@@ -1,0 +1,29 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum Perfil {
+  COORDENADOR
+  ALUNO
+  ORIENTADOR
+}
+
+model User {
+  id            String   @id @default(cuid())
+  nome_completo String
+  email         String   @unique
+  username      String   @unique
+  senha_hash    String
+  perfil        Perfil
+  ativo         Boolean  @default(true)
+  criado_em     DateTime @default(now())
+
+  @@map("users")
+}
+
