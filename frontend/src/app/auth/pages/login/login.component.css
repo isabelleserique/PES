@@ -1,0 +1,144 @@
+.login-shell {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr;
+  gap: 24px;
+  padding: 32px;
+}
+
+.brand-panel,
+.form-panel {
+  background: var(--panel);
+  border: 1px solid var(--panel-border);
+  border-radius: 24px;
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(10px);
+}
+
+.brand-panel {
+  padding: 40px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.eyebrow,
+.panel-label {
+  margin: 0 0 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  font: 12px/1.4 "Courier New", monospace;
+  color: var(--muted);
+}
+
+h1 {
+  margin: 0 0 16px;
+  font-size: clamp(2.2rem, 6vw, 4.4rem);
+  line-height: 0.98;
+}
+
+.description {
+  max-width: 34rem;
+  font-size: 1.1rem;
+  line-height: 1.7;
+  color: var(--muted);
+}
+
+.milestones {
+  display: grid;
+  gap: 14px;
+  margin-top: 36px;
+}
+
+.milestones div {
+  padding: 18px 20px;
+  border-radius: 18px;
+  border: 1px solid rgba(30, 95, 116, 0.16);
+  background: linear-gradient(135deg, rgba(30, 95, 116, 0.09), rgba(183, 110, 60, 0.08));
+}
+
+.milestones strong,
+.helper p {
+  display: block;
+  margin-bottom: 6px;
+}
+
+.milestones span,
+.helper li {
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.form-panel {
+  padding: 32px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+form {
+  display: grid;
+  gap: 16px;
+}
+
+label {
+  display: grid;
+  gap: 8px;
+}
+
+label span {
+  font-size: 0.95rem;
+}
+
+input {
+  width: 100%;
+  border: 1px solid rgba(32, 26, 22, 0.14);
+  border-radius: 14px;
+  padding: 14px 16px;
+  background: rgba(255, 255, 255, 0.75);
+}
+
+input:focus {
+  outline: 2px solid rgba(30, 95, 116, 0.24);
+  border-color: rgba(30, 95, 116, 0.4);
+}
+
+button {
+  border: 0;
+  border-radius: 999px;
+  padding: 14px 18px;
+  color: white;
+  background: linear-gradient(135deg, var(--accent), #184e61);
+  cursor: pointer;
+}
+
+.helper {
+  margin-top: 22px;
+  padding-top: 18px;
+  border-top: 1px solid rgba(32, 26, 22, 0.12);
+}
+
+.helper ul {
+  margin: 10px 0 0;
+  padding-left: 18px;
+}
+
+code {
+  font-family: "Courier New", monospace;
+  background: rgba(32, 26, 22, 0.06);
+  border-radius: 6px;
+  padding: 0 6px;
+}
+
+@media (max-width: 900px) {
+  .login-shell {
+    grid-template-columns: 1fr;
+    padding: 20px;
+  }
+
+  .brand-panel,
+  .form-panel {
+    padding: 24px;
+  }
+}
+

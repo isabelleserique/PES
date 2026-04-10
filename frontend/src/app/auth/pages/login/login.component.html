@@ -1,0 +1,52 @@
+<section class="login-shell">
+  <div class="brand-panel">
+    <p class="eyebrow">Sprint 1 · Setup concluído</p>
+    <h1>Sistema TCC ICOMP</h1>
+    <p class="description">
+      Base do frontend pronta para evoluir as histórias de autenticação, cadastro
+      e redefinição de senha.
+    </p>
+
+    <div class="milestones">
+      <div>
+        <strong>AuthModule</strong>
+        <span>Estruturado para login e fluxos futuros.</span>
+      </div>
+      <div>
+        <strong>HttpClient</strong>
+        <span>Apontando para <code>{{ apiUrl }}</code>.</span>
+      </div>
+      <div>
+        <strong>Routing</strong>
+        <span>Rota base redireciona para esta tela.</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="form-panel">
+    <p class="panel-label">Placeholder de login</p>
+    <form [formGroup]="form" (ngSubmit)="submit()">
+      <label>
+        <span>E-mail institucional</span>
+        <input type="email" formControlName="email" placeholder="nome@icomp.ufam.edu.br">
+      </label>
+
+      <label>
+        <span>Senha</span>
+        <input type="password" formControlName="senha" placeholder="Mínimo de 8 caracteres">
+      </label>
+
+      <button type="submit">Entrar</button>
+    </form>
+
+    <div class="helper">
+      <p>Próximos passos da US003:</p>
+      <ul>
+        <li>Integrar endpoint `POST /auth/login`</li>
+        <li>Guardar sessão via cookie HttpOnly</li>
+        <li>Adicionar guardas por perfil</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
