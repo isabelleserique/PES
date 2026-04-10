@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cards Trello — Sprint 1 · Sistema TCC ICOMP</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #f0ede8;
+  --surface: #faf9f7;
+  --surface2: #f0ede8;
+  --border: rgba(0,0,0,0.10);
+  --border2: rgba(0,0,0,0.18);
+  --text: #1a1917;
+  --text2: #5c5a55;
+  --text3: #9c9a94;
+
+  --blue-bg: #dceeff; --blue-text: #0a3d6b;
+  --teal-bg: #d2f5e8; --teal-text: #074a30;
+  --purple-bg: #ebe8fb; --purple-text: #32268a;
+  --amber-bg: #fdecc8; --amber-text: #5a3a00;
+  --coral-bg: #fde0d4; --coral-text: #6b2510;
+  --red-bg:   #fcd8d8; --red-text:   #6b1414;
+  --green-bg: #d8f0c0; --green-text: #244d08;
+  --gray-bg:  #e4e2db; --gray-text:  #3a3936;
+}
+
+body {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  padding: 32px 24px 64px;
+}
+
+/* Header */
+.header {
+  text-align: center;
+  margin-bottom: 32px;
+  padding-bottom: 24px;
+  border-bottom: 2px solid var(--border2);
+}
+.header h1 {
+  font-size: 26px;
+  font-weight: normal;
+  letter-spacing: -0.5px;
+  color: var(--text);
+  margin-bottom: 6px;
+}
+.header p {
+  font-size: 13px;
+  color: var(--text3);
+  font-family: 'Courier New', monospace;
+}
+.header .sprint-badge {
+  display: inline-block;
+  margin-top: 10px;
+  padding: 3px 14px;
+  border: 1px solid var(--border2);
+  border-radius: 2px;
+  font-size: 11px;
+  font-family: 'Courier New', monospace;
+  letter-spacing: .08em;
+  color: var(--text2);
+  background: var(--surface);
+}
+
+/* Tabs */
+.tabs {
+  display: flex; gap: 6px; flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+.tab {
+  padding: 6px 16px;
+  border: 1px solid var(--border2);
+  border-radius: 2px;
+  font-size: 12px;
+  font-family: 'Courier New', monospace;
+  cursor: pointer;
+  background: var(--surface);
+  color: var(--text2);
+  transition: all .15s;
+  letter-spacing: .02em;
+}
+.tab:hover { background: var(--surface2); }
+.tab.active {
+  background: var(--text);
+  color: var(--bg);
+  border-color: var(--text);
+}
+
+/* Panel */
+.panel { display: none; }
+.panel.active { display: block; }
+
+.panel-title {
+  font-size: 11px;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--text3);
+  font-family: 'Courier New', monospace;
+  margin-bottom: 4px;
+}
+.panel-story {
+  font-size: 13px;
+  color: var(--text2);
+  font-style: italic;
+  margin-bottom: 18px;
+  padding: 10px 14px;
+  border-left: 3px solid var(--border2);
+  background: var(--surface);
+  border-radius: 0 4px 4px 0;
+  line-height: 1.6;
+}
+
+/* Board columns */
+.board {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 14px;
+}
+@media (max-width: 780px) {
+  .board { grid-template-columns: 1fr; }
+}
+.setup-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+@media (max-width: 640px) {
+  .setup-grid { grid-template-columns: 1fr; }
+}
+
+.col-header {
+  font-size: 10px;
+  font-family: 'Courier New', monospace;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--text3);
+  margin-bottom: 10px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--border2);
+}
+
+/* Card */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-radius: 3px;
+  padding: 12px 14px;
+  margin-bottom: 10px;
+  box-shadow: 2px 2px 0 rgba(0,0,0,0.05);
+  transition: box-shadow .15s, transform .15s;
+}
+.card:hover {
+  box-shadow: 3px 3px 0 rgba(0,0,0,0.1);
+  transform: translate(-1px,-1px);
+}
+.card-top {
+  display: flex; justify-content: space-between;
+  align-items: flex-start; margin-bottom: 7px;
+}
+.card-id {
+  font-size: 10px;
+  font-family: 'Courier New', monospace;
+  color: var(--text3);
+  letter-spacing: .05em;
+}
+.card-pts {
+  font-size: 10px;
+  font-family: 'Courier New', monospace;
+  padding: 1px 8px;
+  border-radius: 2px;
+  background: var(--blue-bg);
+  color: var(--blue-text);
+  border: 1px solid rgba(10,61,107,.15);
+}
+.card-title {
+  font-size: 13px;
+  font-weight: bold;
+  margin-bottom: 7px;
+  line-height: 1.4;
+  font-family: 'Georgia', serif;
+}
+.card-story-italic {
+  font-size: 12px;
+  font-style: italic;
+  color: var(--text2);
+  margin-bottom: 10px;
+  line-height: 1.5;
+}
+
+/* Labels */
+.labels { margin-bottom: 8px; }
+.label {
+  display: inline-block;
+  font-size: 9px;
+  font-family: 'Courier New', monospace;
+  letter-spacing: .06em;
+  padding: 2px 8px;
+  border-radius: 2px;
+  margin-right: 4px;
+  margin-bottom: 3px;
+  text-transform: uppercase;
+  font-weight: bold;
+}
+.l-dev    { background: var(--teal-bg);   color: var(--teal-text);   }
+.l-fe     { background: var(--blue-bg);   color: var(--blue-text);   }
+.l-test   { background: var(--purple-bg); color: var(--purple-text); }
+.l-infra  { background: var(--amber-bg);  color: var(--amber-text);  }
+.l-ra     { background: var(--coral-bg);  color: var(--coral-text);  }
+.l-high   { background: var(--red-bg);    color: var(--red-text);    }
+.l-med    { background: var(--amber-bg);  color: var(--amber-text);  }
+
+/* Checklist */
+.checklist {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px dashed var(--border2);
+}
+.checklist-title {
+  font-size: 10px;
+  font-family: 'Courier New', monospace;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--text3);
+  margin-bottom: 7px;
+}
+.check-item {
+  display: flex; align-items: flex-start;
+  gap: 8px; font-size: 11.5px;
+  color: var(--text2); margin-bottom: 5px;
+  line-height: 1.45;
+  font-family: 'Georgia', serif;
+}
+.check-item input[type=checkbox] {
+  margin-top: 2px; flex-shrink: 0;
+  accent-color: var(--text);
+  width: 12px; height: 12px;
+}
+code {
+  font-family: 'Courier New', monospace;
+  font-size: 10.5px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  padding: 0 4px;
+  color: var(--text);
+}
+
+/* DoD */
+.dod-card {
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-radius: 3px;
+  padding: 16px 18px;
+  max-width: 560px;
+  margin-bottom: 16px;
+  box-shadow: 2px 2px 0 rgba(0,0,0,0.05);
+}
+.columns-box {
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-radius: 3px;
+  padding: 14px 18px;
+  max-width: 560px;
+  font-size: 12px;
+  line-height: 1.9;
+  font-family: 'Georgia', serif;
+  color: var(--text2);
+}
+.columns-box strong { font-weight: bold; color: var(--text); }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>Cards Trello — Sprint 1</h1>
+  <p>Sistema de Gerenciamento de TCC · ICOMP</p>
+  <div class="sprint-badge">10/abr → 19/abr/2025 · 18 story points · 4 US</div>
+</div>
+
+<div class="tabs">
+  <div class="tab active" onclick="show('setup', this)">⚙ Setup (hoje)</div>
+  <div class="tab" onclick="show('us001', this)">US001 — Cadastro Admin</div>
+  <div class="tab" onclick="show('us002', this)">US002 — Cadastro Aluno/PO</div>
+  <div class="tab" onclick="show('us003', this)">US003 — Login</div>
+  <div class="tab" onclick="show('us004', this)">US004 — Reset Senha</div>
+  <div class="tab" onclick="show('dod', this)">✓ DoD</div>
+</div>
+
+<!-- SETUP -->
+<div id="panel-setup" class="panel active">
+  <p class="panel-title">Cards de setup — executar hoje (10/abr)</p>
+  <div class="setup-grid">
+
+    <div class="card">
+      <div class="card-top"><span class="card-id">SETUP-01</span></div>
+      <div class="card-title">Configurar repositório e estrutura base</div>
+      <div class="labels"><span class="label l-infra">RA 2</span><span class="label l-high">Alta</span></div>
+      <div class="checklist">
+        <div class="checklist-title">Checklist</div>
+        <div class="check-item"><input type="checkbox">Criar estrutura de pastas: <code>/backend</code>, <code>/frontend</code></div>
+        <div class="check-item"><input type="checkbox">Configurar <code>.gitignore</code> para Python, Angular e variáveis de ambiente</div>
+        <div class="check-item"><input type="checkbox">Criar <code>.env.example</code> com todas as variáveis necessárias</div>
+        <div class="check-item"><input type="checkbox">Proteger branch <code>main</code> — exigir PR + 1 aprovação</div>
+        <div class="check-item"><input type="checkbox">Criar branches: <code>dev</code>, <code>feature/us001</code>, <code>feature/us002</code>, <code>feature/us003</code>, <code>feature/us004</code></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-top"><span class="card-id">SETUP-02</span></div>
+      <div class="card-title">Configurar PostgreSQL + Prisma</div>
+      <div class="labels"><span class="label l-dev">Dev 2</span><span class="label l-infra">RA 2</span><span class="label l-high">Alta</span></div>
+      <div class="checklist">
+        <div class="checklist-title">Checklist</div>
+        <div class="check-item"><input type="checkbox">Subir instância PostgreSQL (local ou Docker)</div>
+        <div class="check-item"><input type="checkbox">Inicializar Prisma no backend (<code>prisma init</code>)</div>
+        <div class="check-item"><input type="checkbox">Criar schema inicial: model <code>User</code> com campos RF001</div>
+        <div class="check-item"><input type="checkbox">Rodar primeira migration: <code>prisma migrate dev</code></div>
+        <div class="check-item"><input type="checkbox">Confirmar conexão com <code>prisma studio</code></div>
+        <div class="check-item"><input type="checkbox">Documentar string de conexão no <code>.env.example</code></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-top"><span class="card-id">SETUP-03</span></div>
+      <div class="card-title">Configurar projeto backend Python</div>
+      <div class="labels"><span class="label l-dev">Dev 1</span><span class="label l-high">Alta</span></div>
+      <div class="checklist">
+        <div class="checklist-title">Checklist</div>
+        <div class="check-item"><input type="checkbox">Definir framework: FastAPI ou Django REST (decidir hoje com o time)</div>
+        <div class="check-item"><input type="checkbox">Criar <code>requirements.txt</code> ou <code>pyproject.toml</code></div>
+        <div class="check-item"><input type="checkbox">Configurar virtualenv e instalar dependências</div>
+        <div class="check-item"><input type="checkbox">Criar estrutura: <code>routers/</code>, <code>models/</code>, <code>services/</code>, <code>schemas/</code></div>
+        <div class="check-item"><input type="checkbox">Endpoint <code>GET /health</code> retornando 200 — smoke test</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-top"><span class="card-id">SETUP-04</span></div>
+      <div class="card-title">Configurar projeto Angular</div>
+      <div class="labels"><span class="label l-fe">Dev 3</span><span class="label l-high">Alta</span></div>
+      <div class="checklist">
+        <div class="checklist-title">Checklist</div>
+        <div class="check-item"><input type="checkbox">Criar projeto Angular com routing habilitado</div>
+        <div class="check-item"><input type="checkbox">Criar módulos: <code>AuthModule</code>, <code>SharedModule</code></div>
+        <div class="check-item"><input type="checkbox">Configurar <code>HttpClientModule</code> e <code>environment.ts</code> com URL da API</div>
+        <div class="check-item"><input type="checkbox">Criar rota base e tela placeholder de login</div>
+        <div class="check-item"><input type="checkbox"><code>ng serve</code> rodando sem erros</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-top"><span class="card-id">SETUP-05</span></div>
+      <div class="card-title">Configurar SMTP Gmail (Google Workspace)</div>
+      <div class="labels"><span class="label l-ra">RA 1</span><span class="label l-dev">Dev 2</span><span class="label l-high">Alta</span></div>
+      <div class="checklist">
+        <div class="checklist-title">Checklist</div>
+        <div class="check-item"><input type="checkbox">RA 1: verificar se ICOMP tem Google Workspace institucional ativo</div>
+        <div class="check-item"><input type="checkbox">Se Workspace: configurar conta de serviço com permissão SMTP</div>
+        <div class="check-item"><input type="checkbox">Se não: usar Gmail pessoal + App Password (2FA obrigatório)</div>
+        <div class="check-item"><input type="checkbox">Para dev/testes: configurar Mailtrap</div>
+        <div class="check-item"><input type="checkbox">Testar envio de e-mail simples via Python antes de integrar às US</div>
+        <div class="check-item"><input type="checkbox">Variáveis: <code>SMTP_HOST</code>, <code>SMTP_PORT</code>, <code>SMTP_USER</code>, <code>SMTP_PASS</code> no <code>.env</code></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-top"><span class="card-id">SETUP-06</span></div>
+      <div class="card-title">Configurar CI básico no GitHub Actions</div>
+      <div class="labels"><span class="label l-infra">RA 2</span><span class="label l-med">Média</span></div>
+      <div class="checklist">
+        <div class="checklist-title">Checklist</div>
+        <div class="check-item"><input type="checkbox">Criar workflow <code>ci.yml</code>: roda em push para <code>dev</code> e PRs</div>
+        <div class="check-item"><input type="checkbox">Job backend: instala deps + roda testes (<code>pytest</code>)</div>
+        <div class="check-item"><input type="checkbox">Job frontend: <code>npm install</code> + <code>ng build</code></div>
+        <div class="check-item"><input type="checkbox">Badge de status no README</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- US001 -->
+<div id="panel-us001" class="panel">
+  <p class="panel-title">US001 — Cadastro de Usuário: Coordenador · 5 pts · Alta</p>
+  <div class="panel-story">"Como administrador, quero cadastrar coordenador informando nome completo, e-mail institucional, nome de usuário e senha provisória, para que ele acesse o sistema com as permissões corretas."</div>
+  <div class="board">
+    <div>
+      <div class="col-header">Backend</div>
+      <div class="card">
+        <div class="card-top"><span class="card-id">US001-BE-01</span></div>
+        <div class="card-title">Model + migration User (Coordenador)</div>
+        <div class="labels"><span class="label l-dev">Dev 1</span><span class="label l-high">Alta</span></div>
+        <div class="checklist">
+          <div class="checklist-title">Checklist</div>
+          <div class="check-item"><input type="checkbox">Campos: <code>id</code>, <code>nome_completo</code>, <code>email</code>, <code>username</code>, <code>senha_hash</code>, <code>perfil</code>, <code>ativo</code>, <code>criado_em</code></div>
+          <div class="check-item"><input type="checkbox">Perfil enum: <code>COORDENADOR</code>, <code>ALUNO</code>, <code>ORIENTADOR</code></div>
+          <div class="check-item"><input type="checkbox">Index único em <code>email</code> e <code>username</code></div>
+          <div class="check-item"><input type="checkbox">Migration rodando sem erros</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-top"><span class="card-id">US001-BE-02</span></div>
+        <div class="card-title">Endpoint POST /usuarios/coordenador</div>
+        <div class="labels"><span class="label l-dev">Dev 1</span><span class="label l-high">Alta</span></div>
+        <div class="checklist">
+          <div class="checklist-title">Checklist</div>
+          <div class="check-item"><input type="checkbox">Validar campos obrigatórios (nome, e-mail, username, senha)</div>
+          <div class="check-item"><input type="checkbox">Checar unicidade de e-mail — retornar 409 sem expor dados existentes</div>
+          <div class="check-item"><input type="checkbox">Hash da senha com bcrypt (mínimo 10 rounds)</div>
+          <div class="check-item"><input type="checkbox">Retornar 201 com ID e nome (nunca retornar senha_hash)</div>
+          <div class="check-item"><input type="checkbox">Registrar log de auditoria: ação <code>CADASTRO_USUARIO</code>, perfil, timestamp</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-top"><span class="card-id">US001-BE-03</span></div>
+        <div class="card-title">Serviço de e-mail — boas-vindas</div>
+        <div class="labels"><span class="label l-dev">Dev 2</span><span class="label l-high">Alta</span></div>
+        <div class="checklist">
+          <div class="checklist-title">Checklist</div>
+          <div class="check-item"><input type="checkbox">Criar <code>EmailService</code> desacoplado (RNF015)</div>
+          <div class="check-item"><input type="checkbox">Template: nome, username, instrução de primeiro acesso</div>
+          <div class="check-item"><input type="checkbox">Disparar após cadastro aprovado pelo admin</div>
+          <div class="check-item"><input type="checkbox">Tratamento de falha: logar erro, não quebrar o fluxo</div>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="col-header">Frontend</div>
+      <div class="card">
+        <div class="card-top"><span class="card-id">US001-FE-01</span></div>
+        <div class="card-title">Tela de cadastro de coordenador (admin)</div>
+        <div class="labels"><span class="label l-fe">Dev 3</span><span class="label l-high">Alta</span></div>
+        <div class="checklist">
+          <div class="checklist-title">Checklist</div>
+          <div class="check-item"><input type="checkbox">Formulário: nome completo, e-mail institucional, username, senha</div>
+          <div class="check-item"><input type="checkbox">Validação de campos no frontend antes de submeter</div>
+          <div class="check-item"><input type="checkbox">Mensagem de erro genérica se e-mail já existir</div>
+          <div class="check-item"><input type="checkbox">Feedback visual de sucesso após cadastro</div>
+          <div class="check-item"><input type="checkbox">Rota protegida — acessível apenas pelo admin</div>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="col-header">Testes</div>
+      <div class="card">
+        <div class="card-top"><span class="card-id">US001-QA-01</span></div>
+        <div class="card-title">Casos de teste — US001</div>
+        <div class="labels"><span class="label l-test">Tester 1</span></div>
+        <div class="checklist">
+          <div class="checklist-title">Cenários obrigatórios</div>
+          <div class="check-item"><input type="checkbox">Cadastro válido → 201, e-mail enviado, senha não exposta</div>
+          <div class="check-item"><input type="checkbox">E-mail duplicado → erro genérico, sem revelar usuário existente</div>
+          <div class="check-item"><input type="checkbox">Senha com menos de 8 caracteres → erro de validação</div>
+          <div class="check-item"><input type="checkbox">Campo obrigatório vazio → erro de validação</div>
+          <div class="check-item"><input type="checkbox">Verificar no banco que senha_hash ≠ senha em texto claro</div>
+          <div class="check-item"><input type="checkbox">Log de auditoria gerado com dados corretos</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- US002 -->
+<div id="panel-us002" class="panel">
+  <p class="panel-title">US002 — Cadastro de Usuário: Aluno / Professor Orientador · 5 pts · Alta</p>
+  <div class="panel-story">"Como Aluno ou Professor Orientador, quero solicitar cadastro pelo formulário de auto-cadastro, para acessar o sistema com as permissões corretas após aprovação do coordenador."</div>
+  <div class="board">
+    <div>
+      <div class="col-header">Backend</div>
+      <div class="card">
+        <div class="card-top"><span class="card-id">US002-BE-01</span></div>
+        <div class="card-title">Endpoint POST /usuarios/solicitar-cadastro</div>
+        <div class="labels"><span class="label l-dev">Dev 1</span><span class="label l-high">Alta</span></div>
+        <div class="checklist">
+          <div class="checklist-title">Checklist</div>
+          <div class="check-item"><input type="checkbox">Campos: nome, e-mail, username, perfil, matrícula (obrigatório se perfil=ALUNO)</div>
+          <div class="check-item"><input type="checkbox">Status inicial: <code>PENDENTE</code> — usuário não acessa até aprovação</div>
+          <div class="check-item"><input type="checkbox">Checar unicidade de e-mail</div>
+          <div class="check-item"><input type="checkbox">Hash de senha com bcrypt</div>
+          <div class="check-item"><input type="checkbox">Notificar coordenador sobre nova solicitação pendente</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-top"><span class="card-id">US002-BE-02</span></div>
+        <div class="card-title">Endpoint PATCH /usuarios/:id/aprovar (RF004)</div>
+        <div class="labels"><span class="label l-dev">Dev 1</span><span class="label l-high">Alta</span></div>
+        <div class="checklist">
+          <div class="checklist-title">Checklist</div>
+          <div class="check-item"><input type="checkbox">Apenas coordenador pode chamar este endpoint</div>
+          <div class="check-item"><input type="checkbox">Ação: <code>APROVAR</code> ou <code>REJEITAR</code> — alterar campo <code>status</code></div>
+          <div class="check-item"><input type="checkbox">Após aprovação: disparar e-mail de boas-vindas</div>
+          <div class="check-item"><input type="checkbox">Log de auditoria: quem aprovou, quando, qual usuário</div>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="col-header">Frontend</div>
+      <div class="card">
+        <div class="card-top"><span class="card-id">US002-FE-01</span></div>
+        <div class="card-title">Tela de auto-cadastro (pública)</div>
+        <div class="labels"><span class="label l-fe">Dev 3</span><span class="label l-high">Alta</span></div>
+        <div class="checklist">
+          <div class="checklist-title">Checklist</div>
+          <div class="check-item"><input type="checkbox">Formulário público: nome, e-mail, username, perfil, senha</div>
+          <div class="check-item"><input type="checkbox">Campo matrícula aparece/desaparece conforme perfil selecionado</div>
+          <div class="check-item"><input type="checkbox">Mensagem pós-envio: "Seu cadastro está em análise. Aguarde aprovação."</div>
+          <div class="check-item"><input type="checkbox">Erro de e-mail duplicado: mensagem genérica</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-top"><span class="card-id">US002-FE-02</span></div>
+        <div class="card-title">Painel de aprovação de cadastros (coordenador)</div>
+        <div class="labels"><span class="label l-fe">Dev 3</span><span class="label l-high">Alta</span></div>
+        <div class="checklist">
+          <div class="checklist-title">Checklist</div>
+          <div class="check-item"><input type="checkbox">Listagem de usuários com status PENDENTE</div>
+          <div class="check-item"><input type="checkbox">Botões Aprovar / Rejeitar por usuário</div>
+          <div class="check-item"><input type="checkbox">Feedback visual após ação</div>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="col-header">Testes</div>
+      <div class="card">
+        <div class="card-top"><span class="card-id">US002-QA-01</span></div>
+        <div class="card-title">Casos de teste — US002</div>
+        <div class="labels"><span class="label l-test">Tester 2</span></div>
+        <div class="checklist">
+          <div class="checklist-title">Cenários obrigatórios</div>
+          <div class="check-item"><input type="checkbox">Auto-cadastro válido (aluno com matrícula) → status PENDENTE</div>
+          <div class="check-item"><input type="checkbox">Auto-cadastro válido (professor sem matrícula) → status PENDENTE</div>
+          <div class="check-item"><input type="checkbox">Aluno sem matrícula → erro de validação</div>
+          <div class="check-item"><input type="checkbox">Coordenador aprova → status ATIVO, e-mail enviado</div>
+          <div class="check-item"><input type="checkbox">Coordenador rejeita → status REJEITADO, usuário sem acesso</div>
+          <div class="check-item"><input type="checkbox">Usuário PENDENTE tenta fazer login → acesso negado com mensagem clara</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- US003 -->
+<div id="panel-us003" class="panel">
+  <p class="panel-title">US003 — Login de Usuário · 5 pts · Alta · Depende de US001</p>
+  <div class="panel-story">"Como usuário interno, quero fazer login com e-mail e senha, para acessar a área restrita correspondente ao meu perfil."</div>
+  <div class="board">
+    <div>
+      <div class="col-header">Backend</div>
+      <div class="card">
+        <div class="card-top"><span class="card-id">US003-BE-01</span></div>
+        <div class="card-title">Endpoint POST /auth/login</div>
+        <div class="labels"><span class="label l-dev">Dev 4</span><span class="label l-high">Alta</span></div>
+        <div class="checklist">
+          <div class="checklist-title">Checklist</div>
+          <div class="check-item"><input type="checkbox">Receber e-mail + senha, verificar com bcrypt</div>
+          <div class="check-item"><input type="checkbox">Credenciais inválidas → mensagem genérica</div>
+          <div class="check-item"><input type="checkbox">Após 5 falhas consecutivas → bloquear conta por 15 min</div>
+          <div class="check-item"><input type="checkbox">Sucesso → retornar JWT com payload: <code>user_id</code>, <code>perfil</code>, <code>exp</code></div>
+          <div class="check-item"><input type="checkbox">Expiração por inatividade: <strong>8 horas</strong> (<code>SESSION_TIMEOUT_HOURS=8</code>)</div>
+          <div class="check-item"><input type="checkbox">Log de auditoria: logar tentativas falhas e logins bem-sucedidos</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-top"><span class="card-id">US003-BE-02</span></div>
+        <div class="card-title">Middleware de autenticação JWT</div>
+        <div class="labels"><span class="label l-dev">Dev 4</span><span class="label l-high">Alta</span></div>
+        <div class="checklist">
+          <div class="checklist-title">Checklist</div>
+          <div class="check-item"><input type="checkbox">Validar token em rotas protegidas</div>
+          <div class="check-item"><input type="checkbox">Extrair perfil do token e disponibilizar no contexto</div>
+          <div class="check-item"><input type="checkbox">Token expirado → 401 com mensagem clara</div>
+          <div class="check-item"><input type="checkbox">Token inválido → 401</div>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="col-header">Frontend</div>
+      <div class="card">
+        <div class="card-top"><span class="card-id">US003-FE-01</span></div>
+        <div class="card-title">Tela de login</div>
+        <div class="labels"><span class="label l-fe">Dev 4</span><span class="label l-high">Alta</span></div>
+        <div class="checklist">
+          <div class="checklist-title">Checklist</div>
+          <div class="check-item"><input type="checkbox">Campos: e-mail e senha</div>
+          <div class="check-item"><input type="checkbox">Erro genérico para credenciais inválidas</div>
+          <div class="check-item"><input type="checkbox">Link "Esqueci minha senha" → rota de reset (US004)</div>
+          <div class="check-item"><input type="checkbox">Armazenar JWT via HttpOnly cookie (mais seguro que localStorage)</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-top"><span class="card-id">US003-FE-02</span></div>
+        <div class="card-title">Redirect por perfil + Auth Guards</div>
+        <div class="labels"><span class="label l-fe">Dev 4</span><span class="label l-high">Alta</span></div>
+        <div class="checklist">
+          <div class="checklist-title">Checklist</div>
+          <div class="check-item"><input type="checkbox">Login COORDENADOR → <code>/coordenador/dashboard</code></div>
+          <div class="check-item"><input type="checkbox">Login ALUNO → <code>/aluno/dashboard</code></div>
+          <div class="check-item"><input type="checkbox">Login ORIENTADOR → <code>/orientador/dashboard</code></div>
+          <div class="check-item"><input type="checkbox">Guard Angular protegendo rotas de cada perfil</div>
+          <div class="check-item"><input type="checkbox">Exibir nome e perfil do usuário em todas as páginas restritas</div>
+          <div class="check-item"><input type="checkbox">Sessão expirada → redirecionar para login com mensagem</div>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="col-header">Testes</div>
+      <div class="card">
+        <div class="card-top"><span class="card-id">US003-QA-01</span></div>
+        <div class="card-title">Casos de teste — US003</div>
+        <div class="labels"><span class="label l-test">Tester 1</span><span class="label l-test">Tester 2</span></div>
+        <div class="checklist">
+          <div class="checklist-title">Cenários obrigatórios</div>
+          <div class="check-item"><input type="checkbox">Login válido (cada perfil) → redirect correto</div>
+          <div class="check-item"><input type="checkbox">Senha errada → mensagem genérica</div>
+          <div class="check-item"><input type="checkbox">5 tentativas erradas → conta bloqueada 15 min</div>
+          <div class="check-item"><input type="checkbox">Tentativa na 6ª → erro de conta bloqueada</div>
+          <div class="check-item"><input type="checkbox">Após 15 min → login liberado novamente</div>
+          <div class="check-item"><input type="checkbox">Usuário PENDENTE tenta logar → acesso negado</div>
+          <div class="check-item"><input type="checkbox">Rota protegida sem token → redirect para login</div>
+          <div class="check-item"><input type="checkbox">Perfil ALUNO acessa rota de COORDENADOR → 403</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- US004 -->
+<div id="panel-us004" class="panel">
+  <p class="panel-title">US004 — Redefinição de Senha · 3 pts · Média · Depende de US001</p>
+  <div class="panel-story">"Como usuário, quero solicitar a redefinição de senha por e-mail, para recuperar acesso à minha conta caso esqueça minha senha."</div>
+  <div class="board">
+    <div>
+      <div class="col-header">Backend</div>
+      <div class="card">
+        <div class="card-top"><span class="card-id">US004-BE-01</span></div>
+        <div class="card-title">Endpoint POST /auth/solicitar-reset</div>
+        <div class="labels"><span class="label l-dev">Dev 2</span><span class="label l-med">Média</span></div>
+        <div class="checklist">
+          <div class="checklist-title">Checklist</div>
+          <div class="check-item"><input type="checkbox">Receber e-mail; sempre retornar mensagem genérica</div>
+          <div class="check-item"><input type="checkbox">Gerar token único (<code>uuid4</code>) com TTL de 2 horas</div>
+          <div class="check-item"><input type="checkbox">Salvar token: <code>user_id</code>, <code>token</code>, <code>expira_em</code>, <code>usado</code></div>
+          <div class="check-item"><input type="checkbox">Enviar e-mail com link: <code>/reset-senha?token=xxx</code></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-top"><span class="card-id">US004-BE-02</span></div>
+        <div class="card-title">Endpoint POST /auth/confirmar-reset</div>
+        <div class="labels"><span class="label l-dev">Dev 2</span><span class="label l-med">Média</span></div>
+        <div class="checklist">
+          <div class="checklist-title">Checklist</div>
+          <div class="check-item"><input type="checkbox">Receber token + nova senha</div>
+          <div class="check-item"><input type="checkbox">Validar: existe, não expirou, não foi usado</div>
+          <div class="check-item"><input type="checkbox">Token inválido/expirado → 400 com mensagem clara</div>
+          <div class="check-item"><input type="checkbox">Senha nova mínimo 8 caracteres + hash bcrypt</div>
+          <div class="check-item"><input type="checkbox">Marcar token como <code>usado=true</code> após uso</div>
+          <div class="check-item"><input type="checkbox">Log de auditoria: <code>RESET_SENHA</code>, user_id, timestamp</div>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="col-header">Frontend</div>
+      <div class="card">
+        <div class="card-top"><span class="card-id">US004-FE-01</span></div>
+        <div class="card-title">Tela de solicitação de reset</div>
+        <div class="labels"><span class="label l-fe">Dev 3</span><span class="label l-med">Média</span></div>
+        <div class="checklist">
+          <div class="checklist-title">Checklist</div>
+          <div class="check-item"><input type="checkbox">Campo e-mail + botão enviar</div>
+          <div class="check-item"><input type="checkbox">Após envio: "Se o e-mail estiver cadastrado, você receberá as instruções"</div>
+          <div class="check-item"><input type="checkbox">Link de volta para o login</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-top"><span class="card-id">US004-FE-02</span></div>
+        <div class="card-title">Tela de nova senha (via link do e-mail)</div>
+        <div class="labels"><span class="label l-fe">Dev 3</span><span class="label l-med">Média</span></div>
+        <div class="checklist">
+          <div class="checklist-title">Checklist</div>
+          <div class="check-item"><input type="checkbox">Ler token da query string (<code>?token=xxx</code>)</div>
+          <div class="check-item"><input type="checkbox">Campos: nova senha + confirmação</div>
+          <div class="check-item"><input type="checkbox">Validação: senhas coincidem + mínimo 8 caracteres</div>
+          <div class="check-item"><input type="checkbox">Token inválido/expirado → mensagem + link para novo reset</div>
+          <div class="check-item"><input type="checkbox">Sucesso → redirecionar para login com confirmação</div>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="col-header">Testes</div>
+      <div class="card">
+        <div class="card-top"><span class="card-id">US004-QA-01</span></div>
+        <div class="card-title">Casos de teste — US004</div>
+        <div class="labels"><span class="label l-test">Tester 2</span></div>
+        <div class="checklist">
+          <div class="checklist-title">Cenários obrigatórios</div>
+          <div class="check-item"><input type="checkbox">E-mail válido → resposta genérica, e-mail disparado, token no banco</div>
+          <div class="check-item"><input type="checkbox">E-mail inexistente → mesma resposta genérica</div>
+          <div class="check-item"><input type="checkbox">Token válido + nova senha OK → senha alterada, token usado</div>
+          <div class="check-item"><input type="checkbox">Mesmo token usado 2x → erro 400</div>
+          <div class="check-item"><input type="checkbox">Token expirado (>2h) → erro 400</div>
+          <div class="check-item"><input type="checkbox">Token inválido/adulterado → erro 400</div>
+          <div class="check-item"><input type="checkbox">Nova senha &lt; 8 caracteres → erro de validação</div>
+          <div class="check-item"><input type="checkbox">Após reset: senha antiga falha, nova senha funciona</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- DOD -->
+<div id="panel-dod" class="panel">
+  <p class="panel-title">Definition of Done — checklist final por US</p>
+  <p style="font-size:13px;color:var(--text2);margin-bottom:16px;font-family:Georgia,serif;">Uma US só vai para <strong>Done</strong> no Trello quando todos os itens abaixo estiverem marcados.</p>
+  <div class="dod-card">
+    <div class="card-title" style="margin-bottom:12px;">Checklist DoD universal</div>
+    <div class="check-item"><input type="checkbox">Todos os critérios de aceite implementados e verificados</div>
+    <div class="check-item"><input type="checkbox">Código passou por code review de pelo menos 1 outro dev</div>
+    <div class="check-item"><input type="checkbox">Testes unitários escritos e passando para a lógica principal</div>
+    <div class="check-item"><input type="checkbox">Zero bugs críticos ou bloqueantes em aberto</div>
+    <div class="check-item"><input type="checkbox">Funcionalidade testada manualmente no ambiente de dev</div>
+    <div class="check-item"><input type="checkbox">Fluxos de erro e mensagens de validação implementados</div>
+    <div class="check-item"><input type="checkbox">Log de auditoria registra as ações relevantes da US</div>
+    <div class="check-item"><input type="checkbox">Código integrado à branch <code>dev</code> sem conflitos via PR</div>
+    <div class="check-item"><input type="checkbox">Card no Trello movido para Done pelo responsável</div>
+  </div>
+  <div class="columns-box">
+    <strong>Colunas sugeridas no Trello</strong><br><br>
+    📋 <strong>Backlog</strong> — tasks ainda não iniciadas<br>
+    🔧 <strong>Em progresso</strong> — sendo desenvolvida (máx. 2 tasks por pessoa)<br>
+    👀 <strong>Em revisão / QA</strong> — aguardando code review ou testes<br>
+    ✅ <strong>Done</strong> — DoD completo, aprovado pelo tester
+  </div>
+</div>
+
+<script>
+function show(id, el) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('panel-' + id).classList.add('active');
+  el.classList.add('active');
+}
+</script>
+</body>
+</html>
