@@ -1,0 +1,50 @@
+<div class="auth-wrapper">
+  <div class="auth-card">
+    <div class="brand-panel">
+      <div class="logo-row">
+        <div class="logo-badge">IC</div>
+        <div class="logo-info">
+          <span class="logo-name">IComp</span>
+          <span class="logo-sub">Instituto de Computação</span>
+        </div>
+      </div>
+      <div class="brand-body">
+        <span class="brand-title">TCComp</span>
+        <p class="brand-subtitle">O sistema de Gerenciamento de TCC do IComp!</p>
+      </div>
+    </div>
+    <div class="form-panel">
+      <form [formGroup]="form" (ngSubmit)="submit()" class="form-gap">
+        <mat-radio-group formControlName="perfil" style="display:flex;gap:24px;margin-bottom:4px;">
+          <mat-radio-button value="COORDENADOR">Coordenador</mat-radio-button>
+          <mat-radio-button value="PROFESSOR">Professor</mat-radio-button>
+          <mat-radio-button value="ALUNO">Aluno</mat-radio-button>
+        </mat-radio-group>
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Nome Completo</mat-label>
+          <input matInput formControlName="nome_completo">
+        </mat-form-field>
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Email Institucional</mat-label>
+          <input matInput type="email" formControlName="email">
+        </mat-form-field>
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Nome usuário</mat-label>
+          <input matInput formControlName="username">
+        </mat-form-field>
+        <div class="row-2">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Senha</mat-label>
+            <input matInput type="password" formControlName="senha" placeholder="Mín. 8 caracteres">
+          </mat-form-field>
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Confirmar senha</mat-label>
+            <input matInput type="password" formControlName="confirmar_senha">
+          </mat-form-field>
+        </div>
+        <button mat-raised-button type="submit" class="full-width submit-btn">CADASTRAR</button>
+        <span class="link-text">Já tem uma conta? <a routerLink="/auth/login" style="color:inherit">Entrar</a></span>
+      </form>
+    </div>
+  </div>
+</div>
