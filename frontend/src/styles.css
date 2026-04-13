@@ -98,8 +98,10 @@ html, body {
   display: flex;
   flex-direction: column;
   justify-content: center;
-  background-image: radial-gradient(circle, rgba(13, 33, 55, 0.06) 1.5px, transparent 1.5px);
-  background-size: 22px 22px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='350' height='280'%3E%3Cpolygon points='320,0 354.6,20 354.6,60 320,80 285.4,60 285.4,20' fill='none' stroke='rgba(13,33,55,0.09)' stroke-width='1.5'/%3E%3Cpolygon points='250,0 284.6,20 284.6,60 250,80 215.4,60 215.4,20' fill='none' stroke='rgba(13,33,55,0.09)' stroke-width='1.5'/%3E%3Cpolygon points='180,0 214.6,20 214.6,60 180,80 145.4,60 145.4,20' fill='none' stroke='rgba(13,33,55,0.09)' stroke-width='1.5'/%3E%3Cpolygon points='355,60 350,80 350,120 355,140' fill='none' stroke='rgba(13,33,55,0.09)' stroke-width='1.5'/%3E%3Cpolygon points='285,60 319.6,80 319.6,120 285,140 250.4,120 250.4,80' fill='none' stroke='rgba(13,33,55,0.09)' stroke-width='1.5'/%3E%3Cpolygon points='215,60 249.6,80 249.6,120 215,140 180.4,120 180.4,80' fill='none' stroke='rgba(13,33,55,0.09)' stroke-width='1.5'/%3E%3Cpolygon points='145,60 179.6,80 179.6,120 145,140 110.4,120 110.4,80' fill='none' stroke='rgba(13,33,55,0.09)' stroke-width='1.5'/%3E%3Cpolygon points='320,120 354.6,140 354.6,180 320,200 285.4,180 285.4,140' fill='none' stroke='rgba(13,33,55,0.09)' stroke-width='1.5'/%3E%3Cpolygon points='250,120 284.6,140 284.6,180 250,200 215.4,180 215.4,140' fill='none' stroke='rgba(13,33,55,0.09)' stroke-width='1.5'/%3E%3Cpolygon points='180,120 214.6,140 214.6,180 180,200 145.4,180 145.4,140' fill='none' stroke='rgba(13,33,55,0.09)' stroke-width='1.5'/%3E%3Cpolygon points='355,180 350,200 350,240 355,260' fill='none' stroke='rgba(13,33,55,0.09)' stroke-width='1.5'/%3E%3Cpolygon points='285,180 319.6,200 319.6,240 285,260 250.4,240 250.4,200' fill='none' stroke='rgba(13,33,55,0.09)' stroke-width='1.5'/%3E%3Cpolygon points='215,180 249.6,200 249.6,240 215,260 180.4,240 180.4,200' fill='none' stroke='rgba(13,33,55,0.09)' stroke-width='1.5'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: top right;
+  background-size: 350px 280px;
 }
 
 .form-title {
