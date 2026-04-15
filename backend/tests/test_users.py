@@ -1,7 +1,41 @@
-import logging
+from __future__ import annotations
 
-from backend.app.core.security import verify_password
+import logging
+from typing import Optional
+from uuid import uuid4
+
+from backend.app.core.security import hash_password, verify_password
 from backend.app.db.models import UserRecord
+from backend.app.models.user import Perfil, StatusCadastro
+
+
+def _seed_user(
+    db_session,
+    *,
+    nome_completo: str,
+    email: str,
+    username: str,
+    perfil: Perfil,
+    status: StatusCadastro,
+    ativo: bool,
+    senha: str = "SenhaPadrao@123",
+    matricula: Optional[str] = None,
+) -> UserRecord:
+    user = UserRecord(
+        id=str(uuid4()),
+        nome_completo=nome_completo,
+        email=email,
+        username=username,
+        senha_hash=hash_password(senha),
+        perfil=perfil,
+        matricula=matricula,
+        status=status,
+        ativo=ativo,
+    )
+    db_session.add(user)
+    db_session.commit()
+    db_session.refresh(user)
+    return user
 
 
 def test_create_coordenador_returns_201_and_never_exposes_password_hash(client, db_session, email_service, caplog) -> None:
@@ -21,7 +55,8 @@ def test_create_coordenador_returns_201_and_never_exposes_password_hash(client, 
     assert body["nome_completo"] == payload["nome_completo"]
 
     stored_user = db_session.query(UserRecord).filter_by(email=payload["email"]).one()
-    assert stored_user.perfil.value == "COORDENADOR"
+    assert stored_user.perfil == Perfil.COORDENADOR
+    assert stored_user.status == StatusCadastro.ATIVO
     assert stored_user.ativo is True
     assert stored_user.username == payload["username"]
     assert stored_user.senha_hash != payload["senha"]
@@ -75,3 +110,264 @@ def test_create_coordenador_keeps_flow_alive_when_welcome_email_fails(client, em
 
     assert response.status_code == 201
     assert response.json()["nome_completo"] == payload["nome_completo"]
+
+
+def test_request_registration_creates_pending_student_and_notifies_active_coordinators(
+    client,
+    db_session,
+    email_service,
+    caplog,
+) -> None:
+    coordinator = _seed_user(
+        db_session,
+        nome_completo="Maria Coordenadora",
+        email="maria@icomp.ufam.edu.br",
+        username="maria.coord",
+        perfil=Perfil.COORDENADOR,
+        status=StatusCadastro.ATIVO,
+        ativo=True,
+    )
+    payload = {
+        "nome_completo": "Aluno Teste",
+        "email": "aluno@icomp.ufam.edu.br",
+        "username": "aluno.teste",
+        "senha": "SenhaAluno@123",
+        "perfil": "ALUNO",
+        "matricula": "2023123456",
+    }
+
+    with caplog.at_level(logging.INFO, logger="backend.audit"):
+        response = client.post("/usuarios/solicitar-cadastro", json=payload)
+
+    assert response.status_code == 201
+    body = response.json()
+    assert body["nome_completo"] == payload["nome_completo"]
+    assert body["status"] == "PENDENTE"
+    assert body["mensagem"] == "Seu cadastro esta em analise. Aguarde aprovacao."
+
+    stored_user = db_session.query(UserRecord).filter_by(email=payload["email"]).one()
+    assert stored_user.perfil == Perfil.ALUNO
+    assert stored_user.status == StatusCadastro.PENDENTE
+    assert stored_user.ativo is False
+    assert stored_user.matricula == payload["matricula"]
+    assert verify_password(payload["senha"], stored_user.senha_hash) is True
+
+    assert email_service.pending_notifications == [
+        {
+            "to_email": coordinator.email,
+            "requester_name": payload["nome_completo"],
+            "requester_email": payload["email"],
+            "requester_username": payload["username"],
+            "requester_profile": "ALUNO",
+        }
+    ]
+    assert email_service.approval_calls == []
+    assert "action=SOLICITACAO_CADASTRO" in caplog.text
+    assert "status=PENDENTE" in caplog.text
+
+
+def test_request_registration_allows_orientador_without_matricula(client, db_session) -> None:
+    payload = {
+        "nome_completo": "Professora Orientadora",
+        "email": "orientadora@icomp.ufam.edu.br",
+        "username": "orientadora.icomp",
+        "senha": "SenhaOrientadora@123",
+        "perfil": "ORIENTADOR",
+    }
+
+    response = client.post("/usuarios/solicitar-cadastro", json=payload)
+
+    assert response.status_code == 201
+    stored_user = db_session.query(UserRecord).filter_by(email=payload["email"]).one()
+    assert stored_user.perfil == Perfil.ORIENTADOR
+    assert stored_user.status == StatusCadastro.PENDENTE
+    assert stored_user.matricula is None
+
+
+def test_request_registration_returns_422_when_student_has_no_matricula(client) -> None:
+    payload = {
+        "nome_completo": "Aluno Sem Matricula",
+        "email": "sem.matricula@icomp.ufam.edu.br",
+        "username": "aluno.sem.matricula",
+        "senha": "SenhaAluno@123",
+        "perfil": "ALUNO",
+    }
+
+    response = client.post("/usuarios/solicitar-cadastro", json=payload)
+
+    assert response.status_code == 422
+    assert "Matricula e obrigatoria para perfil ALUNO." in response.body.decode("utf-8")
+
+
+def test_request_registration_returns_409_when_email_already_exists(client, db_session) -> None:
+    _seed_user(
+        db_session,
+        nome_completo="Maria Coordenadora",
+        email="maria@icomp.ufam.edu.br",
+        username="maria.coord",
+        perfil=Perfil.COORDENADOR,
+        status=StatusCadastro.ATIVO,
+        ativo=True,
+    )
+    payload = {
+        "nome_completo": "Outra Pessoa",
+        "email": "maria@icomp.ufam.edu.br",
+        "username": "outra.pessoa",
+        "senha": "OutraSenha@123",
+        "perfil": "ORIENTADOR",
+    }
+
+    response = client.post("/usuarios/solicitar-cadastro", json=payload)
+
+    assert response.status_code == 409
+    assert response.json()["detail"] == "Nao foi possivel concluir o cadastro com os dados informados."
+
+
+def test_review_registration_approves_pending_user_and_logs_audit(client, db_session, email_service, caplog) -> None:
+    coordinator = _seed_user(
+        db_session,
+        nome_completo="Maria Coordenadora",
+        email="maria@icomp.ufam.edu.br",
+        username="maria.coord",
+        perfil=Perfil.COORDENADOR,
+        status=StatusCadastro.ATIVO,
+        ativo=True,
+    )
+    pending_user = _seed_user(
+        db_session,
+        nome_completo="Aluno Teste",
+        email="aluno@icomp.ufam.edu.br",
+        username="aluno.teste",
+        perfil=Perfil.ALUNO,
+        status=StatusCadastro.PENDENTE,
+        ativo=False,
+        matricula="2023123456",
+    )
+
+    with caplog.at_level(logging.INFO, logger="backend.audit"):
+        response = client.patch(
+            f"/usuarios/{pending_user.id}/aprovar",
+            json={"acao": "APROVAR"},
+            headers={"X-User-Id": coordinator.id},
+        )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["id"] == pending_user.id
+    assert body["perfil"] == "ALUNO"
+    assert body["status"] == "ATIVO"
+
+    db_session.refresh(pending_user)
+    assert pending_user.status == StatusCadastro.ATIVO
+    assert pending_user.ativo is True
+
+    assert email_service.approval_calls == [
+        {
+            "to_email": pending_user.email,
+            "full_name": pending_user.nome_completo,
+            "username": pending_user.username,
+        }
+    ]
+    assert "action=DECISAO_CADASTRO" in caplog.text
+    assert "decision=APROVAR" in caplog.text
+    assert f"actor_user_id={coordinator.id}" in caplog.text
+    assert f"target_user_id={pending_user.id}" in caplog.text
+    assert "status=ATIVO" in caplog.text
+
+
+def test_review_registration_rejects_pending_user_without_sending_welcome_email(client, db_session, email_service) -> None:
+    coordinator = _seed_user(
+        db_session,
+        nome_completo="Maria Coordenadora",
+        email="maria@icomp.ufam.edu.br",
+        username="maria.coord",
+        perfil=Perfil.COORDENADOR,
+        status=StatusCadastro.ATIVO,
+        ativo=True,
+    )
+    pending_user = _seed_user(
+        db_session,
+        nome_completo="Professor Pendente",
+        email="professor@icomp.ufam.edu.br",
+        username="professor.icomp",
+        perfil=Perfil.ORIENTADOR,
+        status=StatusCadastro.PENDENTE,
+        ativo=False,
+    )
+
+    response = client.patch(
+        f"/usuarios/{pending_user.id}/aprovar",
+        json={"acao": "REJEITAR"},
+        headers={"X-User-Id": coordinator.id},
+    )
+
+    assert response.status_code == 200
+    assert response.json()["status"] == "REJEITADO"
+
+    db_session.refresh(pending_user)
+    assert pending_user.status == StatusCadastro.REJEITADO
+    assert pending_user.ativo is False
+    assert email_service.approval_calls == []
+
+
+def test_review_registration_requires_active_coordinator(client, db_session) -> None:
+    non_coordinator = _seed_user(
+        db_session,
+        nome_completo="Aluno Ativo",
+        email="aluno.ativo@icomp.ufam.edu.br",
+        username="aluno.ativo",
+        perfil=Perfil.ALUNO,
+        status=StatusCadastro.ATIVO,
+        ativo=True,
+        matricula="2023123999",
+    )
+    pending_user = _seed_user(
+        db_session,
+        nome_completo="Outro Aluno",
+        email="outro.aluno@icomp.ufam.edu.br",
+        username="outro.aluno",
+        perfil=Perfil.ALUNO,
+        status=StatusCadastro.PENDENTE,
+        ativo=False,
+        matricula="2023123000",
+    )
+
+    response = client.patch(
+        f"/usuarios/{pending_user.id}/aprovar",
+        json={"acao": "APROVAR"},
+        headers={"X-User-Id": non_coordinator.id},
+    )
+
+    assert response.status_code == 403
+    assert response.json()["detail"] == "Acesso restrito a coordenadores ativos."
+
+
+def test_review_registration_returns_409_when_target_is_not_pending(client, db_session) -> None:
+    coordinator = _seed_user(
+        db_session,
+        nome_completo="Maria Coordenadora",
+        email="maria@icomp.ufam.edu.br",
+        username="maria.coord",
+        perfil=Perfil.COORDENADOR,
+        status=StatusCadastro.ATIVO,
+        ativo=True,
+    )
+    approved_user = _seed_user(
+        db_session,
+        nome_completo="Aluno Ja Ativo",
+        email="ativo@icomp.ufam.edu.br",
+        username="aluno.ativo",
+        perfil=Perfil.ALUNO,
+        status=StatusCadastro.ATIVO,
+        ativo=True,
+        matricula="2023123777",
+    )
+
+    response = client.patch(
+        f"/usuarios/{approved_user.id}/aprovar",
+        json={"acao": "REJEITAR"},
+        headers={"X-User-Id": coordinator.id},
+    )
+
+    assert response.status_code == 409
+    assert response.json()["detail"] == "Solicitacao de cadastro nao esta pendente."

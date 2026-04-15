@@ -14,6 +14,12 @@ enum Perfil {
   ORIENTADOR
 }
 
+enum UserStatus {
+  PENDENTE
+  ATIVO
+  REJEITADO
+}
+
 model User {
   id            String   @id @default(cuid())
   nome_completo String
@@ -21,9 +27,10 @@ model User {
   username      String   @unique
   senha_hash    String
   perfil        Perfil
+  matricula     String?
+  status        UserStatus @default(ATIVO)
   ativo         Boolean  @default(true)
   criado_em     DateTime @default(now())
 
   @@map("users")
 }
-
