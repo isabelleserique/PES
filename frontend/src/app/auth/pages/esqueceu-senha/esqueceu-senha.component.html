@@ -14,17 +14,17 @@
       </div>
     </div>
     <div class="form-panel">
+      <h3 class="form-title">Esqueceu sua senha?</h3>
+      <p style="font-size:0.875rem;color:#555;margin-bottom:16px;line-height:1.5;">
+        Para redefinir sua senha, informe o e-mail cadastrado na sua conta e lhe enviaremos um link com as instruções.
+      </p>
       <form [formGroup]="form" (ngSubmit)="submit()" class="form-gap">
         <mat-form-field appearance="outline" class="full-width">
-          <mat-label>Nome usuário</mat-label>
-          <input matInput formControlName="username">
+          <mat-label>E-mail</mat-label>
+          <input matInput type="email" formControlName="email">
         </mat-form-field>
-        <mat-form-field appearance="outline" class="full-width">
-          <mat-label>Senha</mat-label>
-          <input matInput type="password" formControlName="senha">
-        </mat-form-field>
-        <a class="forgot-link" routerLink="/auth/esqueceu-senha">Esqueci minha senha</a>
-        <button mat-raised-button type="submit" class="full-width submit-btn">ENTRAR</button>
+        <button mat-raised-button type="submit" class="full-width submit-btn">REDEFINIR SENHA</button>
+        <a class="link-text" (click)="cancelar()">Cancelar</a>
       </form>
     </div>
   </div>

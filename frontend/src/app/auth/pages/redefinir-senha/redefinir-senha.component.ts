@@ -5,14 +5,14 @@ import { Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 
 @Component({
-  selector: 'app-login',
-  templateUrl: './login.component.html',
-  styleUrls: ['./login.component.css'],
+  selector: 'app-redefinir-senha',
+  templateUrl: './redefinir-senha.component.html',
+  styleUrls: ['./redefinir-senha.component.css'],
 })
-export class LoginComponent {
+export class RedefinirSenhaComponent {
   readonly form = this.fb.nonNullable.group({
-    username: ['', Validators.required],
-    senha: ['', Validators.required],
+    nova_senha: ['', [Validators.required, Validators.minLength(8)]],
+    confirmar_senha: ['', Validators.required],
   });
 
   constructor(
@@ -24,6 +24,10 @@ export class LoginComponent {
   submit(): void {
     this.form.markAllAsTouched();
     if (this.form.invalid) return;
-    this.authService.login(this.form.getRawValue()).subscribe();
+    this.authService.redefinirSenha(this.form.getRawValue()).subscribe();
+  }
+
+  cancelar(): void {
+    this.router.navigate(['/auth/login']);
   }
 }

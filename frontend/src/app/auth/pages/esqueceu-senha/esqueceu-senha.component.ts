@@ -5,14 +5,13 @@ import { Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 
 @Component({
-  selector: 'app-login',
-  templateUrl: './login.component.html',
-  styleUrls: ['./login.component.css'],
+  selector: 'app-esqueceu-senha',
+  templateUrl: './esqueceu-senha.component.html',
+  styleUrls: ['./esqueceu-senha.component.css'],
 })
-export class LoginComponent {
+export class EsqueceuSenhaComponent {
   readonly form = this.fb.nonNullable.group({
-    username: ['', Validators.required],
-    senha: ['', Validators.required],
+    email: ['', [Validators.required, Validators.email]],
   });
 
   constructor(
@@ -24,6 +23,10 @@ export class LoginComponent {
   submit(): void {
     this.form.markAllAsTouched();
     if (this.form.invalid) return;
-    this.authService.login(this.form.getRawValue()).subscribe();
+    this.authService.esqueceuSenha(this.form.getRawValue()).subscribe();
+  }
+
+  cancelar(): void {
+    this.router.navigate(['/auth/login']);
   }
 }
