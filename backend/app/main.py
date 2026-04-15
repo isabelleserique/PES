@@ -14,6 +14,5 @@ app.include_router(api_router)
 
 
 @app.get("/", tags=["meta"])
-def root() -> dict[str, str]:
+async def root() -> dict[str, str]:
     return {"message": f"{settings.app_name} online"}
-
