@@ -2,7 +2,7 @@ import logging
 import smtplib
 from email.message import EmailMessage
 
-from backend.app.core.config import Settings
+from backend.app.core.config import Settings, get_settings
 
 logger = logging.getLogger(__name__)
 
@@ -10,6 +10,15 @@ logger = logging.getLogger(__name__)
 class EmailService:
     def __init__(self, settings: Settings) -> None:
         self.settings = settings
+
+    def build_welcome_email_body(self, full_name: str, username: str, temporary_password: str) -> str:
+        return (
+            f"Olá, {full_name}!\n\n"
+            f"Seu usuário foi criado com sucesso.\n"
+            f"Username: {username}\n"
+            f"Senha temporária: {temporary_password}\n"
+            "No primeiro acesso, confirme seus dados e altere a senha provisória.\n"
+        )
 
     def send_email(self, to_email: str, subject: str, body: str) -> None:
         if not self.settings.smtp_user or not self.settings.smtp_pass:
@@ -43,13 +52,18 @@ class EmailService:
             smtp.login(self.settings.smtp_user, self.settings.smtp_pass)
             smtp.send_message(message)
 
-    def send_welcome_email(self, to_email: str, full_name: str, username: str) -> bool:
+    def send_welcome_email(
+        self,
+        to_email: str,
+        full_name: str,
+        username: str,
+        temporary_password: str,
+    ) -> bool:
         subject = "Bem-vindo ao Sistema TCC ICOMP"
-        body = (
-            f"Olá, {full_name}!\n\n"
-            f"Seu usuário foi criado com sucesso.\n"
-            f"Username: {username}\n"
-            "No primeiro acesso, confirme seus dados e altere a senha provisória.\n"
+        body = self.build_welcome_email_body(
+            full_name=full_name,
+            username=username,
+            temporary_password=temporary_password,
         )
 
         try:
@@ -60,3 +74,5 @@ class EmailService:
 
         return True
 
+async def get_email_service() -> EmailService:
+    return EmailService(get_settings())
