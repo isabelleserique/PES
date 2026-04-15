@@ -1,10 +1,13 @@
+from __future__ import annotations
+
 from datetime import datetime
+from typing import Optional
 
 from sqlalchemy import Boolean, DateTime, Enum, String, func
 from sqlalchemy.orm import Mapped, mapped_column
 
 from backend.app.db.base import Base
-from backend.app.models.user import Perfil
+from backend.app.models.user import Perfil, StatusCadastro
 
 
 class UserRecord(Base):
@@ -16,6 +19,12 @@ class UserRecord(Base):
     username: Mapped[str] = mapped_column(String, nullable=False, unique=True, index=True)
     senha_hash: Mapped[str] = mapped_column(String, nullable=False)
     perfil: Mapped[Perfil] = mapped_column(Enum(Perfil, name="Perfil"), nullable=False)
+    matricula: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    status: Mapped[StatusCadastro] = mapped_column(
+        Enum(StatusCadastro, name="UserStatus"),
+        nullable=False,
+        default=StatusCadastro.ATIVO,
+    )
     ativo: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     criado_em: Mapped[datetime] = mapped_column(
         DateTime(timezone=False),

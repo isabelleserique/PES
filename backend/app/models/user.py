@@ -1,15 +1,24 @@
+from __future__ import annotations
+
 from dataclasses import dataclass
 from datetime import datetime
-from enum import StrEnum
+from enum import Enum
+from typing import Optional
 
 
-class Perfil(StrEnum):
+class Perfil(str, Enum):
     COORDENADOR = "COORDENADOR"
     ALUNO = "ALUNO"
     ORIENTADOR = "ORIENTADOR"
 
 
-@dataclass(slots=True)
+class StatusCadastro(str, Enum):
+    PENDENTE = "PENDENTE"
+    ATIVO = "ATIVO"
+    REJEITADO = "REJEITADO"
+
+
+@dataclass
 class User:
     id: str
     nome_completo: str
@@ -17,6 +26,7 @@ class User:
     username: str
     senha_hash: str
     perfil: Perfil
+    matricula: Optional[str]
+    status: StatusCadastro
     ativo: bool
     criado_em: datetime
-

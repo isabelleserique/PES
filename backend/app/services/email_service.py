@@ -20,6 +20,29 @@ class EmailService:
             "No primeiro acesso, confirme seus dados e altere a senha provisória.\n"
         )
 
+    def build_registration_approved_email_body(self, full_name: str, username: str) -> str:
+        return (
+            f"Olá, {full_name}!\n\n"
+            "Seu cadastro no Sistema TCC ICOMP foi aprovado.\n"
+            f"Username: {username}\n"
+            "Você já pode acessar o sistema com a senha definida no auto-cadastro.\n"
+        )
+
+    def build_pending_registration_notification_body(
+        self,
+        requester_name: str,
+        requester_email: str,
+        requester_username: str,
+        requester_profile: str,
+    ) -> str:
+        return (
+            "Há uma nova solicitação de cadastro pendente no Sistema TCC ICOMP.\n\n"
+            f"Nome: {requester_name}\n"
+            f"E-mail: {requester_email}\n"
+            f"Username: {requester_username}\n"
+            f"Perfil: {requester_profile}\n"
+        )
+
     def send_email(self, to_email: str, subject: str, body: str) -> None:
         if not self.settings.smtp_user or not self.settings.smtp_pass:
             raise ValueError("SMTP_USER e SMTP_PASS precisam estar configurados.")
@@ -70,6 +93,50 @@ class EmailService:
             self.send_email(to_email=to_email, subject=subject, body=body)
         except Exception:
             logger.exception("Falha ao enviar e-mail de boas-vindas para %s", to_email)
+            return False
+
+        return True
+
+    def send_registration_approved_email(
+        self,
+        to_email: str,
+        full_name: str,
+        username: str,
+    ) -> bool:
+        subject = "Cadastro aprovado no Sistema TCC ICOMP"
+        body = self.build_registration_approved_email_body(
+            full_name=full_name,
+            username=username,
+        )
+
+        try:
+            self.send_email(to_email=to_email, subject=subject, body=body)
+        except Exception:
+            logger.exception("Falha ao enviar e-mail de aprovação para %s", to_email)
+            return False
+
+        return True
+
+    def send_pending_registration_notification(
+        self,
+        to_email: str,
+        requester_name: str,
+        requester_email: str,
+        requester_username: str,
+        requester_profile: str,
+    ) -> bool:
+        subject = "Nova solicitação de cadastro pendente"
+        body = self.build_pending_registration_notification_body(
+            requester_name=requester_name,
+            requester_email=requester_email,
+            requester_username=requester_username,
+            requester_profile=requester_profile,
+        )
+
+        try:
+            self.send_email(to_email=to_email, subject=subject, body=body)
+        except Exception:
+            logger.exception("Falha ao notificar coordenador sobre solicitação pendente para %s", to_email)
             return False
 
         return True

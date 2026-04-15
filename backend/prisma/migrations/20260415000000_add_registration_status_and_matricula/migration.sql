@@ -1,0 +1,5 @@
+CREATE TYPE "UserStatus" AS ENUM ('PENDENTE', 'ATIVO', 'REJEITADO');
+
+ALTER TABLE "users"
+ADD COLUMN "matricula" TEXT,
+ADD COLUMN "status" "UserStatus" NOT NULL DEFAULT 'ATIVO';
