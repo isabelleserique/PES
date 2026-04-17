@@ -49,6 +49,8 @@ class UserService:
             perfil=Perfil.COORDENADOR,
             matricula=None,
             status=StatusCadastro.ATIVO,
+            failed_login_attempts=0,
+            blocked_until=None,
             ativo=True,
         )
 
@@ -86,6 +88,8 @@ class UserService:
             perfil=payload.perfil,
             matricula=payload.matricula if payload.perfil == Perfil.ALUNO else None,
             status=StatusCadastro.PENDENTE,
+            failed_login_attempts=0,
+            blocked_until=None,
             ativo=False,
         )
 

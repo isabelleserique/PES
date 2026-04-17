@@ -1,37 +1,72 @@
 from __future__ import annotations
 
-from typing import Annotated
-from typing import Optional
+from collections.abc import Callable
 
-from fastapi import Depends, Header, HTTPException, status
+from fastapi import Depends, HTTPException, Request, status
+from pydantic import ValidationError
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from backend.app.db.models import UserRecord
 from backend.app.db.session import get_db_session
 from backend.app.models.user import Perfil, StatusCadastro
+from backend.app.schemas.auth import AccessTokenPayload
+
+
+async def get_access_token_payload(request: Request) -> AccessTokenPayload:
+    raw_payload = getattr(request.state, "auth_payload", None)
+    if raw_payload is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token de acesso nao informado.",
+        )
+
+    try:
+        return AccessTokenPayload.model_validate(raw_payload)
+    except ValidationError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token invalido.",
+        ) from exc
+
+
+async def get_current_authenticated_user(
+    token_payload: AccessTokenPayload = Depends(get_access_token_payload),
+    session: Session = Depends(get_db_session),
+) -> UserRecord:
+    user = session.scalar(select(UserRecord).where(UserRecord.id == token_payload.user_id))
+    if user is None or user.perfil != token_payload.perfil:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token invalido.",
+        )
+
+    if user.status != StatusCadastro.ATIVO or user.ativo is not True:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Usuario autenticado nao esta ativo.",
+        )
+
+    return user
+
+
+def require_perfis(*allowed_profiles: Perfil) -> Callable[..., UserRecord]:
+    async def dependency(
+        token_payload: AccessTokenPayload = Depends(get_access_token_payload),
+        current_user: UserRecord = Depends(get_current_authenticated_user),
+    ) -> UserRecord:
+        if token_payload.perfil not in allowed_profiles or current_user.perfil not in allowed_profiles:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Perfil sem permissao para acessar este recurso.",
+            )
+
+        return current_user
+
+    return dependency
 
 
 async def get_current_active_coordenador(
-    x_user_id: Annotated[Optional[str], Header(alias="X-User-Id")] = None,
-    session: Session = Depends(get_db_session),
+    current_user: UserRecord = Depends(require_perfis(Perfil.COORDENADOR)),
 ) -> UserRecord:
-    if not x_user_id:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Identificacao do usuario coordenador nao informada.",
-        )
-
-    coordenador = session.scalar(select(UserRecord).where(UserRecord.id == x_user_id))
-    if (
-        coordenador is None
-        or coordenador.perfil != Perfil.COORDENADOR
-        or coordenador.status != StatusCadastro.ATIVO
-        or coordenador.ativo is not True
-    ):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Acesso restrito a coordenadores ativos.",
-        )
-
-    return coordenador
+    return current_user

@@ -29,6 +29,8 @@ model User {
   perfil        Perfil
   matricula     String?
   status        UserStatus @default(ATIVO)
+  failed_login_attempts Int      @default(0)
+  blocked_until         DateTime?
   ativo         Boolean  @default(true)
   criado_em     DateTime @default(now())
 

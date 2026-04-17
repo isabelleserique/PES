@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 import logging
+from datetime import timedelta
 from typing import Optional
 from uuid import uuid4
 
-from backend.app.core.security import hash_password, verify_password
+from backend.app.core.config import get_settings
+from backend.app.core.security import create_access_token, hash_password, verify_password
 from backend.app.db.models import UserRecord
 from backend.app.models.user import Perfil, StatusCadastro
 
@@ -30,12 +32,28 @@ def _seed_user(
         perfil=perfil,
         matricula=matricula,
         status=status,
+        failed_login_attempts=0,
+        blocked_until=None,
         ativo=ativo,
     )
     db_session.add(user)
     db_session.commit()
     db_session.refresh(user)
     return user
+
+
+def _build_auth_headers(*, user_id: str, perfil: Perfil) -> dict[str, str]:
+    settings = get_settings()
+    token = create_access_token(
+        payload={
+            "user_id": user_id,
+            "perfil": perfil.value,
+        },
+        secret_key=settings.jwt_secret,
+        expires_delta=timedelta(hours=settings.session_timeout_hours),
+        algorithm=settings.jwt_algorithm,
+    )
+    return {"Authorization": f"Bearer {token}"}
 
 
 def test_create_coordenador_returns_201_and_never_exposes_password_hash(client, db_session, email_service, caplog) -> None:
@@ -248,7 +266,7 @@ def test_review_registration_approves_pending_user_and_logs_audit(client, db_ses
         response = client.patch(
             f"/usuarios/{pending_user.id}/aprovar",
             json={"acao": "APROVAR"},
-            headers={"X-User-Id": coordinator.id},
+            headers=_build_auth_headers(user_id=coordinator.id, perfil=coordinator.perfil),
         )
 
     assert response.status_code == 200
@@ -298,7 +316,7 @@ def test_review_registration_rejects_pending_user_without_sending_welcome_email(
     response = client.patch(
         f"/usuarios/{pending_user.id}/aprovar",
         json={"acao": "REJEITAR"},
-        headers={"X-User-Id": coordinator.id},
+        headers=_build_auth_headers(user_id=coordinator.id, perfil=coordinator.perfil),
     )
 
     assert response.status_code == 200
@@ -335,11 +353,11 @@ def test_review_registration_requires_active_coordinator(client, db_session) -> 
     response = client.patch(
         f"/usuarios/{pending_user.id}/aprovar",
         json={"acao": "APROVAR"},
-        headers={"X-User-Id": non_coordinator.id},
+        headers=_build_auth_headers(user_id=non_coordinator.id, perfil=non_coordinator.perfil),
     )
 
     assert response.status_code == 403
-    assert response.json()["detail"] == "Acesso restrito a coordenadores ativos."
+    assert response.json()["detail"] == "Perfil sem permissao para acessar este recurso."
 
 
 def test_review_registration_returns_409_when_target_is_not_pending(client, db_session) -> None:
@@ -366,7 +384,7 @@ def test_review_registration_returns_409_when_target_is_not_pending(client, db_s
     response = client.patch(
         f"/usuarios/{approved_user.id}/aprovar",
         json={"acao": "REJEITAR"},
-        headers={"X-User-Id": coordinator.id},
+        headers=_build_auth_headers(user_id=coordinator.id, perfil=coordinator.perfil),
     )
 
     assert response.status_code == 409

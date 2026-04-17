@@ -28,5 +28,7 @@ class User:
     perfil: Perfil
     matricula: Optional[str]
     status: StatusCadastro
+    failed_login_attempts: int
+    blocked_until: Optional[datetime]
     ativo: bool
     criado_em: datetime
