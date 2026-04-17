@@ -15,34 +15,68 @@
     </div>
     <div class="form-panel">
       <form [formGroup]="form" (ngSubmit)="submit()" class="form-gap">
+        <p class="status-message status-message--error" *ngIf="errorMessage">{{ errorMessage }}</p>
+        <p class="status-message status-message--success" *ngIf="successMessage">{{ successMessage }}</p>
         <mat-radio-group formControlName="perfil" style="display:flex;gap:24px;margin-bottom:4px;">
-          <mat-radio-button value="COORDENADOR">Coordenador</mat-radio-button>
-          <mat-radio-button value="PROFESSOR">Professor</mat-radio-button>
+          <mat-radio-button value="ORIENTADOR">Orientador</mat-radio-button>
           <mat-radio-button value="ALUNO">Aluno</mat-radio-button>
         </mat-radio-group>
         <mat-form-field appearance="outline" class="full-width">
           <mat-label>Nome Completo</mat-label>
           <input matInput formControlName="nome_completo">
+          <mat-error *ngIf="form.controls.nome_completo.touched && form.controls.nome_completo.hasError('required')">
+            Informe seu nome completo.
+          </mat-error>
         </mat-form-field>
         <mat-form-field appearance="outline" class="full-width">
           <mat-label>Email Institucional</mat-label>
           <input matInput type="email" formControlName="email">
+          <mat-error *ngIf="form.controls.email.touched && form.controls.email.hasError('required')">
+            Informe seu e-mail.
+          </mat-error>
+          <mat-error *ngIf="form.controls.email.touched && form.controls.email.hasError('email')">
+            Informe um e-mail valido.
+          </mat-error>
         </mat-form-field>
         <mat-form-field appearance="outline" class="full-width">
           <mat-label>Nome usuário</mat-label>
           <input matInput formControlName="username">
+          <mat-error *ngIf="form.controls.username.touched && form.controls.username.hasError('required')">
+            Informe um nome de usuario.
+          </mat-error>
+        </mat-form-field>
+        <mat-form-field appearance="outline" class="full-width" *ngIf="isAlunoSelected">
+          <mat-label>Matrícula</mat-label>
+          <input matInput formControlName="matricula">
+          <mat-error *ngIf="form.controls.matricula.touched && form.controls.matricula.hasError('required')">
+            Matrícula é obrigatória para aluno.
+          </mat-error>
         </mat-form-field>
         <div class="row-2">
           <mat-form-field appearance="outline" class="full-width">
             <mat-label>Senha</mat-label>
             <input matInput type="password" formControlName="senha" placeholder="Mín. 8 caracteres">
+            <mat-error *ngIf="form.controls.senha.touched && form.controls.senha.hasError('required')">
+              Informe uma senha.
+            </mat-error>
+            <mat-error *ngIf="form.controls.senha.touched && form.controls.senha.hasError('minlength')">
+              A senha deve ter no mínimo 8 caracteres.
+            </mat-error>
           </mat-form-field>
           <mat-form-field appearance="outline" class="full-width">
             <mat-label>Confirmar senha</mat-label>
             <input matInput type="password" formControlName="confirmar_senha">
+            <mat-error *ngIf="form.controls.confirmar_senha.touched && form.controls.confirmar_senha.hasError('required')">
+              Confirme sua senha.
+            </mat-error>
+            <mat-error *ngIf="form.controls.confirmar_senha.touched && form.hasError('passwordMismatch')">
+              As senhas precisam ser iguais.
+            </mat-error>
           </mat-form-field>
         </div>
-        <button mat-raised-button type="submit" class="full-width submit-btn">CADASTRAR</button>
+        <button mat-raised-button type="submit" class="full-width submit-btn" [disabled]="isSubmitting">
+          {{ isSubmitting ? 'ENVIANDO...' : 'SOLICITAR CADASTRO' }}
+        </button>
         <span class="link-text">Já tem uma conta? <a routerLink="/auth/login" style="color:inherit">Entrar</a></span>
       </form>
     </div>

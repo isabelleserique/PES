@@ -292,7 +292,7 @@ def test_request_password_reset_returns_generic_message_and_stores_token_for_kno
         {
             "to_email": user.email,
             "full_name": user.nome_completo,
-            "reset_link": f"{get_settings().frontend_url}/reset-senha?token={stored_token.token}",
+            "reset_link": f"{get_settings().frontend_url}/auth/redefinir-senha?token={stored_token.token}",
         }
     ]
 

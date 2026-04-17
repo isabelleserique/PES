@@ -9,9 +9,11 @@ from backend.app.core.security import hash_password
 from backend.app.db.models import UserRecord
 from backend.app.models.user import Perfil, StatusCadastro
 from backend.app.schemas.user import (
+    AuthenticatedUserProfileResponse,
     CadastroApprovalRequest,
     CadastroApprovalResponse,
     CoordenadorCreateRequest,
+    PendingRegistrationResponse,
     SolicitarCadastroRequest,
     SolicitarCadastroResponse,
     UserCreatedResponse,
@@ -25,6 +27,9 @@ INVALID_REGISTRATION_TARGET_DETAIL = "Cadastro informado nao pode ser avaliado p
 
 
 class UserService:
+    def get_authenticated_profile(self, *, current_user: UserRecord) -> AuthenticatedUserProfileResponse:
+        return AuthenticatedUserProfileResponse.model_validate(current_user)
+
     def create_coordenador(
         self,
         *,
@@ -164,6 +169,14 @@ class UserService:
                 username=user.username,
             )
         return CadastroApprovalResponse.model_validate(user)
+
+    def list_pending_registrations(self, *, session: Session) -> list[PendingRegistrationResponse]:
+        pending_users = session.scalars(
+            select(UserRecord)
+            .where(UserRecord.status == StatusCadastro.PENDENTE)
+            .order_by(UserRecord.criado_em.asc(), UserRecord.nome_completo.asc())
+        ).all()
+        return [PendingRegistrationResponse.model_validate(user) for user in pending_users]
 
     def _ensure_user_uniqueness(self, *, session: Session, email: str, username: str) -> None:
         existing_user = session.scalar(

@@ -1,0 +1,67 @@
+<div class="painel-shell painel-shell--aluno">
+  <header class="painel-header">
+    <div>
+      <span class="painel-eyebrow">Area do aluno</span>
+      <h1 class="painel-title">Painel do aluno</h1>
+      <p class="painel-subtitle">Acompanhe seus dados de acesso e o estado atual da sua conta no sistema.</p>
+    </div>
+    <button mat-stroked-button type="button" (click)="logout()">Sair</button>
+  </header>
+
+  <p class="status-message status-message--error" *ngIf="errorMessage">{{ errorMessage }}</p>
+
+  <section class="painel-card" *ngIf="isLoading">
+    <p class="painel-loading">Carregando painel do aluno...</p>
+  </section>
+
+  <ng-container *ngIf="!isLoading && currentUser as user">
+    <section class="painel-card">
+      <div class="painel-card__header">
+        <div>
+          <span class="painel-card__label">Conta autenticada</span>
+          <h2 class="painel-card__title">{{ user.nome_completo }}</h2>
+        </div>
+        <span class="painel-badge">{{ user.perfil }}</span>
+      </div>
+
+      <div class="painel-grid">
+        <div>
+          <span class="painel-field__label">E-mail</span>
+          <strong>{{ user.email }}</strong>
+        </div>
+        <div>
+          <span class="painel-field__label">Username</span>
+          <strong>{{ user.username }}</strong>
+        </div>
+        <div>
+          <span class="painel-field__label">Status</span>
+          <strong>{{ user.status }}</strong>
+        </div>
+        <div *ngIf="user.matricula">
+          <span class="painel-field__label">Matricula</span>
+          <strong>{{ user.matricula }}</strong>
+        </div>
+      </div>
+    </section>
+
+    <section class="painel-card painel-card--accent">
+      <div class="painel-card__header">
+        <div>
+          <span class="painel-card__label">Proximos passos</span>
+          <h2 class="painel-card__title">Seu espaco de trabalho</h2>
+        </div>
+      </div>
+
+      <div class="painel-grid">
+        <div class="painel-note">
+          <span class="painel-field__label">Acesso</span>
+          <p>Seu token JWT foi validado pelo backend e o painel foi montado a partir de <code>/usuarios/me</code>.</p>
+        </div>
+        <div class="painel-note">
+          <span class="painel-field__label">Cadastro</span>
+          <p>Este painel foi separado para alunos. Aqui entram, na proxima etapa, as features de TCC, orientador e submissoes.</p>
+        </div>
+      </div>
+    </section>
+  </ng-container>
+</div>

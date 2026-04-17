@@ -241,6 +241,112 @@ def test_request_registration_returns_409_when_email_already_exists(client, db_s
     assert response.json()["detail"] == "Nao foi possivel concluir o cadastro com os dados informados."
 
 
+def test_get_authenticated_profile_returns_current_user_data(client, db_session) -> None:
+    user = _seed_user(
+        db_session,
+        nome_completo="Coordenadora Atual",
+        email="coordenadora.atual@icomp.ufam.edu.br",
+        username="coord.atual",
+        perfil=Perfil.COORDENADOR,
+        status=StatusCadastro.ATIVO,
+        ativo=True,
+    )
+
+    response = client.request(
+        "GET",
+        "/usuarios/me",
+        headers=_build_auth_headers(user_id=user.id, perfil=user.perfil),
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["id"] == user.id
+    assert body["nome_completo"] == user.nome_completo
+    assert body["email"] == user.email
+    assert body["username"] == user.username
+    assert body["perfil"] == "COORDENADOR"
+    assert body["status"] == "ATIVO"
+    assert body["ativo"] is True
+
+
+def test_list_pending_registrations_returns_pending_users_for_active_coordinator(client, db_session) -> None:
+    coordinator = _seed_user(
+        db_session,
+        nome_completo="Maria Coordenadora",
+        email="maria@icomp.ufam.edu.br",
+        username="maria.coord",
+        perfil=Perfil.COORDENADOR,
+        status=StatusCadastro.ATIVO,
+        ativo=True,
+    )
+    first_pending = _seed_user(
+        db_session,
+        nome_completo="Aluno Pendente",
+        email="aluno.pendente@icomp.ufam.edu.br",
+        username="aluno.pendente",
+        perfil=Perfil.ALUNO,
+        status=StatusCadastro.PENDENTE,
+        ativo=False,
+        matricula="2023123888",
+    )
+    second_pending = _seed_user(
+        db_session,
+        nome_completo="Orientadora Pendente",
+        email="orientadora.pendente@icomp.ufam.edu.br",
+        username="orientadora.pendente",
+        perfil=Perfil.ORIENTADOR,
+        status=StatusCadastro.PENDENTE,
+        ativo=False,
+    )
+    _seed_user(
+        db_session,
+        nome_completo="Aluno Ativo",
+        email="aluno.ativo@icomp.ufam.edu.br",
+        username="aluno.ativo",
+        perfil=Perfil.ALUNO,
+        status=StatusCadastro.ATIVO,
+        ativo=True,
+        matricula="2023123999",
+    )
+
+    response = client.request(
+        "GET",
+        "/usuarios/pendentes",
+        headers=_build_auth_headers(user_id=coordinator.id, perfil=coordinator.perfil),
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert [item["id"] for item in body] == [first_pending.id, second_pending.id]
+    assert body[0]["perfil"] == "ALUNO"
+    assert body[0]["matricula"] == "2023123888"
+    assert body[1]["perfil"] == "ORIENTADOR"
+    assert body[1]["matricula"] is None
+    assert all(item["status"] == "PENDENTE" for item in body)
+
+
+def test_list_pending_registrations_requires_active_coordinator(client, db_session) -> None:
+    student = _seed_user(
+        db_session,
+        nome_completo="Aluno Ativo",
+        email="aluno.ativo@icomp.ufam.edu.br",
+        username="aluno.ativo",
+        perfil=Perfil.ALUNO,
+        status=StatusCadastro.ATIVO,
+        ativo=True,
+        matricula="2023123999",
+    )
+
+    response = client.request(
+        "GET",
+        "/usuarios/pendentes",
+        headers=_build_auth_headers(user_id=student.id, perfil=student.perfil),
+    )
+
+    assert response.status_code == 403
+    assert response.json()["detail"] == "Perfil sem permissao para acessar este recurso."
+
+
 def test_review_registration_approves_pending_user_and_logs_audit(client, db_session, email_service, caplog) -> None:
     coordinator = _seed_user(
         db_session,

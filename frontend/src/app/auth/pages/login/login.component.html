@@ -15,16 +15,30 @@
     </div>
     <div class="form-panel">
       <form [formGroup]="form" (ngSubmit)="submit()" class="form-gap">
+        <p class="status-message status-message--error" *ngIf="errorMessage">{{ errorMessage }}</p>
+        <p class="status-message status-message--success" *ngIf="successMessage">{{ successMessage }}</p>
         <mat-form-field appearance="outline" class="full-width">
-          <mat-label>Nome usuário</mat-label>
-          <input matInput formControlName="username">
+          <mat-label>E-mail</mat-label>
+          <input matInput type="email" formControlName="email">
+          <mat-error *ngIf="form.controls.email.touched && form.controls.email.hasError('required')">
+            Informe seu e-mail.
+          </mat-error>
+          <mat-error *ngIf="form.controls.email.touched && form.controls.email.hasError('email')">
+            Informe um e-mail valido.
+          </mat-error>
         </mat-form-field>
         <mat-form-field appearance="outline" class="full-width">
           <mat-label>Senha</mat-label>
           <input matInput type="password" formControlName="senha">
+          <mat-error *ngIf="form.controls.senha.touched && form.controls.senha.hasError('required')">
+            Informe sua senha.
+          </mat-error>
         </mat-form-field>
         <a class="forgot-link" routerLink="/auth/esqueceu-senha">Esqueci minha senha</a>
-        <button mat-raised-button type="submit" class="full-width submit-btn">ENTRAR</button>
+        <button mat-raised-button type="submit" class="full-width submit-btn" [disabled]="isSubmitting">
+          {{ isSubmitting ? 'ENTRANDO...' : 'ENTRAR' }}
+        </button>
+        <span class="link-text">Ainda não tem acesso? <a routerLink="/auth/cadastro" style="color:inherit">Solicitar cadastro</a></span>
       </form>
     </div>
   </div>

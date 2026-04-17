@@ -1,12 +1,14 @@
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 
-from backend.app.api.deps import get_current_active_coordenador
+from backend.app.api.deps import get_current_active_coordenador, get_current_authenticated_user
 from backend.app.db.models import UserRecord
 from backend.app.db.session import get_db_session
 from backend.app.schemas.user import (
+    AuthenticatedUserProfileResponse,
     CadastroApprovalRequest,
     CoordenadorCreateRequest,
+    PendingRegistrationResponse,
     SolicitarCadastroRequest,
 )
 from backend.app.services.audit_service import AuditService, get_audit_service
@@ -14,6 +16,32 @@ from backend.app.services.email_service import EmailService, get_email_service
 from backend.app.services.user_service import UserService, get_user_service
 
 router = APIRouter(prefix="/usuarios", tags=["usuarios"])
+
+
+@router.get(
+    "/me",
+    status_code=status.HTTP_200_OK,
+)
+async def get_authenticated_profile(
+    user_service: UserService = Depends(get_user_service),
+    current_user: UserRecord = Depends(get_current_authenticated_user),
+) -> AuthenticatedUserProfileResponse:
+    response = user_service.get_authenticated_profile(current_user=current_user)
+    return response
+
+
+@router.get(
+    "/pendentes",
+    status_code=status.HTTP_200_OK,
+)
+async def list_pending_registrations(
+    session: Session = Depends(get_db_session),
+    user_service: UserService = Depends(get_user_service),
+    current_coordenador: UserRecord = Depends(get_current_active_coordenador),
+) -> list[PendingRegistrationResponse]:
+    _ = current_coordenador
+    response = user_service.list_pending_registrations(session=session)
+    return response
 
 
 @router.post(

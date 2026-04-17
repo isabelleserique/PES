@@ -2,13 +2,18 @@ import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 
 const routes: Routes = [
-  { path: '', pathMatch: 'full', redirectTo: 'auth/login' },
+  { path: '', pathMatch: 'full', redirectTo: 'painel' },
   {
     path: 'auth',
     loadChildren: () =>
       import('./auth/auth.module').then((module) => module.AuthModule),
   },
-  { path: '**', redirectTo: 'auth/login' },
+  {
+    path: 'painel',
+    loadChildren: () =>
+      import('./painel/painel.module').then((module) => module.PainelModule),
+  },
+  { path: '**', redirectTo: 'painel' },
 ];
 
 @NgModule({
@@ -16,4 +21,3 @@ const routes: Routes = [
   exports: [RouterModule],
 })
 export class AppRoutingModule {}
-

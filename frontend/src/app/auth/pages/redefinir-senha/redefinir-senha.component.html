@@ -16,16 +16,32 @@
     <div class="form-panel">
       <h3 class="form-title">Redefinir Senha</h3>
       <form [formGroup]="form" (ngSubmit)="submit()" class="form-gap">
+        <p class="status-message status-message--error" *ngIf="errorMessage">{{ errorMessage }}</p>
+        <p class="status-message status-message--success" *ngIf="successMessage">{{ successMessage }}</p>
         <mat-form-field appearance="outline" class="full-width">
           <mat-label>Nova Senha</mat-label>
           <input matInput type="password" formControlName="nova_senha">
+          <mat-error *ngIf="form.controls.nova_senha.touched && form.controls.nova_senha.hasError('required')">
+            Informe a nova senha.
+          </mat-error>
+          <mat-error *ngIf="form.controls.nova_senha.touched && form.controls.nova_senha.hasError('minlength')">
+            A senha deve ter no mínimo 8 caracteres.
+          </mat-error>
         </mat-form-field>
         <mat-form-field appearance="outline" class="full-width">
           <mat-label>Confirmar nova Senha</mat-label>
           <input matInput type="password" formControlName="confirmar_senha">
+          <mat-error *ngIf="form.controls.confirmar_senha.touched && form.controls.confirmar_senha.hasError('required')">
+            Confirme a nova senha.
+          </mat-error>
+          <mat-error *ngIf="form.controls.confirmar_senha.touched && form.hasError('passwordMismatch')">
+            As senhas precisam ser iguais.
+          </mat-error>
         </mat-form-field>
-        <button mat-raised-button type="submit" class="full-width submit-btn">REDEFINIR SENHA</button>
-        <a class="link-text" (click)="cancelar()">Cancelar</a>
+        <button mat-raised-button type="submit" class="full-width submit-btn" [disabled]="isSubmitting || !token">
+          {{ isSubmitting ? 'SALVANDO...' : 'REDEFINIR SENHA' }}
+        </button>
+        <a class="link-text" (click)="cancelar()">Voltar para login</a>
       </form>
     </div>
   </div>
