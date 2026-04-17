@@ -34,6 +34,7 @@ class Settings(BaseSettings):
     jwt_secret: str = "troque-esta-chave-em-producao"
     jwt_algorithm: str = "HS256"
     session_timeout_hours: int = 8
+    password_reset_token_ttl_hours: int = 2
 
     smtp_host: str = "smtp.gmail.com"
     smtp_port: int = 587
@@ -53,4 +54,3 @@ class Settings(BaseSettings):
 @lru_cache
 def get_settings() -> Settings:
     return Settings()
-

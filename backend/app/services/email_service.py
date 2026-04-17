@@ -43,6 +43,15 @@ class EmailService:
             f"Perfil: {requester_profile}\n"
         )
 
+    def build_password_reset_email_body(self, full_name: str, reset_link: str) -> str:
+        return (
+            f"Ola, {full_name}!\n\n"
+            "Recebemos uma solicitacao para redefinir sua senha no Sistema TCC ICOMP.\n"
+            f"Acesse o link a seguir para criar uma nova senha:\n{reset_link}\n\n"
+            f"Este link expira em {self.settings.password_reset_token_ttl_hours} horas.\n"
+            "Se voce nao solicitou esta alteracao, ignore esta mensagem.\n"
+        )
+
     def send_email(self, to_email: str, subject: str, body: str) -> None:
         if not self.settings.smtp_user or not self.settings.smtp_pass:
             raise ValueError("SMTP_USER e SMTP_PASS precisam estar configurados.")
@@ -137,6 +146,26 @@ class EmailService:
             self.send_email(to_email=to_email, subject=subject, body=body)
         except Exception:
             logger.exception("Falha ao notificar coordenador sobre solicitação pendente para %s", to_email)
+            return False
+
+        return True
+
+    def send_password_reset_email(
+        self,
+        to_email: str,
+        full_name: str,
+        reset_link: str,
+    ) -> bool:
+        subject = "Redefinicao de senha no Sistema TCC ICOMP"
+        body = self.build_password_reset_email_body(
+            full_name=full_name,
+            reset_link=reset_link,
+        )
+
+        try:
+            self.send_email(to_email=to_email, subject=subject, body=body)
+        except Exception:
+            logger.exception("Falha ao enviar e-mail de reset de senha para %s", to_email)
             return False
 
         return True

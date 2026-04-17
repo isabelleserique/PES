@@ -7,8 +7,8 @@ from uuid import uuid4
 import pytest
 
 from backend.app.core.config import get_settings
-from backend.app.core.security import create_access_token, decode_access_token, hash_password
-from backend.app.db.models import UserRecord
+from backend.app.core.security import create_access_token, decode_access_token, hash_password, verify_password
+from backend.app.db.models import PasswordResetTokenRecord, UserRecord
 from backend.app.models.user import Perfil, StatusCadastro
 
 
@@ -56,6 +56,28 @@ def _build_bearer_token(*, user_id: str, perfil: Perfil, expires_delta: timedelt
         expires_delta=expires_delta,
         algorithm=settings.jwt_algorithm,
     )
+
+
+def _seed_password_reset_token(
+    db_session,
+    *,
+    user_id: str,
+    token: str | None = None,
+    expires_at: datetime | None = None,
+    usado: bool = False,
+) -> PasswordResetTokenRecord:
+    reset_token = PasswordResetTokenRecord(
+        token=token or str(uuid4()),
+        user_id=user_id,
+        expira_em=(
+            expires_at or datetime.now(UTC) + timedelta(hours=get_settings().password_reset_token_ttl_hours)
+        ).replace(tzinfo=None),
+        usado=usado,
+    )
+    db_session.add(reset_token)
+    db_session.commit()
+    db_session.refresh(reset_token)
+    return reset_token
 
 
 @pytest.mark.parametrize(
@@ -235,6 +257,203 @@ def test_login_denies_pending_user_with_clear_message(client, db_session, caplog
     assert response.json()["detail"] == "Seu cadastro ainda esta em analise. Aguarde aprovacao."
     assert "action=LOGIN_DENIED" in caplog.text
     assert "reason=PENDENTE" in caplog.text
+
+
+def test_request_password_reset_returns_generic_message_and_stores_token_for_known_email(
+    client,
+    db_session,
+    email_service,
+) -> None:
+    user = _seed_user(
+        db_session,
+        nome_completo="Aluno Reset",
+        email="reset@icomp.ufam.edu.br",
+        username="aluno.reset",
+        perfil=Perfil.ALUNO,
+        status=StatusCadastro.ATIVO,
+        ativo=True,
+        senha="SenhaAntiga@123",
+        matricula="2023123555",
+    )
+
+    response = client.post(
+        "/auth/solicitar-reset",
+        json={"email": user.email},
+    )
+
+    assert response.status_code == 200
+    assert response.json()["mensagem"] == "Se o e-mail estiver cadastrado, voce recebera as instrucoes."
+
+    stored_token = db_session.query(PasswordResetTokenRecord).filter_by(user_id=user.id).one()
+    assert stored_token.usado is False
+    assert stored_token.expira_em.replace(tzinfo=UTC) > datetime.now(UTC)
+
+    assert email_service.reset_calls == [
+        {
+            "to_email": user.email,
+            "full_name": user.nome_completo,
+            "reset_link": f"{get_settings().frontend_url}/reset-senha?token={stored_token.token}",
+        }
+    ]
+
+
+def test_request_password_reset_returns_same_generic_message_for_unknown_email(client, db_session, email_service) -> None:
+    response = client.post(
+        "/auth/solicitar-reset",
+        json={"email": "nao.existe@icomp.ufam.edu.br"},
+    )
+
+    assert response.status_code == 200
+    assert response.json()["mensagem"] == "Se o e-mail estiver cadastrado, voce recebera as instrucoes."
+    assert db_session.query(PasswordResetTokenRecord).count() == 0
+    assert email_service.reset_calls == []
+
+
+def test_confirm_password_reset_updates_password_marks_token_used_and_logs_audit(client, db_session, caplog) -> None:
+    user = _seed_user(
+        db_session,
+        nome_completo="Orientador Reset",
+        email="orientador.reset@icomp.ufam.edu.br",
+        username="orientador.reset",
+        perfil=Perfil.ORIENTADOR,
+        status=StatusCadastro.ATIVO,
+        ativo=True,
+        senha="SenhaAntiga@123",
+        failed_login_attempts=3,
+        blocked_until=(datetime.now(UTC) + timedelta(minutes=10)).replace(tzinfo=None),
+    )
+    reset_token = _seed_password_reset_token(db_session, user_id=user.id)
+
+    with caplog.at_level(logging.INFO, logger="backend.audit"):
+        response = client.post(
+            "/auth/confirmar-reset",
+            json={
+                "token": reset_token.token,
+                "nova_senha": "SenhaNova@456",
+            },
+        )
+
+    assert response.status_code == 200
+    assert response.json()["mensagem"] == "Senha redefinida com sucesso."
+
+    db_session.refresh(user)
+    db_session.refresh(reset_token)
+    assert verify_password("SenhaNova@456", user.senha_hash) is True
+    assert verify_password("SenhaAntiga@123", user.senha_hash) is False
+    assert user.failed_login_attempts == 0
+    assert user.blocked_until is None
+    assert reset_token.usado is True
+    assert "action=RESET_SENHA" in caplog.text
+    assert f"user_id={user.id}" in caplog.text
+
+    old_password_response = client.post(
+        "/auth/login",
+        json={
+            "email": user.email,
+            "senha": "SenhaAntiga@123",
+        },
+    )
+    assert old_password_response.status_code == 401
+    assert old_password_response.json()["detail"] == "Credenciais invalidas."
+
+    new_password_response = client.post(
+        "/auth/login",
+        json={
+            "email": user.email,
+            "senha": "SenhaNova@456",
+        },
+    )
+    assert new_password_response.status_code == 200
+
+
+def test_confirm_password_reset_rejects_reused_token(client, db_session) -> None:
+    user = _seed_user(
+        db_session,
+        nome_completo="Aluno Reuso",
+        email="aluno.reuso@icomp.ufam.edu.br",
+        username="aluno.reuso",
+        perfil=Perfil.ALUNO,
+        status=StatusCadastro.ATIVO,
+        ativo=True,
+        senha="SenhaBase@123",
+        matricula="2023999001",
+    )
+    reset_token = _seed_password_reset_token(db_session, user_id=user.id)
+
+    first_response = client.post(
+        "/auth/confirmar-reset",
+        json={
+            "token": reset_token.token,
+            "nova_senha": "SenhaNova@789",
+        },
+    )
+    second_response = client.post(
+        "/auth/confirmar-reset",
+        json={
+            "token": reset_token.token,
+            "nova_senha": "OutraSenha@789",
+        },
+    )
+
+    assert first_response.status_code == 200
+    assert second_response.status_code == 400
+    assert second_response.json()["detail"] == "Token de reset ja foi utilizado."
+
+
+def test_confirm_password_reset_rejects_expired_token(client, db_session) -> None:
+    user = _seed_user(
+        db_session,
+        nome_completo="Aluno Expirado",
+        email="aluno.expirado@icomp.ufam.edu.br",
+        username="aluno.expirado",
+        perfil=Perfil.ALUNO,
+        status=StatusCadastro.ATIVO,
+        ativo=True,
+        senha="SenhaBase@123",
+        matricula="2023999002",
+    )
+    reset_token = _seed_password_reset_token(
+        db_session,
+        user_id=user.id,
+        expires_at=datetime.now(UTC) - timedelta(hours=3),
+    )
+
+    response = client.post(
+        "/auth/confirmar-reset",
+        json={
+            "token": reset_token.token,
+            "nova_senha": "SenhaNova@123",
+        },
+    )
+
+    assert response.status_code == 400
+    assert response.json()["detail"] == "Token de reset expirado."
+
+
+def test_confirm_password_reset_rejects_invalid_token(client) -> None:
+    response = client.post(
+        "/auth/confirmar-reset",
+        json={
+            "token": "token-adulterado",
+            "nova_senha": "SenhaNova@123",
+        },
+    )
+
+    assert response.status_code == 400
+    assert response.json()["detail"] == "Token de reset invalido."
+
+
+def test_confirm_password_reset_returns_422_for_short_password(client) -> None:
+    response = client.post(
+        "/auth/confirmar-reset",
+        json={
+            "token": str(uuid4()),
+            "nova_senha": "1234567",
+        },
+    )
+
+    assert response.status_code == 422
+    assert "Senha deve ter no minimo 8 caracteres." in response.body.decode("utf-8")
 
 
 def test_protected_route_without_token_returns_401(client) -> None:
