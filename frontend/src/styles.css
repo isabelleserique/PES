@@ -161,3 +161,21 @@ html, body {
 .forgot-link:hover {
   text-decoration: underline;
 }
+
+.status-message {
+  border-radius: 10px;
+  font-size: 0.94rem;
+  line-height: 1.5;
+  margin-bottom: 12px;
+  padding: 12px 14px;
+}
+
+.status-message--error {
+  background: #fdecea;
+  color: #b3261e;
+}
+
+.status-message--success {
+  background: #e8f5e9;
+  color: #1b5e20;
+}

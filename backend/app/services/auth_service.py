@@ -260,7 +260,7 @@ class AuthService:
 
     def _build_password_reset_link(self, *, token: str) -> str:
         frontend_url = self.settings.frontend_url.rstrip("/")
-        return f"{frontend_url}/reset-senha?token={token}"
+        return f"{frontend_url}/auth/redefinir-senha?token={token}"
 
 
 async def get_auth_service() -> AuthService:

@@ -1,0 +1,108 @@
+<div class="painel-shell">
+  <header class="painel-header">
+    <div>
+      <span class="painel-eyebrow">Area do coordenador</span>
+      <h1 class="painel-title">Painel do coordenador</h1>
+      <p class="painel-subtitle">Gerencie o seu acesso autenticado e acompanhe as solicitacoes pendentes de cadastro.</p>
+    </div>
+    <button mat-stroked-button type="button" (click)="logout()">Sair</button>
+  </header>
+
+  <p class="status-message status-message--error" *ngIf="errorMessage">{{ errorMessage }}</p>
+  <p class="status-message status-message--success" *ngIf="feedbackMessage">{{ feedbackMessage }}</p>
+
+  <section class="painel-card" *ngIf="isLoading">
+    <p class="painel-loading">Carregando painel...</p>
+  </section>
+
+  <ng-container *ngIf="!isLoading">
+    <ng-container *ngIf="currentUser as user">
+      <section class="painel-card">
+        <div class="painel-card__header">
+          <div>
+            <span class="painel-card__label">Sessao atual</span>
+            <h2 class="painel-card__title">{{ user.nome_completo }}</h2>
+          </div>
+          <span class="painel-badge">{{ user.perfil }}</span>
+        </div>
+
+        <div class="painel-grid">
+          <div>
+            <span class="painel-field__label">E-mail</span>
+            <strong>{{ user.email }}</strong>
+          </div>
+          <div>
+            <span class="painel-field__label">Username</span>
+            <strong>{{ user.username }}</strong>
+          </div>
+          <div>
+            <span class="painel-field__label">Status</span>
+            <strong>{{ user.status }}</strong>
+          </div>
+          <div *ngIf="user.matricula">
+            <span class="painel-field__label">Matricula</span>
+            <strong>{{ user.matricula }}</strong>
+          </div>
+        </div>
+      </section>
+
+      <section class="painel-card" *ngIf="isCoordenador; else genericUserState">
+        <div class="painel-card__header">
+          <div>
+            <span class="painel-card__label">Aprovacoes</span>
+            <h2 class="painel-card__title">Cadastros pendentes</h2>
+          </div>
+          <span class="painel-badge painel-badge--subtle">{{ pendingRegistrations.length }} pendente(s)</span>
+        </div>
+
+        <div class="pending-list" *ngIf="pendingRegistrations.length; else emptyPendingState">
+          <article class="pending-item" *ngFor="let pending of pendingRegistrations">
+            <div class="pending-item__main">
+              <h3>{{ pending.nome_completo }}</h3>
+              <p>{{ pending.email }}</p>
+              <p>Username: {{ pending.username }}</p>
+              <p>Perfil: {{ pending.perfil }}</p>
+              <p *ngIf="pending.matricula">Matricula: {{ pending.matricula }}</p>
+            </div>
+            <div class="pending-item__actions">
+              <button
+                mat-raised-button
+                type="button"
+                class="approve-btn"
+                [disabled]="isReviewing"
+                (click)="revisarCadastro(pending.id, 'APROVAR')">
+                Aprovar
+              </button>
+              <button
+                mat-stroked-button
+                type="button"
+                class="reject-btn"
+                [disabled]="isReviewing"
+                (click)="revisarCadastro(pending.id, 'REJEITAR')">
+                Rejeitar
+              </button>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <ng-template #emptyPendingState>
+        <p class="painel-empty">Nao ha solicitacoes pendentes no momento.</p>
+      </ng-template>
+
+      <ng-template #genericUserState>
+        <section class="painel-card">
+          <div class="painel-card__header">
+            <div>
+              <span class="painel-card__label">Acesso liberado</span>
+              <h2 class="painel-card__title">Painel autenticado ativo</h2>
+            </div>
+          </div>
+          <p class="painel-empty">
+            Seu token JWT foi validado e o painel carregou seus dados a partir do endpoint protegido <code>/usuarios/me</code>.
+          </p>
+        </section>
+      </ng-template>
+    </ng-container>
+  </ng-container>
+</div>

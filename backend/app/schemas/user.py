@@ -102,3 +102,28 @@ class CadastroApprovalResponse(BaseModel):
     nome_completo: str
     perfil: Perfil
     status: StatusCadastro
+
+
+class AuthenticatedUserProfileResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: str
+    nome_completo: str
+    email: str
+    username: str
+    perfil: Perfil
+    matricula: Optional[str]
+    status: StatusCadastro
+    ativo: bool
+
+
+class PendingRegistrationResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: str
+    nome_completo: str
+    email: str
+    username: str
+    perfil: Perfil
+    matricula: Optional[str]
+    status: StatusCadastro

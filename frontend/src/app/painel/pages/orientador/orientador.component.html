@@ -1,0 +1,63 @@
+<div class="painel-shell painel-shell--orientador">
+  <header class="painel-header">
+    <div>
+      <span class="painel-eyebrow">Area do orientador</span>
+      <h1 class="painel-title">Painel do orientador</h1>
+      <p class="painel-subtitle">Visualizacao dedicada para docentes orientadores autenticados no sistema.</p>
+    </div>
+    <button mat-stroked-button type="button" (click)="logout()">Sair</button>
+  </header>
+
+  <p class="status-message status-message--error" *ngIf="errorMessage">{{ errorMessage }}</p>
+
+  <section class="painel-card" *ngIf="isLoading">
+    <p class="painel-loading">Carregando painel do orientador...</p>
+  </section>
+
+  <ng-container *ngIf="!isLoading && currentUser as user">
+    <section class="painel-card">
+      <div class="painel-card__header">
+        <div>
+          <span class="painel-card__label">Conta autenticada</span>
+          <h2 class="painel-card__title">{{ user.nome_completo }}</h2>
+        </div>
+        <span class="painel-badge">{{ user.perfil }}</span>
+      </div>
+
+      <div class="painel-grid">
+        <div>
+          <span class="painel-field__label">E-mail</span>
+          <strong>{{ user.email }}</strong>
+        </div>
+        <div>
+          <span class="painel-field__label">Username</span>
+          <strong>{{ user.username }}</strong>
+        </div>
+        <div>
+          <span class="painel-field__label">Status</span>
+          <strong>{{ user.status }}</strong>
+        </div>
+      </div>
+    </section>
+
+    <section class="painel-card painel-card--accent">
+      <div class="painel-card__header">
+        <div>
+          <span class="painel-card__label">Visao do perfil</span>
+          <h2 class="painel-card__title">Workspace do orientador</h2>
+        </div>
+      </div>
+
+      <div class="painel-grid">
+        <div class="painel-note">
+          <span class="painel-field__label">Autenticacao</span>
+          <p>O backend validou o JWT e retornou seus dados protegidos via <code>/usuarios/me</code>.</p>
+        </div>
+        <div class="painel-note">
+          <span class="painel-field__label">Proxima iteracao</span>
+          <p>Este painel ja esta isolado por perfil e esta pronto para receber orientandos, bancas e atividades do orientador.</p>
+        </div>
+      </div>
+    </section>
+  </ng-container>
+</div>
