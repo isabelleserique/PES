@@ -98,5 +98,13 @@ class AuditService:
             timestamp,
         )
 
+    def log_password_reset(self, *, user_id: str) -> None:
+        timestamp = datetime.now(UTC).isoformat()
+        logger.info(
+            "AUDIT action=RESET_SENHA user_id=%s timestamp=%s",
+            user_id,
+            timestamp,
+        )
+
 async def get_audit_service() -> AuditService:
     return AuditService()

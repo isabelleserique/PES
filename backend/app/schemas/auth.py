@@ -41,6 +41,48 @@ class LoginResponse(BaseModel):
     user: AuthenticatedUserResponse
 
 
+class PasswordResetRequest(BaseModel):
+    email: EmailStr
+
+    @field_validator("email")
+    @classmethod
+    def normalize_email(cls, value: EmailStr) -> str:
+        normalized = str(value).strip().lower()
+        if not normalized:
+            raise ValueError("Campo obrigatorio.")
+        return normalized
+
+
+class PasswordResetRequestResponse(BaseModel):
+    mensagem: str
+
+
+class PasswordResetConfirmRequest(BaseModel):
+    token: str = Field(max_length=255)
+    nova_senha: str = Field(max_length=255)
+
+    @field_validator("token")
+    @classmethod
+    def validate_token(cls, value: str) -> str:
+        normalized = value.strip()
+        if not normalized:
+            raise ValueError("Campo obrigatorio.")
+        return normalized
+
+    @field_validator("nova_senha")
+    @classmethod
+    def validate_new_password(cls, value: str) -> str:
+        if not value.strip():
+            raise ValueError("Campo obrigatorio.")
+        if len(value) < 8:
+            raise ValueError("Senha deve ter no minimo 8 caracteres.")
+        return value
+
+
+class PasswordResetConfirmResponse(BaseModel):
+    mensagem: str
+
+
 class AccessTokenPayload(BaseModel):
     user_id: str
     perfil: Perfil

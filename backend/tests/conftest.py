@@ -110,6 +110,7 @@ class StubEmailService:
         self.calls: list[dict[str, str]] = []
         self.approval_calls: list[dict[str, str]] = []
         self.pending_notifications: list[dict[str, str]] = []
+        self.reset_calls: list[dict[str, str]] = []
 
     def send_welcome_email(
         self,
@@ -162,6 +163,23 @@ class StubEmailService:
                 "requester_email": requester_email,
                 "requester_username": requester_username,
                 "requester_profile": requester_profile,
+            }
+        )
+        if self.should_fail:
+            return False
+        return True
+
+    def send_password_reset_email(
+        self,
+        to_email: str,
+        full_name: str,
+        reset_link: str,
+    ) -> bool:
+        self.reset_calls.append(
+            {
+                "to_email": to_email,
+                "full_name": full_name,
+                "reset_link": reset_link,
             }
         )
         if self.should_fail:

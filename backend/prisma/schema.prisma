@@ -21,18 +21,31 @@ enum UserStatus {
 }
 
 model User {
-  id            String   @id @default(cuid())
-  nome_completo String
-  email         String   @unique
-  username      String   @unique
-  senha_hash    String
-  perfil        Perfil
-  matricula     String?
-  status        UserStatus @default(ATIVO)
-  failed_login_attempts Int      @default(0)
+  id                    String               @id @default(cuid())
+  nome_completo         String
+  email                 String               @unique
+  username              String               @unique
+  senha_hash            String
+  perfil                Perfil
+  matricula             String?
+  status                UserStatus           @default(ATIVO)
+  failed_login_attempts Int                  @default(0)
   blocked_until         DateTime?
-  ativo         Boolean  @default(true)
-  criado_em     DateTime @default(now())
+  ativo                 Boolean              @default(true)
+  criado_em             DateTime             @default(now())
+  password_reset_tokens PasswordResetToken[]
 
   @@map("users")
+}
+
+model PasswordResetToken {
+  token     String   @id
+  user_id   String
+  expira_em DateTime
+  usado     Boolean  @default(false)
+  criado_em DateTime @default(now())
+  user      User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id])
+  @@map("password_reset_tokens")
 }
