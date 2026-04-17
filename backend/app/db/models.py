@@ -25,6 +25,8 @@ class UserRecord(Base):
         nullable=False,
         default=StatusCadastro.ATIVO,
     )
+    failed_login_attempts: Mapped[int] = mapped_column(default=0, nullable=False)
+    blocked_until: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=False), nullable=True)
     ativo: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     criado_em: Mapped[datetime] = mapped_column(
         DateTime(timezone=False),
