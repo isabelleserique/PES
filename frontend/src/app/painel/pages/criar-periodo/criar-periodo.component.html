@@ -1,0 +1,151 @@
+<div class="app-shell">
+
+  <!-- Navbar -->
+  <nav class="app-navbar">
+    <div class="navbar-brand">
+      <div class="logo-badge">IC</div>
+      <span class="logo-name">IComp</span>
+    </div>
+    <div class="navbar-sep"></div>
+    <span class="navbar-app-name">TCComp</span>
+  </nav>
+
+  <!-- Page content -->
+  <main class="app-page-content">
+
+    <p class="status-message status-message--error" *ngIf="errorMessage">{{ errorMessage }}</p>
+    <p class="status-message status-message--success" *ngIf="successMessage">{{ successMessage }}</p>
+
+    <h1 class="cp-page-title">Criação e Configuração do Período Letivo</h1>
+
+    <form [formGroup]="periodoForm" (ngSubmit)="salvarPeriodo()">
+
+      <!-- Linha: Nome, Data início, Data fim -->
+      <div class="cp-form-row">
+        <mat-form-field appearance="outline" class="cp-field-nome">
+          <mat-label>Nome/Código do Período (ex: 2026.1)</mat-label>
+          <input matInput formControlName="nome" />
+          <mat-error *ngIf="periodoForm.controls['nome'].hasError('required')">Campo obrigatório</mat-error>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="cp-field-date">
+          <mat-label>Data de início</mat-label>
+          <input matInput [matDatepicker]="pickerInicio" formControlName="dataInicio" />
+          <mat-datepicker-toggle matIconSuffix [for]="pickerInicio"></mat-datepicker-toggle>
+          <mat-datepicker #pickerInicio></mat-datepicker>
+          <mat-error *ngIf="periodoForm.controls['dataInicio'].hasError('required')">Campo obrigatório</mat-error>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="cp-field-date">
+          <mat-label>Data de fim</mat-label>
+          <input matInput [matDatepicker]="pickerFim" formControlName="dataFim" />
+          <mat-datepicker-toggle matIconSuffix [for]="pickerFim"></mat-datepicker-toggle>
+          <mat-datepicker #pickerFim></mat-datepicker>
+          <mat-error *ngIf="periodoForm.controls['dataFim'].hasError('required')">Campo obrigatório</mat-error>
+        </mat-form-field>
+      </div>
+
+      <!-- Checkbox ativo -->
+      <div class="cp-checkbox-row">
+        <mat-checkbox formControlName="ativo">Tornar este período ativo</mat-checkbox>
+      </div>
+
+      <hr class="cp-divider" />
+
+      <!-- Seção de prazos -->
+      <h2 class="cp-section-title">Definição dos Prazos das Etapas</h2>
+
+      <!-- Stepper visual -->
+      <div class="cp-stepper">
+        <ng-container *ngFor="let etapa of etapas; let i = index; let last = last">
+          <div class="cp-step">
+            <div class="cp-step-circle">{{ i + 1 }}</div>
+            <span class="cp-step-label">{{ etapa }}</span>
+            <mat-icon class="cp-step-icon">calendar_today</mat-icon>
+          </div>
+          <div class="cp-step-connector" *ngIf="!last"></div>
+        </ng-container>
+      </div>
+
+      <!-- Tabela de prazos -->
+      <table class="cp-table" *ngIf="prazos.length > 0">
+        <thead>
+          <tr>
+            <th>Nome da Etapa</th>
+            <th>Data Limite</th>
+            <th>Tipo de TCC Aplicável</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let prazo of prazos">
+            <td>{{ prazo.nomeEtapa }}</td>
+            <td>{{ prazo.dataLimite | date:'dd/MM/yyyy' }}</td>
+            <td>{{ prazo.tipoDeTCC }}</td>
+            <td class="cp-table-actions">
+              <button type="button" class="cp-action-btn" (click)="editarPrazo(prazo)" title="Editar">
+                <mat-icon>edit</mat-icon>
+              </button>
+              <button type="button" class="cp-action-btn cp-action-btn--delete" (click)="removerPrazo(prazo.localId)" title="Remover">
+                <mat-icon>delete</mat-icon>
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- Formulário inline de prazo -->
+      <div class="cp-prazo-card" *ngIf="showPrazoForm" [formGroup]="prazoForm">
+        <div class="cp-prazo-row">
+          <mat-form-field appearance="outline" class="cp-prazo-etapa">
+            <mat-label>Nome da Etapa</mat-label>
+            <input matInput formControlName="nomeEtapa" placeholder="Ex: Entrega Monografia" />
+            <mat-error *ngIf="prazoForm.controls['nomeEtapa'].hasError('required')">Campo obrigatório</mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="cp-prazo-date">
+            <mat-label>Data Limite</mat-label>
+            <input matInput [matDatepicker]="pickerPrazo" formControlName="dataLimite" />
+            <mat-datepicker-toggle matIconSuffix [for]="pickerPrazo"></mat-datepicker-toggle>
+            <mat-datepicker #pickerPrazo></mat-datepicker>
+            <mat-error *ngIf="prazoForm.controls['dataLimite'].hasError('required')">Campo obrigatório</mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="cp-prazo-tipo">
+            <mat-label>Tipo de TCC</mat-label>
+            <mat-select formControlName="tipoDeTCC">
+              <mat-option *ngFor="let tipo of tiposDeTCC" [value]="tipo">{{ tipo }}</mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+
+        <div class="cp-prazo-form-actions">
+          <button mat-stroked-button type="button" (click)="cancelarFormPrazo()">Cancelar</button>
+          <button mat-raised-button type="button" class="cp-btn-confirmar" (click)="confirmarPrazo()">
+            {{ editingId ? 'Salvar Alterações' : 'Adicionar' }}
+          </button>
+        </div>
+      </div>
+
+      <!-- Botão adicionar prazo -->
+      <button
+        mat-stroked-button
+        type="button"
+        class="cp-add-btn"
+        *ngIf="!showPrazoForm"
+        (click)="abrirFormPrazo()"
+      >
+        + Adicionar Novo Prazo
+      </button>
+
+      <!-- Ações da página -->
+      <div class="cp-page-actions">
+        <button mat-stroked-button type="button" (click)="cancelar()">Cancelar</button>
+        <button mat-raised-button type="submit" class="cp-btn-salvar" [disabled]="isSubmitting">
+          {{ isSubmitting ? 'Salvando...' : 'Salvar Período' }}
+        </button>
+      </div>
+
+    </form>
+  </main>
+</div>

@@ -1,0 +1,368 @@
+/* ── Título ── */
+.dt-page-title {
+  color: #0d2137;
+  font-size: 1.55rem;
+  font-weight: 700;
+  margin-bottom: 20px;
+}
+
+/* ── Alerta fora do prazo ── */
+.dt-alert {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  border-radius: 10px;
+  padding: 12px 16px;
+  margin-bottom: 24px;
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+
+.dt-alert--warning {
+  background: #fff8e1;
+  border: 1px solid #f59e0b;
+  color: #92400e;
+}
+
+.dt-alert--warning mat-icon {
+  color: #f59e0b;
+  flex-shrink: 0;
+  font-size: 20px;
+  width: 20px;
+  height: 20px;
+}
+
+/* ── Stepper customização ── */
+.dt-stepper {
+  background: transparent;
+}
+
+::ng-deep .dt-stepper .mat-step-header .mat-step-icon {
+  background-color: #1565c0;
+}
+
+::ng-deep .dt-stepper .mat-step-header .mat-step-icon-selected {
+  background-color: #0d2137;
+}
+
+::ng-deep .dt-stepper .mat-step-header .mat-step-icon-state-done {
+  background-color: #27ae60;
+}
+
+::ng-deep .dt-stepper .mat-stepper-horizontal-line {
+  border-top-color: #1565c0;
+}
+
+::ng-deep .dt-stepper .mat-step-header .mat-step-label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #4a5568;
+}
+
+::ng-deep .dt-stepper .mat-step-header .mat-step-label.mat-step-label-active {
+  color: #0d2137;
+}
+
+::ng-deep .dt-stepper .mat-horizontal-content-container {
+  padding: 28px 0 0;
+}
+
+/* ── Seção verde ── */
+.dt-section-header {
+  background: #27ae60;
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.82rem;
+  letter-spacing: 0.08em;
+  padding: 10px 16px;
+  border-radius: 6px;
+  margin-bottom: 20px;
+}
+
+/* ── Campos do formulário ── */
+.dt-form-row {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 4px;
+  flex-wrap: wrap;
+}
+
+.dt-field-titulo {
+  flex: 2;
+  min-width: 240px;
+}
+
+.dt-field-tipo {
+  flex: 1;
+  min-width: 200px;
+}
+
+.dt-field-full {
+  width: 100%;
+}
+
+/* ── Professor section ── */
+.dt-professor-section {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  overflow: hidden;
+  margin-bottom: 16px;
+}
+
+.dt-professor-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid #e2e8f0;
+  background: #f8fafc;
+}
+
+.dt-professor-title {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #0d2137;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.dt-search-input {
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-size: 0.85rem;
+  color: #4a5568;
+  outline: none;
+  width: 220px;
+  transition: border-color 0.15s;
+}
+
+.dt-search-input:focus {
+  border-color: #1565c0;
+}
+
+.dt-professor-list {
+  max-height: 240px;
+  overflow-y: auto;
+}
+
+.dt-professor-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 11px 16px;
+  border-bottom: 1px solid #f4f7fb;
+  cursor: pointer;
+  font-size: 0.88rem;
+  color: #0d2137;
+  transition: background 0.12s;
+}
+
+.dt-professor-row:last-child {
+  border-bottom: none;
+}
+
+.dt-professor-row--header {
+  background: #f0f4f8;
+  font-weight: 600;
+  font-size: 0.78rem;
+  color: #718096;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  cursor: default;
+}
+
+.dt-professor-row:not(.dt-professor-row--header):hover {
+  background: #f0f7ff;
+}
+
+.dt-professor-row--selected {
+  background: #e8f4fd !important;
+  border-left: 3px solid #1565c0;
+}
+
+.dt-area {
+  color: #718096;
+  font-size: 0.83rem;
+}
+
+.dt-orientador-selecionado {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  background: #e8f5e9;
+  color: #1b5e20;
+  font-size: 0.88rem;
+  border-top: 1px solid #c8e6c9;
+}
+
+.dt-orientador-selecionado mat-icon {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+  color: #27ae60;
+}
+
+/* ── Co-orientador ── */
+.dt-coorientador-note {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #f0f7ff;
+  border: 1px solid rgba(21, 101, 192, 0.2);
+  border-radius: 8px;
+  padding: 10px 14px;
+  margin-bottom: 20px;
+  font-size: 0.88rem;
+  color: #1565c0;
+}
+
+.dt-coorientador-note mat-icon {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+.dt-empty {
+  padding: 16px;
+  color: #718096;
+  font-size: 0.88rem;
+  text-align: center;
+}
+
+/* ── Revisão ── */
+.dt-review-card {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 20px;
+}
+
+.dt-review-title {
+  color: #0d2137;
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 20px;
+}
+
+.dt-review-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.dt-review-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.dt-review-item--full {
+  grid-column: 1 / -1;
+}
+
+.dt-review-label {
+  font-size: 0.75rem;
+  color: #718096;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.dt-review-value {
+  color: #0d2137;
+  font-size: 0.92rem;
+  line-height: 1.5;
+}
+
+/* ── Ações de cada step ── */
+.dt-step-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid #e2e8f0;
+}
+
+/* ── Botões ── */
+.dt-btn-primary {
+  background: #0d2137 !important;
+  color: #fff !important;
+}
+
+.dt-btn-submeter {
+  background: #1565c0 !important;
+  color: #fff !important;
+  min-width: 180px;
+  font-weight: 600 !important;
+  letter-spacing: 0.04em !important;
+}
+
+/* ── Tela de sucesso ── */
+.dt-success-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid rgba(39, 174, 96, 0.2);
+  border-radius: 18px;
+  box-shadow: 0 8px 40px rgba(13, 33, 55, 0.08);
+  padding: 56px 40px;
+  max-width: 560px;
+  margin: 40px auto;
+  text-align: center;
+}
+
+.dt-success-icon {
+  font-size: 56px !important;
+  width: 56px !important;
+  height: 56px !important;
+  color: #27ae60;
+}
+
+.dt-success-card h2 {
+  color: #0d2137;
+  font-size: 1.4rem;
+}
+
+.dt-success-card p {
+  color: #4a5568;
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+
+.dt-success-status span {
+  color: #1565c0;
+  font-weight: 700;
+}
+
+@media (max-width: 768px) {
+  .dt-form-row {
+    flex-direction: column;
+  }
+
+  .dt-field-titulo,
+  .dt-field-tipo {
+    min-width: 100%;
+  }
+
+  .dt-review-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .dt-professor-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .dt-search-input {
+    width: 100%;
+  }
+}

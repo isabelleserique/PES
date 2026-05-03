@@ -1,0 +1,145 @@
+<div class="app-shell">
+
+  <!-- Navbar -->
+  <nav class="app-navbar">
+    <div class="navbar-brand">
+      <div class="logo-badge">IC</div>
+      <span class="logo-name">IComp</span>
+    </div>
+    <div class="navbar-sep"></div>
+    <span class="navbar-app-name">TCComp</span>
+  </nav>
+
+  <main class="app-page-content">
+
+    <h1 class="ao-page-title">Painel do Orientador - Aceite de Solicitação</h1>
+
+    <!-- Alerta fora do prazo -->
+    <div class="ao-alert ao-alert--warning" *ngIf="foraDoPrazo">
+      <mat-icon>warning</mat-icon>
+      <span>
+        O prazo para aceite de orientação expirou há <strong>{{ diasAtraso }} dia(s)</strong>
+        ({{ prazoAceite | date:'dd/MM/yyyy' }}). Você ainda pode responder, mas o coordenador será notificado.
+      </span>
+    </div>
+
+    <!-- Mensagens -->
+    <p class="status-message status-message--error" *ngIf="errorMessage">{{ errorMessage }}</p>
+    <p class="status-message status-message--success" *ngIf="successMessage">{{ successMessage }}</p>
+
+    <!-- Loading -->
+    <div class="ao-card" *ngIf="isLoading">
+      <p class="ao-empty">Carregando solicitações...</p>
+    </div>
+
+    <!-- Tabela -->
+    <div class="ao-card" *ngIf="!isLoading">
+
+      <table class="ao-table" *ngIf="solicitacoes.length > 0; else semSolicitacoes">
+        <thead>
+          <tr>
+            <th>Nome do Aluno</th>
+            <th>Título do TCC</th>
+            <th>Tipo</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody>
+          <ng-container *ngFor="let s of solicitacoes">
+
+            <!-- Linha da solicitação -->
+            <tr class="ao-row" [class.ao-row--active]="expandedId === s.id">
+              <td>{{ s.nomeAluno }}</td>
+              <td class="ao-td-titulo">{{ s.tituloDeTCC }}</td>
+              <td>{{ s.tipo }}</td>
+              <td class="ao-td-acoes">
+                <button
+                  class="ao-btn ao-btn--ap"
+                  [class.ao-btn--active]="expandedId === s.id && acaoAtual === 'ACEITAR'"
+                  (click)="abrirAcao(s, 'ACEITAR')"
+                  title="Aceitar">
+                  AP
+                </button>
+                <button
+                  class="ao-btn ao-btn--rej"
+                  [class.ao-btn--active]="expandedId === s.id && acaoAtual === 'REJEITAR'"
+                  (click)="abrirAcao(s, 'REJEITAR')"
+                  title="Rejeitar">
+                  REJ
+                </button>
+              </td>
+            </tr>
+
+            <!-- Painel expansível -->
+            <tr *ngIf="expandedId === s.id && solicitacaoAtiva" class="ao-detail-row">
+              <td colspan="4">
+                <div class="ao-detail-panel" [formGroup]="acaoForm">
+
+                  <!-- Lado esquerdo: aluno + observações -->
+                  <div class="ao-detail-left">
+                    <div class="ao-student-info">
+                      <div class="ao-avatar"><mat-icon>person</mat-icon></div>
+                      <span class="ao-student-name">{{ solicitacaoAtiva.nomeAluno }}</span>
+                    </div>
+                    <label class="ao-obs-label">OBSERVAÇÕES AO ALUNO</label>
+                    <mat-form-field appearance="outline" class="ao-obs-field">
+                      <textarea matInput formControlName="observacao" rows="3"
+                                placeholder="Escreva uma observação (opcional)..."></textarea>
+                    </mat-form-field>
+                  </div>
+
+                  <!-- Lado direito: formalização -->
+                  <div class="ao-detail-right">
+                    <div class="ao-vinculo-card">
+                      <h4 class="ao-vinculo-title">FORMALIZAÇÃO DE VÍNCULO</h4>
+
+                      <div class="ao-vinculo-row">
+                        <span class="ao-vinculo-label">1. Vínculo Formalizado</span>
+                        <span class="ao-vinculo-value">{{ nomeOrientador }}</span>
+                      </div>
+
+                      <div class="ao-vinculo-row">
+                        <span class="ao-vinculo-label">2. Status do TCC</span>
+                        <mat-form-field appearance="outline" class="ao-status-field">
+                          <mat-select formControlName="statusTCC">
+                            <mat-option
+                              *ngFor="let opt of statusOpcoes[acaoAtual!]"
+                              [value]="opt">
+                              {{ opt }}
+                            </mat-option>
+                          </mat-select>
+                        </mat-form-field>
+                      </div>
+                    </div>
+                  </div>
+
+                </div>
+
+                <!-- Rodapé do painel -->
+                <div class="ao-detail-footer">
+                  <button mat-stroked-button type="button" (click)="fecharPainel()">Cancelar</button>
+                  <button
+                    mat-raised-button
+                    type="button"
+                    class="ao-btn-continuar"
+                    [disabled]="isConfirmando"
+                    (click)="confirmar()">
+                    {{ isConfirmando ? 'Processando...' : 'Continuar' }}
+                  </button>
+                </div>
+
+              </td>
+            </tr>
+
+          </ng-container>
+        </tbody>
+      </table>
+
+      <ng-template #semSolicitacoes>
+        <p class="ao-empty">Não há solicitações de orientação pendentes no momento.</p>
+      </ng-template>
+
+    </div>
+
+  </main>
+</div>
