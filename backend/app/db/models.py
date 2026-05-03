@@ -9,6 +9,7 @@ from sqlalchemy.orm import Mapped, mapped_column
 from backend.app.db.base import Base
 from backend.app.models.user import Perfil, StatusCadastro
 
+from backend.app.models.tcc import TipoTCC, StatusTCC
 
 class UserRecord(Base):
     __tablename__ = "users"
@@ -50,5 +51,42 @@ class PasswordResetTokenRecord(Base):
     criado_em: Mapped[datetime] = mapped_column(
         DateTime(timezone=False),
         server_default=func.now(),
+        nullable=False,
+    )
+
+
+class TCCRecord(Base):
+    __tablename__ = "tccs"
+
+    id: Mapped[str] = mapped_column(String, primary_key=True)
+    titulo: Mapped[str] = mapped_column(String, nullable=False)
+
+    tipo: Mapped[TipoTCC] = mapped_column(Enum(TipoTCC), nullable=False)
+
+    aluno_id: Mapped[str] = mapped_column(String, ForeignKey("users.id"), nullable=False)
+    orientador_id: Mapped[str] = mapped_column(String, ForeignKey("users.id"), nullable=False)
+    coorientador_id: Mapped[Optional[str]] = mapped_column(String, ForeignKey("users.id"), nullable=True)
+
+    periodo: Mapped[str] = mapped_column(String, nullable=False)
+
+    status: Mapped[StatusTCC] = mapped_column(
+        Enum(StatusTCC),
+        default=StatusTCC.AGUARDANDO_ACEITE,
+        nullable=False,
+    )
+
+    prazo_excedido: Mapped[bool] = mapped_column(Boolean, default=False)
+    
+
+    criado_em: Mapped[datetime] = mapped_column(
+        DateTime, 
+        default=datetime.utcnow,
+        nullable=False
+    )
+
+    atualizado_em: Mapped[datetime] = mapped_column(
+        DateTime,
+        default=datetime.utcnow,
+        onupdate=datetime.utcnow,
         nullable=False,
     )

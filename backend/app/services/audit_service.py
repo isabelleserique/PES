@@ -106,5 +106,19 @@ class AuditService:
             timestamp,
         )
 
+    def log_tcc_submission(self, *, aluno_id: str, tcc_id: str) -> None:
+        logger.info(
+            "AUDIT action=TCC_SUBMITTED aluno_id=%s tcc_id=%s",
+            aluno_id,
+            tcc_id,
+        )
+
+    def log_tcc_update(self, *, aluno_id: str, tcc_id: str) -> None:
+        logger.info(
+            "AUDIT action=TCC_UPDATED aluno_id=%s tcc_id=%s",
+            aluno_id,
+            tcc_id,
+        )
+
 async def get_audit_service() -> AuditService:
     return AuditService()

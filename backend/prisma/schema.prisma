@@ -49,3 +49,33 @@ model PasswordResetToken {
   @@index([user_id])
   @@map("password_reset_tokens")
 }
+
+enum TipoTCC {
+  MONOGRAFIA
+  ARTIGO
+  RELATORIO
+}
+
+enum StatusTCC {
+  RASCUNHO
+  AGUARDANDO_ACEITE
+  APROVADO
+  REJEITADO
+}
+
+model TCC {
+  id              String   @id @default(cuid())
+  titulo          String
+  tipo            TipoTCC
+  aluno_id        String
+  orientador_id   String
+  coorientador_id String?
+  periodo         String
+  status          StatusTCC @default(AGUARDANDO_ACEITE)
+  prazo_excedido  Boolean   @default(false)
+  criado_em       DateTime  @default(now())
+  atualizado_em   DateTime  @updatedAt
+
+  @@unique([aluno_id, periodo])
+  @@map("tccs")
+}

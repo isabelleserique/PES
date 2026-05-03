@@ -169,6 +169,26 @@ class EmailService:
             return False
 
         return True
+        
+    def send_tcc_submission_notification(
+        self,
+        to_email: str,
+        aluno_nome: str,
+        titulo: str,
+    ) -> bool:
+        subject = "Novo TCC para aceite"
+        body = (
+            f"O aluno {aluno_nome} submeteu um TCC.\n\n"
+            f"Título: {titulo}\n"
+            "Acesse o sistema para aceitar ou recusar."
+        )
+
+        try:
+            self.send_email(to_email, subject, body)
+        except Exception:
+            return False
+
+        return True
 
 async def get_email_service() -> EmailService:
     return EmailService(get_settings())
