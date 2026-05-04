@@ -6,6 +6,8 @@ from typing import Optional
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from backend.app.models.periodo import TipoTCC
+from backend.app.models.tcc import StatusTCC
+from backend.app.models.user import Perfil
 
 
 class PrazoPayload(BaseModel):
@@ -102,3 +104,54 @@ class PeriodoResponse(BaseModel):
     data_fim: date
     ativo: bool
     prazos: list[PrazoResponse]
+
+
+class PeriodoResumoResponse(BaseModel):
+    id: str
+    nome: str
+    data_inicio: date
+    data_fim: date
+    ativo: bool
+
+
+class CronogramaPrazoResponse(BaseModel):
+    id: str
+    nome_etapa: str
+    data_limite: date
+    tipo_tcc: TipoTCC
+    dias_restantes: int
+    status: str
+    cor: str
+    mensagem: str
+    atrasado: bool
+
+
+class CronogramaAlunoResponse(BaseModel):
+    aluno_id: str
+    titulo_tcc: Optional[str] = None
+    tipo_tcc: Optional[TipoTCC] = None
+    status_tcc: Optional[StatusTCC] = None
+    prazo_excedido: bool = False
+    alerta_prazo: Optional[str] = None
+    prazos: list[CronogramaPrazoResponse] = Field(default_factory=list)
+
+
+class CronogramaOrientandoResponse(BaseModel):
+    aluno_id: str
+    aluno_nome: str
+    matricula: Optional[str] = None
+    titulo_tcc: str
+    tipo_tcc: TipoTCC
+    status_tcc: StatusTCC
+    prazo_excedido: bool
+    alerta_prazo: Optional[str] = None
+    papel_orientacao: str
+    prazos: list[CronogramaPrazoResponse] = Field(default_factory=list)
+
+
+class CronogramaPeriodoResponse(BaseModel):
+    periodo: PeriodoResumoResponse
+    perfil: Perfil
+    aluno: Optional[CronogramaAlunoResponse] = None
+    orientandos: list[CronogramaOrientandoResponse] = Field(default_factory=list)
+    filtro_orientando_id: Optional[str] = None

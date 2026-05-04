@@ -21,9 +21,22 @@ enum UserStatus {
 }
 
 enum TipoTCC {
-  TODOS       @map("Todos")
-  MONOGRAFIA  @map("Monografia")
-  ARTIGO      @map("Artigo")
+  TODOS               @map("Todos")
+  MONOGRAFIA          @map("Monografia")
+  ARTIGO              @map("Artigo")
+  RELATORIO_ESTAGIO   @map("Relatorio de Estagio")
+}
+
+enum StatusTCC {
+  AGUARDANDO_ACEITE
+  EM_ANDAMENTO
+  APROVADO
+  REJEITADO
+}
+
+enum AcaoEdicaoTCC {
+  CRIACAO
+  EDICAO
 }
 
 model User {
@@ -40,19 +53,24 @@ model User {
   ativo                 Boolean              @default(true)
   criado_em             DateTime             @default(now())
   password_reset_tokens PasswordResetToken[]
+  tccs_como_aluno       TCC[]                @relation("AlunoTCC")
+  tccs_como_orientador  TCC[]                @relation("OrientadorTCC")
+  tccs_como_coorientador TCC[]               @relation("CoorientadorTCC")
+  tcc_edit_logs         TCCEditLog[]         @relation("ActorTCCEdit")
 
   @@map("users")
 }
 
 model PeriodoLetivo {
-  id           String       @id
-  nome         String
-  data_inicio  DateTime     @db.Date
-  data_fim     DateTime     @db.Date
-  ativo        Boolean      @default(false)
-  criado_em    DateTime     @default(now())
-  atualizado_em DateTime    @updatedAt
-  prazos       PrazoEtapa[]
+  id            String       @id
+  nome          String
+  data_inicio   DateTime     @db.Date
+  data_fim      DateTime     @db.Date
+  ativo         Boolean      @default(false)
+  criado_em     DateTime     @default(now())
+  atualizado_em DateTime     @updatedAt
+  prazos        PrazoEtapa[]
+  tccs          TCC[]
 
   @@index([nome])
   @@index([data_inicio])
@@ -72,6 +90,47 @@ model PrazoEtapa {
 
   @@index([periodo_id])
   @@map("prazos_etapas")
+}
+
+model TCC {
+  id               String       @id
+  titulo           String
+  tipo_tcc         TipoTCC
+  aluno_id         String
+  orientador_id    String
+  coorientador_id  String?
+  periodo_id       String
+  status           StatusTCC    @default(AGUARDANDO_ACEITE)
+  prazo_excedido   Boolean      @default(false)
+  criado_em        DateTime     @default(now())
+  atualizado_em    DateTime     @updatedAt
+  aluno            User         @relation("AlunoTCC", fields: [aluno_id], references: [id], onDelete: Cascade)
+  orientador       User         @relation("OrientadorTCC", fields: [orientador_id], references: [id], onDelete: Restrict)
+  coorientador     User?        @relation("CoorientadorTCC", fields: [coorientador_id], references: [id], onDelete: SetNull)
+  periodo          PeriodoLetivo @relation(fields: [periodo_id], references: [id], onDelete: Cascade)
+  edit_logs        TCCEditLog[]
+
+  @@unique([aluno_id, periodo_id])
+  @@index([orientador_id])
+  @@index([coorientador_id])
+  @@index([periodo_id])
+  @@map("tccs")
+}
+
+model TCCEditLog {
+  id               String         @id
+  tcc_id           String
+  actor_user_id    String
+  acao             AcaoEdicaoTCC
+  dados_anteriores Json?
+  dados_novos      Json
+  criado_em        DateTime       @default(now())
+  tcc              TCC            @relation(fields: [tcc_id], references: [id], onDelete: Cascade)
+  actor            User           @relation("ActorTCCEdit", fields: [actor_user_id], references: [id], onDelete: Cascade)
+
+  @@index([tcc_id])
+  @@index([actor_user_id])
+  @@map("tcc_edit_logs")
 }
 
 model PasswordResetToken {

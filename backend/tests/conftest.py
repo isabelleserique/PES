@@ -7,6 +7,7 @@ from collections.abc import Generator
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, Optional
+from urllib.parse import urlsplit
 
 import pytest
 from sqlalchemy import create_engine
@@ -74,6 +75,7 @@ class ASGITestClient:
             async def send(message: dict) -> None:
                 messages.append(message)
 
+            parsed_path = urlsplit(path)
             scope = {
                 "type": "http",
                 "asgi": {"version": "3.0"},
@@ -81,9 +83,9 @@ class ASGITestClient:
                 "method": method,
                 "headers": raw_headers,
                 "scheme": "http",
-                "path": path,
-                "raw_path": path.encode("utf-8"),
-                "query_string": b"",
+                "path": parsed_path.path,
+                "raw_path": parsed_path.path.encode("utf-8"),
+                "query_string": parsed_path.query.encode("utf-8"),
                 "server": ("testserver", 80),
                 "client": ("testclient", 50000),
                 "root_path": "",
@@ -111,6 +113,7 @@ class StubEmailService:
         self.approval_calls: list[dict[str, str]] = []
         self.pending_notifications: list[dict[str, str]] = []
         self.reset_calls: list[dict[str, str]] = []
+        self.tcc_notifications: list[dict[str, str | bool]] = []
 
     def send_welcome_email(
         self,
@@ -180,6 +183,30 @@ class StubEmailService:
                 "to_email": to_email,
                 "full_name": full_name,
                 "reset_link": reset_link,
+            }
+        )
+        if self.should_fail:
+            return False
+        return True
+
+    def send_tcc_submission_notification(
+        self,
+        *,
+        to_email: str,
+        aluno_nome: str,
+        titulo: str,
+        tipo_tcc: str,
+        periodo_nome: str,
+        prazo_excedido: bool,
+    ) -> bool:
+        self.tcc_notifications.append(
+            {
+                "to_email": to_email,
+                "aluno_nome": aluno_nome,
+                "titulo": titulo,
+                "tipo_tcc": tipo_tcc,
+                "periodo_nome": periodo_nome,
+                "prazo_excedido": prazo_excedido,
             }
         )
         if self.should_fail:

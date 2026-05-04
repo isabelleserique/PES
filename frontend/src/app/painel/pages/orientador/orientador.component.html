@@ -3,7 +3,7 @@
     <div>
       <span class="painel-eyebrow">Area do orientador</span>
       <h1 class="painel-title">Painel do orientador</h1>
-      <p class="painel-subtitle">Visualizacao dedicada para docentes orientadores autenticados no sistema.</p>
+      <p class="painel-subtitle">Acompanhe os cronogramas do periodo atual por orientando e identifique atrasos com rapidez.</p>
     </div>
     <button mat-stroked-button type="button" (click)="logout()">Sair</button>
   </header>
@@ -43,21 +43,81 @@
     <section class="painel-card painel-card--accent">
       <div class="painel-card__header">
         <div>
-          <span class="painel-card__label">Visao do perfil</span>
-          <h2 class="painel-card__title">Workspace do orientador</h2>
+          <span class="painel-card__label">US007</span>
+          <h2 class="painel-card__title">Cronograma do periodo {{ cronograma?.periodo?.nome }}</h2>
         </div>
+        <span class="painel-badge painel-badge--subtle">{{ orientandosVisiveis.length }} orientando(s)</span>
       </div>
 
-      <div class="painel-grid">
-        <div class="painel-note">
-          <span class="painel-field__label">Autenticacao</span>
-          <p>O backend validou o JWT e retornou seus dados protegidos via <code>/usuarios/me</code>.</p>
-        </div>
-        <div class="painel-note">
-          <span class="painel-field__label">Proxima iteracao</span>
-          <p>Este painel ja esta isolado por perfil e esta pronto para receber orientandos, bancas e atividades do orientador.</p>
-        </div>
+      <div class="painel-toolbar" [formGroup]="filtroForm" *ngIf="(cronograma?.orientandos?.length || 0) > 1">
+        <mat-form-field appearance="outline" class="full-width painel-toolbar__field">
+          <mat-label>Filtrar por orientando</mat-label>
+          <mat-select formControlName="orientando_id">
+            <mat-option value="">Todos os orientandos</mat-option>
+            <mat-option *ngFor="let orientando of cronograma?.orientandos" [value]="orientando.aluno_id">
+              {{ orientando.aluno_nome }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
       </div>
+
+      <div class="orientando-list" *ngIf="orientandosVisiveis.length; else semOrientandos">
+        <article class="orientando-card" *ngFor="let orientando of orientandosVisiveis">
+          <div class="orientando-card__header">
+            <div>
+              <span class="painel-card__label">{{ orientando.papel_orientacao }}</span>
+              <h3 class="painel-card__title">{{ orientando.aluno_nome }}</h3>
+            </div>
+            <span class="painel-badge painel-badge--subtle">{{ orientando.tipo_tcc }}</span>
+          </div>
+
+          <div class="painel-grid">
+            <div>
+              <span class="painel-field__label">Tema</span>
+              <strong>{{ orientando.titulo_tcc }}</strong>
+            </div>
+            <div *ngIf="orientando.matricula">
+              <span class="painel-field__label">Matricula</span>
+              <strong>{{ orientando.matricula }}</strong>
+            </div>
+            <div>
+              <span class="painel-field__label">Status do TCC</span>
+              <strong>{{ orientando.status_tcc }}</strong>
+            </div>
+          </div>
+
+          <div class="painel-alert" *ngIf="orientando.alerta_prazo">
+            <strong>Alerta de prazo</strong>
+            <p>{{ orientando.alerta_prazo }}</p>
+          </div>
+
+          <div class="cronograma-list cronograma-list--compact">
+            <article
+              class="cronograma-item"
+              *ngFor="let prazo of orientando.prazos"
+              [class.cronograma-item--verde]="prazo.cor === 'verde'"
+              [class.cronograma-item--amarelo]="prazo.cor === 'amarelo'"
+              [class.cronograma-item--laranja]="prazo.cor === 'laranja'"
+              [class.cronograma-item--vermelho]="prazo.cor === 'vermelho'">
+              <div class="cronograma-item__header">
+                <div>
+                  <span class="painel-card__label">{{ prazo.tipo_tcc }}</span>
+                  <h3>{{ prazo.nome_etapa }}</h3>
+                </div>
+                <span class="cronograma-status">{{ prazo.status }}</span>
+              </div>
+              <div class="cronograma-item__meta">
+                <strong>{{ prazo.data_limite | date:'dd/MM/yyyy' }}</strong>
+                <span>{{ prazo.mensagem }}</span>
+              </div>
+            </article>
+          </div>
+        </article>
+      </div>
+
+      <ng-template #semOrientandos>
+        <p class="painel-empty">Nao ha orientandos com TCC registrado no periodo letivo ativo.</p>
+      </ng-template>
     </section>
   </ng-container>
 </div>

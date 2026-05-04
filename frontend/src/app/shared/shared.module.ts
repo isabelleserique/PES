@@ -7,6 +7,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatRadioModule } from '@angular/material/radio';
+import { MatSelectModule } from '@angular/material/select';
 
 @NgModule({
   imports: [CommonModule],
@@ -19,6 +20,7 @@ import { MatRadioModule } from '@angular/material/radio';
     MatIconModule,
     MatInputModule,
     MatRadioModule,
+    MatSelectModule,
   ],
 })
 export class SharedModule {}

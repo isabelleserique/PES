@@ -3,12 +3,13 @@
     <div>
       <span class="painel-eyebrow">Area do aluno</span>
       <h1 class="painel-title">Painel do aluno</h1>
-      <p class="painel-subtitle">Acompanhe seus dados de acesso e o estado atual da sua conta no sistema.</p>
+      <p class="painel-subtitle">Registre seu TCC, acompanhe o cronograma do periodo letivo atual e evite perder entregas.</p>
     </div>
     <button mat-stroked-button type="button" (click)="logout()">Sair</button>
   </header>
 
   <p class="status-message status-message--error" *ngIf="errorMessage">{{ errorMessage }}</p>
+  <p class="status-message status-message--success" *ngIf="feedbackMessage">{{ feedbackMessage }}</p>
 
   <section class="painel-card" *ngIf="isLoading">
     <p class="painel-loading">Carregando painel do aluno...</p>
@@ -47,21 +48,127 @@
     <section class="painel-card painel-card--accent">
       <div class="painel-card__header">
         <div>
-          <span class="painel-card__label">Proximos passos</span>
-          <h2 class="painel-card__title">Seu espaco de trabalho</h2>
+          <span class="painel-card__label">US008</span>
+          <h2 class="painel-card__title">Formalizacao do TCC</h2>
         </div>
+        <span class="painel-badge painel-badge--subtle">{{ meuTcc ? meuTcc.status : 'SEM ENVIO' }}</span>
       </div>
 
-      <div class="painel-grid">
-        <div class="painel-note">
-          <span class="painel-field__label">Acesso</span>
-          <p>Seu token JWT foi validado pelo backend e o painel foi montado a partir de <code>/usuarios/me</code>.</p>
-        </div>
-        <div class="painel-note">
-          <span class="painel-field__label">Cadastro</span>
-          <p>Este painel foi separado para alunos. Aqui entram, na proxima etapa, as features de TCC, orientador e submissoes.</p>
-        </div>
+      <div class="painel-alert" *ngIf="meuTcc?.alerta_prazo">
+        <strong>Alerta de prazo</strong>
+        <p>{{ meuTcc?.alerta_prazo }}</p>
       </div>
+
+      <div class="painel-summary" *ngIf="meuTcc as tcc">
+        <span class="painel-summary__chip">{{ tcc.tipo_tcc }}</span>
+        <span class="painel-summary__chip">Orientador: {{ tcc.orientador_nome }}</span>
+        <span class="painel-summary__chip" *ngIf="tcc.coorientador_nome">Coorientador: {{ tcc.coorientador_nome }}</span>
+        <span class="painel-summary__chip">Periodo: {{ tcc.periodo_nome }}</span>
+      </div>
+
+      <p class="painel-empty" *ngIf="!meuTcc">
+        Voce ainda nao informou seu TCC neste periodo. O cadastro e unico por periodo, mas pode ser atualizado com log de edicoes.
+      </p>
+
+      <form [formGroup]="tccForm" class="painel-form" (ngSubmit)="submitTcc()">
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Titulo do TCC</mat-label>
+          <input matInput formControlName="titulo">
+          <mat-error *ngIf="tccForm.controls.titulo.touched && tccForm.controls.titulo.hasError('required')">
+            Informe o tema do TCC.
+          </mat-error>
+          <mat-error *ngIf="tccForm.controls.titulo.touched && tccForm.controls.titulo.hasError('minlength')">
+            Use pelo menos 3 caracteres.
+          </mat-error>
+        </mat-form-field>
+
+        <div class="painel-form__row">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Tipo de TCC</mat-label>
+            <mat-select formControlName="tipo_tcc">
+              <mat-option *ngFor="let tipo of tiposTcc" [value]="tipo.value">{{ tipo.label }}</mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Professor orientador</mat-label>
+            <mat-select formControlName="orientador_id">
+              <mat-option *ngFor="let orientador of orientadores" [value]="orientador.id">
+                {{ orientador.nome_completo }}
+              </mat-option>
+            </mat-select>
+            <mat-error *ngIf="tccForm.controls.orientador_id.touched && tccForm.controls.orientador_id.hasError('required')">
+              Selecione um orientador.
+            </mat-error>
+          </mat-form-field>
+        </div>
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Coorientador opcional</mat-label>
+          <mat-select formControlName="coorientador_id">
+            <mat-option value="">Sem coorientador</mat-option>
+            <mat-option *ngFor="let orientador of coorientadoresDisponiveis" [value]="orientador.id">
+              {{ orientador.nome_completo }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <div class="painel-form__actions">
+          <button mat-raised-button type="submit" class="approve-btn" [disabled]="isSavingTcc || orientadores.length === 0">
+            {{ isSavingTcc ? 'SALVANDO...' : (meuTcc ? 'ATUALIZAR TCC' : 'REGISTRAR TCC') }}
+          </button>
+          <p class="painel-empty" *ngIf="orientadores.length === 0">
+            Nenhum orientador ativo esta disponivel no momento.
+          </p>
+        </div>
+      </form>
+    </section>
+
+    <section class="painel-card" *ngIf="cronogramaAluno as cronogramaAlunoData">
+      <div class="painel-card__header">
+        <div>
+          <span class="painel-card__label">US007</span>
+          <h2 class="painel-card__title">Cronograma do periodo {{ cronograma?.periodo?.nome }}</h2>
+        </div>
+        <span class="painel-badge painel-badge--subtle">
+          {{ cronogramaAlunoData.tipo_tcc || 'Prazos gerais' }}
+        </span>
+      </div>
+
+      <div class="painel-alert" *ngIf="cronogramaAlunoData.alerta_prazo">
+        <strong>Envio fora do prazo</strong>
+        <p>{{ cronogramaAlunoData.alerta_prazo }}</p>
+      </div>
+
+      <p class="painel-empty" *ngIf="!cronogramaAlunoData.titulo_tcc">
+        Sem TCC cadastrado neste periodo, o cronograma mostra apenas os prazos gerais aplicaveis a todos os alunos.
+      </p>
+
+      <div class="cronograma-list" *ngIf="cronogramaAlunoData.prazos.length; else semPrazosAluno">
+        <article
+          class="cronograma-item"
+          *ngFor="let prazo of cronogramaAlunoData.prazos"
+          [class.cronograma-item--verde]="prazo.cor === 'verde'"
+          [class.cronograma-item--amarelo]="prazo.cor === 'amarelo'"
+          [class.cronograma-item--laranja]="prazo.cor === 'laranja'"
+          [class.cronograma-item--vermelho]="prazo.cor === 'vermelho'">
+          <div class="cronograma-item__header">
+            <div>
+              <span class="painel-card__label">{{ prazo.tipo_tcc }}</span>
+              <h3>{{ prazo.nome_etapa }}</h3>
+            </div>
+            <span class="cronograma-status">{{ prazo.status }}</span>
+          </div>
+          <div class="cronograma-item__meta">
+            <strong>{{ prazo.data_limite | date:'dd/MM/yyyy' }}</strong>
+            <span>{{ prazo.mensagem }}</span>
+          </div>
+        </article>
+      </div>
+
+      <ng-template #semPrazosAluno>
+        <p class="painel-empty">Nao ha prazos configurados para o seu contexto no periodo letivo ativo.</p>
+      </ng-template>
     </section>
   </ng-container>
 </div>

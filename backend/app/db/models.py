@@ -1,16 +1,14 @@
 from __future__ import annotations
 
-from datetime import datetime
 from datetime import date, datetime
-from typing import Optional
+from typing import Any, Optional
 
-from sqlalchemy import Boolean, DateTime, Enum, ForeignKey, String, func
-from sqlalchemy.orm import Mapped, mapped_column
-from sqlalchemy import Boolean, Date, DateTime, Enum, ForeignKey, String, func
+from sqlalchemy import Boolean, Date, DateTime, Enum, ForeignKey, JSON, String, UniqueConstraint, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from backend.app.db.base import Base
 from backend.app.models.periodo import TipoTCC
+from backend.app.models.tcc import AcaoEdicaoTCC, StatusTCC
 from backend.app.models.user import Perfil, StatusCadastro
 
 
@@ -62,6 +60,10 @@ class PeriodoLetivoRecord(Base):
         back_populates="periodo",
         cascade="all, delete-orphan",
     )
+    tccs: Mapped[list["TCCRecord"]] = relationship(
+        back_populates="periodo",
+        cascade="all, delete-orphan",
+    )
 
 
 class PrazoEtapaRecord(Base):
@@ -83,6 +85,93 @@ class PrazoEtapaRecord(Base):
         nullable=False,
     )
     periodo: Mapped[PeriodoLetivoRecord] = relationship(back_populates="prazos")
+
+
+class TCCRecord(Base):
+    __tablename__ = "tccs"
+    __table_args__ = (
+        UniqueConstraint("aluno_id", "periodo_id", name="uq_tcc_aluno_periodo"),
+    )
+
+    id: Mapped[str] = mapped_column(String, primary_key=True)
+    titulo: Mapped[str] = mapped_column(String, nullable=False)
+    tipo_tcc: Mapped[TipoTCC] = mapped_column(Enum(TipoTCC, name="TipoTCC"), nullable=False)
+    aluno_id: Mapped[str] = mapped_column(
+        String,
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    orientador_id: Mapped[str] = mapped_column(
+        String,
+        ForeignKey("users.id", ondelete="RESTRICT"),
+        nullable=False,
+        index=True,
+    )
+    coorientador_id: Mapped[Optional[str]] = mapped_column(
+        String,
+        ForeignKey("users.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+    periodo_id: Mapped[str] = mapped_column(
+        String,
+        ForeignKey("periodos_letivos.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    status: Mapped[StatusTCC] = mapped_column(
+        Enum(StatusTCC, name="StatusTCC"),
+        nullable=False,
+        default=StatusTCC.AGUARDANDO_ACEITE,
+    )
+    prazo_excedido: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    criado_em: Mapped[datetime] = mapped_column(
+        DateTime(timezone=False),
+        server_default=func.now(),
+        nullable=False,
+    )
+    atualizado_em: Mapped[datetime] = mapped_column(
+        DateTime(timezone=False),
+        server_default=func.now(),
+        onupdate=func.now(),
+        nullable=False,
+    )
+    periodo: Mapped[PeriodoLetivoRecord] = relationship(back_populates="tccs")
+    logs: Mapped[list["TCCEditLogRecord"]] = relationship(
+        back_populates="tcc",
+        cascade="all, delete-orphan",
+    )
+
+
+class TCCEditLogRecord(Base):
+    __tablename__ = "tcc_edit_logs"
+
+    id: Mapped[str] = mapped_column(String, primary_key=True)
+    tcc_id: Mapped[str] = mapped_column(
+        String,
+        ForeignKey("tccs.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    actor_user_id: Mapped[str] = mapped_column(
+        String,
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    acao: Mapped[AcaoEdicaoTCC] = mapped_column(
+        Enum(AcaoEdicaoTCC, name="AcaoEdicaoTCC"),
+        nullable=False,
+    )
+    dados_anteriores: Mapped[Optional[dict[str, Any]]] = mapped_column(JSON, nullable=True)
+    dados_novos: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False)
+    criado_em: Mapped[datetime] = mapped_column(
+        DateTime(timezone=False),
+        server_default=func.now(),
+        nullable=False,
+    )
+    tcc: Mapped[TCCRecord] = relationship(back_populates="logs")
 
 
 class PasswordResetTokenRecord(Base):

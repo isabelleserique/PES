@@ -7,3 +7,4 @@ class TipoTCC(str, Enum):
     TODOS = "Todos"
     MONOGRAFIA = "Monografia"
     ARTIGO = "Artigo"
+    RELATORIO_ESTAGIO = "Relatorio de Estagio"
