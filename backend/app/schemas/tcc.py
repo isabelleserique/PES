@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import date, datetime
 from typing import Optional
 
 from pydantic import BaseModel, Field, field_validator, model_validator
@@ -54,5 +54,63 @@ class TCCResponse(BaseModel):
     status: StatusTCC
     prazo_excedido: bool
     alerta_prazo: Optional[str] = None
+    observacao_orientador: Optional[str] = None
     criado_em: datetime
     atualizado_em: datetime
+
+
+class OrientationRequestResponse(BaseModel):
+    tcc_id: str
+    aluno_id: str
+    aluno_nome: str
+    aluno_email: str
+    matricula: Optional[str] = None
+    titulo: str
+    tipo_tcc: TipoTCC
+    status: StatusTCC
+    prazo_excedido: bool
+    alerta_submissao_prazo: Optional[str] = None
+    prazo_aceite: Optional[date] = None
+    acao_fora_do_prazo: bool
+    alerta_acao_prazo: Optional[str] = None
+    criado_em: datetime
+
+
+class OrientationDecisionRequest(BaseModel):
+    acao: str = Field(min_length=1, max_length=20)
+    observacao: Optional[str] = Field(default=None, max_length=1000)
+
+    @field_validator("acao")
+    @classmethod
+    def normalize_action(cls, value: str) -> str:
+        normalized = value.strip().upper()
+        if normalized not in {"ACEITAR", "RECUSAR"}:
+            raise ValueError("Acao invalida. Use ACEITAR ou RECUSAR.")
+        return normalized
+
+    @field_validator("observacao")
+    @classmethod
+    def normalize_observacao(cls, value: Optional[str]) -> Optional[str]:
+        if value is None:
+            return None
+
+        normalized = value.strip()
+        if not normalized:
+            return None
+        return normalized
+
+    @model_validator(mode="after")
+    def validate_observacao(self) -> "OrientationDecisionRequest":
+        if self.acao == "RECUSAR" and not self.observacao:
+            raise ValueError("Observacao e obrigatoria ao recusar a orientacao.")
+        return self
+
+
+class OrientationDecisionResponse(BaseModel):
+    tcc_id: str
+    aluno_id: str
+    aluno_nome: str
+    status: StatusTCC
+    observacao_orientador: Optional[str] = None
+    acao_fora_do_prazo: bool
+    alerta_acao_prazo: Optional[str] = None

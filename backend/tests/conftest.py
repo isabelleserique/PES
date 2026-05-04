@@ -114,6 +114,7 @@ class StubEmailService:
         self.pending_notifications: list[dict[str, str]] = []
         self.reset_calls: list[dict[str, str]] = []
         self.tcc_notifications: list[dict[str, str | bool]] = []
+        self.orientation_decisions: list[dict[str, str | bool | None]] = []
 
     def send_welcome_email(
         self,
@@ -207,6 +208,32 @@ class StubEmailService:
                 "tipo_tcc": tipo_tcc,
                 "periodo_nome": periodo_nome,
                 "prazo_excedido": prazo_excedido,
+            }
+        )
+        if self.should_fail:
+            return False
+        return True
+
+    def send_orientation_decision_notification(
+        self,
+        *,
+        to_email: str,
+        aluno_nome: str,
+        titulo: str,
+        orientador_nome: str,
+        accepted: bool,
+        observacao: str | None,
+        outside_deadline: bool,
+    ) -> bool:
+        self.orientation_decisions.append(
+            {
+                "to_email": to_email,
+                "aluno_nome": aluno_nome,
+                "titulo": titulo,
+                "orientador_nome": orientador_nome,
+                "accepted": accepted,
+                "observacao": observacao,
+                "outside_deadline": outside_deadline,
             }
         )
         if self.should_fail:

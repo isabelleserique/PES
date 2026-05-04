@@ -5,7 +5,14 @@ from backend.app.api.deps import require_perfis
 from backend.app.db.models import UserRecord
 from backend.app.db.session import get_db_session
 from backend.app.models.user import Perfil
-from backend.app.schemas.tcc import OrientadorDisponivelResponse, TCCResponse, TCCWriteRequest
+from backend.app.schemas.tcc import (
+    OrientadorDisponivelResponse,
+    OrientationDecisionRequest,
+    OrientationDecisionResponse,
+    OrientationRequestResponse,
+    TCCResponse,
+    TCCWriteRequest,
+)
 from backend.app.services.audit_service import AuditService, get_audit_service
 from backend.app.services.email_service import EmailService, get_email_service
 from backend.app.services.tcc_service import TCCService, get_tcc_service
@@ -75,6 +82,44 @@ async def update_my_tcc(
         session=session,
         payload=payload,
         current_user=current_aluno,
+        email_service=email_service,
+        audit_service=audit_service,
+    )
+
+
+@router.get(
+    "/orientacoes/pendentes",
+    status_code=status.HTTP_200_OK,
+)
+async def list_pending_orientation_requests(
+    session: Session = Depends(get_db_session),
+    tcc_service: TCCService = Depends(get_tcc_service),
+    current_orientador: UserRecord = Depends(require_perfis(Perfil.ORIENTADOR)),
+) -> list[OrientationRequestResponse]:
+    return tcc_service.list_pending_orientation_requests(
+        session=session,
+        current_user=current_orientador,
+    )
+
+
+@router.patch(
+    "/orientacoes/{tcc_id}/decisao",
+    status_code=status.HTTP_200_OK,
+)
+async def decide_orientation_request(
+    tcc_id: str,
+    payload: OrientationDecisionRequest,
+    session: Session = Depends(get_db_session),
+    tcc_service: TCCService = Depends(get_tcc_service),
+    email_service: EmailService = Depends(get_email_service),
+    audit_service: AuditService = Depends(get_audit_service),
+    current_orientador: UserRecord = Depends(require_perfis(Perfil.ORIENTADOR)),
+) -> OrientationDecisionResponse:
+    return tcc_service.decide_orientation_request(
+        session=session,
+        tcc_id=tcc_id,
+        payload=payload,
+        current_user=current_orientador,
         email_service=email_service,
         audit_service=audit_service,
     )

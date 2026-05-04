@@ -76,6 +76,33 @@ class EmailService:
             "Acesse o sistema para acompanhar o cronograma e as informacoes do aluno.\n"
         )
 
+    def build_orientation_decision_notification_body(
+        self,
+        *,
+        aluno_nome: str,
+        titulo: str,
+        orientador_nome: str,
+        accepted: bool,
+        observacao: str | None,
+        outside_deadline: bool,
+    ) -> str:
+        decision_text = "aceitou" if accepted else "recusou"
+        resulting_status = "Em andamento" if accepted else "Sem orientador"
+        observacao_block = f"\nObservacao do orientador: {observacao}\n" if observacao else "\n"
+        late_notice = (
+            "\nAtencao: a decisao foi registrada fora do prazo configurado para o aceite do orientador.\n"
+            if outside_deadline
+            else "\n"
+        )
+        return (
+            f"O professor {orientador_nome} {decision_text} sua solicitacao de orientacao.\n\n"
+            f"TCC: {titulo}\n"
+            f"Novo status: {resulting_status}\n"
+            f"{observacao_block}"
+            f"{late_notice}"
+            f"Aluno: {aluno_nome}\n"
+        )
+
     def send_email(self, to_email: str, subject: str, body: str) -> None:
         if not self.settings.smtp_user or not self.settings.smtp_pass:
             raise ValueError("SMTP_USER e SMTP_PASS precisam estar configurados.")
@@ -217,6 +244,39 @@ class EmailService:
             self.send_email(to_email=to_email, subject=subject, body=body)
         except Exception:
             logger.exception("Falha ao enviar notificacao de TCC para %s", to_email)
+            return False
+
+        return True
+
+    def send_orientation_decision_notification(
+        self,
+        *,
+        to_email: str,
+        aluno_nome: str,
+        titulo: str,
+        orientador_nome: str,
+        accepted: bool,
+        observacao: str | None,
+        outside_deadline: bool,
+    ) -> bool:
+        subject = (
+            "Orientacao aceita no Sistema TCC ICOMP"
+            if accepted
+            else "Orientacao recusada no Sistema TCC ICOMP"
+        )
+        body = self.build_orientation_decision_notification_body(
+            aluno_nome=aluno_nome,
+            titulo=titulo,
+            orientador_nome=orientador_nome,
+            accepted=accepted,
+            observacao=observacao,
+            outside_deadline=outside_deadline,
+        )
+
+        try:
+            self.send_email(to_email=to_email, subject=subject, body=body)
+        except Exception:
+            logger.exception("Falha ao enviar decisao de orientacao para %s", to_email)
             return False
 
         return True

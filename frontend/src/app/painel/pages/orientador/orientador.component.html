@@ -9,6 +9,7 @@
   </header>
 
   <p class="status-message status-message--error" *ngIf="errorMessage">{{ errorMessage }}</p>
+  <p class="status-message status-message--success" *ngIf="feedbackMessage">{{ feedbackMessage }}</p>
 
   <section class="painel-card" *ngIf="isLoading">
     <p class="painel-loading">Carregando painel do orientador...</p>
@@ -37,6 +38,68 @@
           <span class="painel-field__label">Status</span>
           <strong>{{ user.status }}</strong>
         </div>
+      </div>
+    </section>
+
+    <section class="painel-card" *ngIf="hasPendingRequests; else semSolicitacoesPendentes">
+      <div class="painel-card__header">
+        <div>
+          <span class="painel-card__label">US009</span>
+          <h2 class="painel-card__title">Solicitacoes pendentes de orientacao</h2>
+        </div>
+        <span class="painel-badge painel-badge--subtle">{{ pendingRequests.length }} pendente(s)</span>
+      </div>
+
+      <div class="pending-list">
+        <article class="pending-item pending-item--review" *ngFor="let request of pendingRequests">
+          <div class="pending-item__main pending-item__main--wide">
+            <h3>{{ request.aluno_nome }}</h3>
+            <p>Tema: {{ request.titulo }}</p>
+            <p>Tipo de TCC: {{ request.tipo_tcc }}</p>
+            <p *ngIf="request.matricula">Matricula: {{ request.matricula }}</p>
+            <p>Solicitado em: {{ request.criado_em | date:'dd/MM/yyyy HH:mm' }}</p>
+            <p *ngIf="request.prazo_aceite">Prazo de aceite: {{ request.prazo_aceite | date:'dd/MM/yyyy' }}</p>
+
+            <div class="painel-alert" *ngIf="request.alerta_submissao_prazo">
+              <strong>Alerta de submissao</strong>
+              <p>{{ request.alerta_submissao_prazo }}</p>
+            </div>
+
+            <div class="painel-alert" *ngIf="request.alerta_acao_prazo">
+              <strong>Alerta de decisao</strong>
+              <p>{{ request.alerta_acao_prazo }}</p>
+            </div>
+
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Observacao para o aluno</mat-label>
+              <textarea
+                matInput
+                rows="4"
+                [value]="observacoes[request.tcc_id] || ''"
+                (input)="updateObservacao(request.tcc_id, $any($event.target).value)"></textarea>
+              <mat-hint>Obrigatoria para recusa. Opcional para aceite.</mat-hint>
+            </mat-form-field>
+          </div>
+
+          <div class="pending-item__actions pending-item__actions--inline">
+            <button
+              mat-raised-button
+              type="button"
+              class="approve-btn"
+              [disabled]="isReviewing"
+              (click)="decidirSolicitacao(request, 'ACEITAR')">
+              Aceitar
+            </button>
+            <button
+              mat-stroked-button
+              type="button"
+              class="reject-btn"
+              [disabled]="isReviewing"
+              (click)="decidirSolicitacao(request, 'RECUSAR')">
+              Recusar
+            </button>
+          </div>
+        </article>
       </div>
     </section>
 
@@ -119,5 +182,17 @@
         <p class="painel-empty">Nao ha orientandos com TCC registrado no periodo letivo ativo.</p>
       </ng-template>
     </section>
+
+    <ng-template #semSolicitacoesPendentes>
+      <section class="painel-card">
+        <div class="painel-card__header">
+          <div>
+            <span class="painel-card__label">US009</span>
+            <h2 class="painel-card__title">Solicitacoes pendentes de orientacao</h2>
+          </div>
+        </div>
+        <p class="painel-empty">Nao ha solicitacoes pendentes para sua decisao no momento.</p>
+      </section>
+    </ng-template>
   </ng-container>
 </div>
