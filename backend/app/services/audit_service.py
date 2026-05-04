@@ -106,5 +106,41 @@ class AuditService:
             timestamp,
         )
 
+    def log_tcc_submission(
+        self,
+        *,
+        aluno_id: str,
+        tcc_id: str,
+        orientador_id: str,
+        prazo_excedido: bool,
+    ) -> None:
+        timestamp = datetime.now(UTC).isoformat()
+        logger.info(
+            "AUDIT action=TCC_SUBMISSION aluno_id=%s tcc_id=%s orientador_id=%s prazo_excedido=%s timestamp=%s",
+            aluno_id,
+            tcc_id,
+            orientador_id,
+            prazo_excedido,
+            timestamp,
+        )
+
+    def log_tcc_update(
+        self,
+        *,
+        aluno_id: str,
+        tcc_id: str,
+        orientador_id: str,
+        prazo_excedido: bool,
+    ) -> None:
+        timestamp = datetime.now(UTC).isoformat()
+        logger.info(
+            "AUDIT action=TCC_UPDATE aluno_id=%s tcc_id=%s orientador_id=%s prazo_excedido=%s timestamp=%s",
+            aluno_id,
+            tcc_id,
+            orientador_id,
+            prazo_excedido,
+            timestamp,
+        )
+
 async def get_audit_service() -> AuditService:
     return AuditService()

@@ -127,6 +127,62 @@
   padding: 18px;
 }
 
+.full-width {
+  width: 100%;
+}
+
+.painel-form {
+  display: grid;
+  gap: 18px;
+}
+
+.painel-form__row {
+  display: grid;
+  gap: 18px;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.painel-form__actions {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+
+.painel-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.painel-summary__chip {
+  background: rgba(13, 33, 55, 0.06);
+  border-radius: 999px;
+  color: #0d2137;
+  font-size: 0.88rem;
+  font-weight: 600;
+  padding: 8px 14px;
+}
+
+.painel-alert {
+  background: rgba(180, 83, 9, 0.08);
+  border: 1px solid rgba(180, 83, 9, 0.2);
+  border-radius: 16px;
+  color: #8a3d06;
+  margin-bottom: 18px;
+  padding: 16px 18px;
+}
+
+.painel-alert strong {
+  display: block;
+  margin-bottom: 6px;
+}
+
+.painel-alert p {
+  line-height: 1.6;
+}
+
 .pending-list {
   display: grid;
   gap: 16px;
@@ -171,9 +227,101 @@
   color: #b3261e !important;
 }
 
+.painel-toolbar {
+  margin-bottom: 18px;
+  max-width: 320px;
+}
+
+.cronograma-list {
+  display: grid;
+  gap: 14px;
+}
+
+.cronograma-list--compact {
+  margin-top: 18px;
+}
+
+.cronograma-item {
+  background: #f9fbfd;
+  border: 1px solid rgba(13, 33, 55, 0.08);
+  border-left-width: 6px;
+  border-radius: 16px;
+  padding: 18px;
+}
+
+.cronograma-item--verde {
+  border-left-color: #2e7d32;
+}
+
+.cronograma-item--amarelo {
+  border-left-color: #f9a825;
+}
+
+.cronograma-item--laranja {
+  border-left-color: #ef6c00;
+}
+
+.cronograma-item--vermelho {
+  border-left-color: #c62828;
+}
+
+.cronograma-item__header {
+  align-items: flex-start;
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.cronograma-item__header h3 {
+  color: #0d2137;
+  font-size: 1.05rem;
+}
+
+.cronograma-item__meta {
+  align-items: center;
+  color: #4a5568;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  line-height: 1.5;
+}
+
+.cronograma-status {
+  background: rgba(13, 33, 55, 0.07);
+  border-radius: 999px;
+  color: #0d2137;
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  padding: 8px 12px;
+}
+
+.orientando-list {
+  display: grid;
+  gap: 18px;
+}
+
+.orientando-card {
+  background: rgba(255, 255, 255, 0.88);
+  border: 1px solid rgba(13, 33, 55, 0.08);
+  border-radius: 18px;
+  padding: 22px;
+}
+
+.orientando-card__header {
+  align-items: center;
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+
 @media (max-width: 768px) {
   .painel-header,
-  .pending-item {
+  .pending-item,
+  .cronograma-item__header,
+  .orientando-card__header {
     align-items: stretch;
     flex-direction: column;
   }
@@ -184,5 +332,11 @@
 
   .pending-item__actions {
     min-width: auto;
+  }
+
+  .cronograma-item__meta,
+  .painel-form__actions {
+    align-items: flex-start;
+    flex-direction: column;
   }
 }

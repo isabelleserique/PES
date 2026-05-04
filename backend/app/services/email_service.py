@@ -52,6 +52,30 @@ class EmailService:
             "Se voce nao solicitou esta alteracao, ignore esta mensagem.\n"
         )
 
+    def build_tcc_submission_notification_body(
+        self,
+        *,
+        aluno_nome: str,
+        titulo: str,
+        tipo_tcc: str,
+        periodo_nome: str,
+        prazo_excedido: bool,
+    ) -> str:
+        late_notice = (
+            "\nAtencao: o envio foi registrado fora do prazo configurado para a etapa de tema/orientador.\n"
+            if prazo_excedido
+            else "\n"
+        )
+        return (
+            "Ha um TCC aguardando aceite no Sistema TCC ICOMP.\n\n"
+            f"Aluno: {aluno_nome}\n"
+            f"Periodo letivo: {periodo_nome}\n"
+            f"Titulo: {titulo}\n"
+            f"Tipo: {tipo_tcc}\n"
+            f"{late_notice}"
+            "Acesse o sistema para acompanhar o cronograma e as informacoes do aluno.\n"
+        )
+
     def send_email(self, to_email: str, subject: str, body: str) -> None:
         if not self.settings.smtp_user or not self.settings.smtp_pass:
             raise ValueError("SMTP_USER e SMTP_PASS precisam estar configurados.")
@@ -166,6 +190,33 @@ class EmailService:
             self.send_email(to_email=to_email, subject=subject, body=body)
         except Exception:
             logger.exception("Falha ao enviar e-mail de reset de senha para %s", to_email)
+            return False
+
+        return True
+
+    def send_tcc_submission_notification(
+        self,
+        *,
+        to_email: str,
+        aluno_nome: str,
+        titulo: str,
+        tipo_tcc: str,
+        periodo_nome: str,
+        prazo_excedido: bool,
+    ) -> bool:
+        subject = "Novo TCC aguardando aceite no Sistema TCC ICOMP"
+        body = self.build_tcc_submission_notification_body(
+            aluno_nome=aluno_nome,
+            titulo=titulo,
+            tipo_tcc=tipo_tcc,
+            periodo_nome=periodo_nome,
+            prazo_excedido=prazo_excedido,
+        )
+
+        try:
+            self.send_email(to_email=to_email, subject=subject, body=body)
+        except Exception:
+            logger.exception("Falha ao enviar notificacao de TCC para %s", to_email)
             return False
 
         return True

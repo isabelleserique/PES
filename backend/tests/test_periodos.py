@@ -7,8 +7,9 @@ import pytest
 
 from backend.app.core.config import get_settings
 from backend.app.core.security import create_access_token, hash_password
-from backend.app.db.models import PeriodoLetivoRecord, PrazoEtapaRecord, UserRecord
+from backend.app.db.models import PeriodoLetivoRecord, PrazoEtapaRecord, TCCRecord, UserRecord
 from backend.app.models.periodo import TipoTCC
+from backend.app.models.tcc import StatusTCC
 from backend.app.models.user import Perfil, StatusCadastro
 
 
@@ -86,6 +87,35 @@ def _seed_periodo(
     db_session.commit()
     db_session.refresh(periodo)
     return periodo
+
+
+def _seed_tcc(
+    db_session,
+    *,
+    periodo_id: str,
+    aluno_id: str,
+    orientador_id: str,
+    titulo: str,
+    tipo_tcc: TipoTCC,
+    prazo_excedido: bool = False,
+    coorientador_id: str | None = None,
+    status: StatusTCC = StatusTCC.AGUARDANDO_ACEITE,
+) -> TCCRecord:
+    tcc = TCCRecord(
+        id=str(uuid4()),
+        titulo=titulo,
+        tipo_tcc=tipo_tcc,
+        aluno_id=aluno_id,
+        orientador_id=orientador_id,
+        coorientador_id=coorientador_id,
+        periodo_id=periodo_id,
+        status=status,
+        prazo_excedido=prazo_excedido,
+    )
+    db_session.add(tcc)
+    db_session.commit()
+    db_session.refresh(tcc)
+    return tcc
 
 
 def test_create_periodo_returns_201_with_prazos_and_active_status(client, db_session) -> None:
@@ -451,3 +481,146 @@ def test_update_periodo_returns_422_when_request_has_no_changes(client, db_sessi
 
     assert response.status_code == 422
     assert "Informe ao menos um campo para atualizacao." in response.body.decode("utf-8")
+
+
+def test_get_active_cronograma_filters_student_prazos_by_tcc_type_and_computes_status(client, db_session) -> None:
+    aluno = _seed_user(
+        db_session,
+        nome_completo="Aluno Cronograma",
+        email="aluno.cronograma@icomp.ufam.edu.br",
+        username="aluno.cronograma",
+        perfil=Perfil.ALUNO,
+        status=StatusCadastro.ATIVO,
+        ativo=True,
+        matricula="2023123011",
+    )
+    orientador = _seed_user(
+        db_session,
+        nome_completo="Prof. Cronograma",
+        email="prof.cronograma@icomp.ufam.edu.br",
+        username="prof.cronograma",
+        perfil=Perfil.ORIENTADOR,
+        status=StatusCadastro.ATIVO,
+        ativo=True,
+    )
+    today = date.today()
+    periodo = _seed_periodo(
+        db_session,
+        nome="2026.1",
+        data_inicio=(today - timedelta(days=30)).isoformat(),
+        data_fim=(today + timedelta(days=45)).isoformat(),
+        ativo=True,
+        prazos=[
+            ("Definicao de Tema/Orientador", (today + timedelta(days=12)).isoformat(), TipoTCC.TODOS),
+            ("Entrega Parcial", (today + timedelta(days=3)).isoformat(), TipoTCC.ARTIGO),
+            ("Entrega Final", (today - timedelta(days=2)).isoformat(), TipoTCC.MONOGRAFIA),
+        ],
+    )
+    _seed_tcc(
+        db_session,
+        periodo_id=periodo.id,
+        aluno_id=aluno.id,
+        orientador_id=orientador.id,
+        titulo="Planejamento de IA",
+        tipo_tcc=TipoTCC.ARTIGO,
+    )
+
+    response = client.request(
+        "GET",
+        "/periodos/ativo/cronograma",
+        headers=_build_auth_headers(user_id=aluno.id, perfil=aluno.perfil),
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["perfil"] == "ALUNO"
+    assert body["aluno"]["tipo_tcc"] == "Artigo"
+    assert [prazo["nome_etapa"] for prazo in body["aluno"]["prazos"]] == [
+        "Entrega Parcial",
+        "Definicao de Tema/Orientador",
+    ]
+    assert body["aluno"]["prazos"][0]["status"] == "PROXIMO"
+    assert body["aluno"]["prazos"][0]["cor"] == "amarelo"
+    assert body["aluno"]["prazos"][1]["status"] == "A_VENCER"
+    assert body["aluno"]["alerta_prazo"] is None
+
+
+def test_get_active_cronograma_returns_orientador_view_grouped_by_orientandos_and_filter(client, db_session) -> None:
+    orientador = _seed_user(
+        db_session,
+        nome_completo="Prof. Orientador",
+        email="orientador.cronograma@icomp.ufam.edu.br",
+        username="orientador.cronograma",
+        perfil=Perfil.ORIENTADOR,
+        status=StatusCadastro.ATIVO,
+        ativo=True,
+    )
+    aluno_artigo = _seed_user(
+        db_session,
+        nome_completo="Aluno Artigo",
+        email="aluno.artigo@icomp.ufam.edu.br",
+        username="aluno.artigo",
+        perfil=Perfil.ALUNO,
+        status=StatusCadastro.ATIVO,
+        ativo=True,
+        matricula="2023123012",
+    )
+    aluno_relatorio = _seed_user(
+        db_session,
+        nome_completo="Aluno Relatorio",
+        email="aluno.relatorio@icomp.ufam.edu.br",
+        username="aluno.relatorio",
+        perfil=Perfil.ALUNO,
+        status=StatusCadastro.ATIVO,
+        ativo=True,
+        matricula="2023123013",
+    )
+    today = date.today()
+    periodo = _seed_periodo(
+        db_session,
+        nome="2026.1",
+        data_inicio=(today - timedelta(days=15)).isoformat(),
+        data_fim=(today + timedelta(days=60)).isoformat(),
+        ativo=True,
+        prazos=[
+            ("Definicao de Tema/Orientador", (today - timedelta(days=1)).isoformat(), TipoTCC.TODOS),
+            ("Entrega Parcial", (today + timedelta(days=5)).isoformat(), TipoTCC.ARTIGO),
+            ("Seminario Final", (today + timedelta(days=8)).isoformat(), TipoTCC.RELATORIO_ESTAGIO),
+        ],
+    )
+    _seed_tcc(
+        db_session,
+        periodo_id=periodo.id,
+        aluno_id=aluno_artigo.id,
+        orientador_id=orientador.id,
+        titulo="Agentes para Educacao",
+        tipo_tcc=TipoTCC.ARTIGO,
+        prazo_excedido=True,
+    )
+    _seed_tcc(
+        db_session,
+        periodo_id=periodo.id,
+        aluno_id=aluno_relatorio.id,
+        orientador_id=orientador.id,
+        titulo="Relatorio de Estagio em Dados",
+        tipo_tcc=TipoTCC.RELATORIO_ESTAGIO,
+    )
+
+    response = client.request(
+        "GET",
+        f"/periodos/ativo/cronograma?orientando_id={aluno_artigo.id}",
+        headers=_build_auth_headers(user_id=orientador.id, perfil=orientador.perfil),
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["perfil"] == "ORIENTADOR"
+    assert body["filtro_orientando_id"] == aluno_artigo.id
+    assert len(body["orientandos"]) == 1
+    assert body["orientandos"][0]["aluno_nome"] == aluno_artigo.nome_completo
+    assert body["orientandos"][0]["papel_orientacao"] == "ORIENTADOR"
+    assert body["orientandos"][0]["alerta_prazo"] is not None
+    assert [prazo["nome_etapa"] for prazo in body["orientandos"][0]["prazos"]] == [
+        "Definicao de Tema/Orientador",
+        "Entrega Parcial",
+    ]

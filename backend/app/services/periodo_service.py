@@ -1,16 +1,24 @@
 from __future__ import annotations
 
+from datetime import date
 from uuid import uuid4
 
 from fastapi import HTTPException, status
 from pydantic import ValidationError
-from sqlalchemy import select
+from sqlalchemy import or_, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, selectinload
 
-from backend.app.db.models import PeriodoLetivoRecord, PrazoEtapaRecord
+from backend.app.db.models import PeriodoLetivoRecord, PrazoEtapaRecord, TCCRecord, UserRecord
+from backend.app.models.periodo import TipoTCC
+from backend.app.models.user import Perfil
 from backend.app.schemas.periodo import (
+    CronogramaAlunoResponse,
+    CronogramaOrientandoResponse,
+    CronogramaPeriodoResponse,
+    CronogramaPrazoResponse,
     CreatePeriodoRequest,
+    PeriodoResumoResponse,
     PeriodoResponse,
     PeriodoWriteRequest,
     PrazoPayload,
@@ -24,6 +32,8 @@ OVERLAPPING_PERIOD_CONFLICT_DETAIL = "Ja existe um periodo letivo configurado pa
 PERIODO_NOT_FOUND_DETAIL = "Periodo letivo nao encontrado."
 NO_ACTIVE_PERIODO_FOUND_DETAIL = "Nenhum periodo letivo ativo encontrado."
 PERIODO_SAVE_CONFLICT_DETAIL = "Nao foi possivel salvar o periodo letivo informado."
+CRONOGRAMA_FORBIDDEN_DETAIL = "Perfil sem permissao para visualizar o cronograma."
+ORIENTANDO_NOT_FOUND_DETAIL = "Orientando nao encontrado para este professor."
 
 
 class PeriodoService:
@@ -72,18 +82,37 @@ class PeriodoService:
         return self._build_periodo_response(periodo)
 
     def get_active_periodo(self, *, session: Session) -> PeriodoResponse:
-        periodo = session.scalar(
-            select(PeriodoLetivoRecord)
-            .options(selectinload(PeriodoLetivoRecord.prazos))
-            .where(PeriodoLetivoRecord.ativo.is_(True))
-            .order_by(PeriodoLetivoRecord.data_inicio.desc())
-        )
-        if periodo is None:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=NO_ACTIVE_PERIODO_FOUND_DETAIL,
-            )
+        periodo = self._get_active_periodo_record(session=session)
         return self._build_periodo_response(periodo)
+
+    def get_cronograma(
+        self,
+        *,
+        session: Session,
+        current_user: UserRecord,
+        orientando_id: str | None = None,
+    ) -> CronogramaPeriodoResponse:
+        periodo = self._get_active_periodo_record(session=session)
+
+        if current_user.perfil == Perfil.ALUNO:
+            return self._build_student_cronograma(
+                session=session,
+                periodo=periodo,
+                current_user=current_user,
+            )
+
+        if current_user.perfil == Perfil.ORIENTADOR:
+            return self._build_advisor_cronograma(
+                session=session,
+                periodo=periodo,
+                current_user=current_user,
+                orientando_id=orientando_id,
+            )
+
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=CRONOGRAMA_FORBIDDEN_DETAIL,
+        )
 
     def update_periodo(
         self,
@@ -138,6 +167,20 @@ class PeriodoService:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=PERIODO_NOT_FOUND_DETAIL,
+            )
+        return periodo
+
+    def _get_active_periodo_record(self, *, session: Session) -> PeriodoLetivoRecord:
+        periodo = session.scalar(
+            select(PeriodoLetivoRecord)
+            .options(selectinload(PeriodoLetivoRecord.prazos))
+            .where(PeriodoLetivoRecord.ativo.is_(True))
+            .order_by(PeriodoLetivoRecord.data_inicio.desc())
+        )
+        if periodo is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=NO_ACTIVE_PERIODO_FOUND_DETAIL,
             )
         return periodo
 
@@ -249,10 +292,7 @@ class PeriodoService:
         ]
 
     def _build_periodo_response(self, periodo: PeriodoLetivoRecord) -> PeriodoResponse:
-        ordered_prazos = sorted(
-            periodo.prazos,
-            key=lambda prazo: (prazo.data_limite, prazo.nome_etapa.casefold(), prazo.id),
-        )
+        ordered_prazos = self._order_prazos(periodo.prazos)
         return PeriodoResponse(
             id=periodo.id,
             nome=periodo.nome,
@@ -261,6 +301,155 @@ class PeriodoService:
             ativo=periodo.ativo,
             prazos=[PrazoResponse.model_validate(prazo) for prazo in ordered_prazos],
         )
+
+    def _build_student_cronograma(
+        self,
+        *,
+        session: Session,
+        periodo: PeriodoLetivoRecord,
+        current_user: UserRecord,
+    ) -> CronogramaPeriodoResponse:
+        tcc = session.scalar(
+            select(TCCRecord).where(
+                TCCRecord.aluno_id == current_user.id,
+                TCCRecord.periodo_id == periodo.id,
+            )
+        )
+        tipo_tcc = tcc.tipo_tcc if tcc is not None else None
+        prazos = self._filter_prazos_for_tipo(periodo.prazos, tipo_tcc=tipo_tcc)
+
+        return CronogramaPeriodoResponse(
+            periodo=self._build_periodo_summary(periodo),
+            perfil=current_user.perfil,
+            aluno=CronogramaAlunoResponse(
+                aluno_id=current_user.id,
+                titulo_tcc=tcc.titulo if tcc is not None else None,
+                tipo_tcc=tipo_tcc,
+                status_tcc=tcc.status if tcc is not None else None,
+                prazo_excedido=tcc.prazo_excedido if tcc is not None else False,
+                alerta_prazo=self._build_prazo_excedido_alert(tcc),
+                prazos=[self._build_cronograma_prazo_response(prazo) for prazo in prazos],
+            ),
+        )
+
+    def _build_advisor_cronograma(
+        self,
+        *,
+        session: Session,
+        periodo: PeriodoLetivoRecord,
+        current_user: UserRecord,
+        orientando_id: str | None,
+    ) -> CronogramaPeriodoResponse:
+        query = (
+            select(TCCRecord, UserRecord)
+            .join(UserRecord, UserRecord.id == TCCRecord.aluno_id)
+            .where(
+                TCCRecord.periodo_id == periodo.id,
+                or_(
+                    TCCRecord.orientador_id == current_user.id,
+                    TCCRecord.coorientador_id == current_user.id,
+                ),
+            )
+            .order_by(UserRecord.nome_completo.asc(), TCCRecord.criado_em.asc())
+        )
+        if orientando_id is not None:
+            query = query.where(TCCRecord.aluno_id == orientando_id)
+
+        rows = session.execute(query).all()
+        if orientando_id is not None and not rows:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=ORIENTANDO_NOT_FOUND_DETAIL,
+            )
+
+        orientandos = []
+        for tcc, aluno in rows:
+            papel_orientacao = "ORIENTADOR" if tcc.orientador_id == current_user.id else "COORIENTADOR"
+            prazos = self._filter_prazos_for_tipo(periodo.prazos, tipo_tcc=tcc.tipo_tcc)
+            orientandos.append(
+                CronogramaOrientandoResponse(
+                    aluno_id=aluno.id,
+                    aluno_nome=aluno.nome_completo,
+                    matricula=aluno.matricula,
+                    titulo_tcc=tcc.titulo,
+                    tipo_tcc=tcc.tipo_tcc,
+                    status_tcc=tcc.status,
+                    prazo_excedido=tcc.prazo_excedido,
+                    alerta_prazo=self._build_prazo_excedido_alert(tcc),
+                    papel_orientacao=papel_orientacao,
+                    prazos=[self._build_cronograma_prazo_response(prazo) for prazo in prazos],
+                )
+            )
+
+        return CronogramaPeriodoResponse(
+            periodo=self._build_periodo_summary(periodo),
+            perfil=current_user.perfil,
+            orientandos=orientandos,
+            filtro_orientando_id=orientando_id,
+        )
+
+    def _build_periodo_summary(self, periodo: PeriodoLetivoRecord) -> PeriodoResumoResponse:
+        return PeriodoResumoResponse(
+            id=periodo.id,
+            nome=periodo.nome,
+            data_inicio=periodo.data_inicio,
+            data_fim=periodo.data_fim,
+            ativo=periodo.ativo,
+        )
+
+    def _build_cronograma_prazo_response(self, prazo: PrazoEtapaRecord) -> CronogramaPrazoResponse:
+        dias_restantes = (prazo.data_limite - date.today()).days
+        status_label, cor = self._status_info(dias_restantes)
+        return CronogramaPrazoResponse(
+            id=prazo.id,
+            nome_etapa=prazo.nome_etapa,
+            data_limite=prazo.data_limite,
+            tipo_tcc=prazo.tipo_tcc,
+            dias_restantes=dias_restantes,
+            status=status_label,
+            cor=cor,
+            mensagem=self._formatar_mensagem(dias_restantes),
+            atrasado=dias_restantes < 0,
+        )
+
+    def _filter_prazos_for_tipo(
+        self,
+        prazos: list[PrazoEtapaRecord],
+        *,
+        tipo_tcc: TipoTCC | None,
+    ) -> list[PrazoEtapaRecord]:
+        return [
+            prazo
+            for prazo in self._order_prazos(prazos)
+            if prazo.tipo_tcc == TipoTCC.TODOS or (tipo_tcc is not None and prazo.tipo_tcc == tipo_tcc)
+        ]
+
+    def _build_prazo_excedido_alert(self, tcc: TCCRecord | None) -> str | None:
+        if tcc is None or tcc.prazo_excedido is not True:
+            return None
+        return "Envio do TCC registrado fora do prazo configurado para tema/orientador."
+
+    def _order_prazos(self, prazos: list[PrazoEtapaRecord]) -> list[PrazoEtapaRecord]:
+        return sorted(
+            prazos,
+            key=lambda prazo: (prazo.data_limite, prazo.nome_etapa.casefold(), prazo.id),
+        )
+
+    def _status_info(self, dias_restantes: int) -> tuple[str, str]:
+        if dias_restantes > 7:
+            return "A_VENCER", "verde"
+        if 1 <= dias_restantes <= 7:
+            return "PROXIMO", "amarelo"
+        if dias_restantes == 0:
+            return "HOJE", "laranja"
+        return "VENCIDO", "vermelho"
+
+    def _formatar_mensagem(self, dias_restantes: int) -> str:
+        if dias_restantes > 0:
+            return f"Faltam {dias_restantes} dias"
+        if dias_restantes == 0:
+            return "Vence hoje"
+        return f"Vencido ha {abs(dias_restantes)} dias"
 
 
 async def get_periodo_service() -> PeriodoService:

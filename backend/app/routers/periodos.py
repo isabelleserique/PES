@@ -1,10 +1,15 @@
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.orm import Session
 
 from backend.app.api.deps import get_current_active_coordenador, get_current_authenticated_user
 from backend.app.db.models import UserRecord
 from backend.app.db.session import get_db_session
-from backend.app.schemas.periodo import CreatePeriodoRequest, PeriodoResponse, UpdatePeriodoRequest
+from backend.app.schemas.periodo import (
+    CronogramaPeriodoResponse,
+    CreatePeriodoRequest,
+    PeriodoResponse,
+    UpdatePeriodoRequest,
+)
 from backend.app.services.periodo_service import PeriodoService, get_periodo_service
 
 router = APIRouter(tags=["periodos"])
@@ -48,6 +53,23 @@ async def get_active_periodo(
 ) -> PeriodoResponse:
     _ = current_user
     return periodo_service.get_active_periodo(session=session)
+
+
+@router.get(
+    "/periodos/ativo/cronograma",
+    status_code=status.HTTP_200_OK,
+)
+async def get_active_periodo_cronograma(
+    orientando_id: str | None = Query(default=None),
+    session: Session = Depends(get_db_session),
+    periodo_service: PeriodoService = Depends(get_periodo_service),
+    current_user: UserRecord = Depends(get_current_authenticated_user),
+) -> CronogramaPeriodoResponse:
+    return periodo_service.get_cronograma(
+        session=session,
+        current_user=current_user,
+        orientando_id=orientando_id,
+    )
 
 
 @router.get(
