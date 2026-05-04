@@ -11,6 +11,13 @@ from backend.app.models.periodo import TipoTCC
 from backend.app.models.tcc import AcaoEdicaoTCC, StatusTCC
 from backend.app.models.user import Perfil, StatusCadastro
 
+TIPO_TCC_ENUM = Enum(
+    TipoTCC,
+    name="TipoTCC",
+    values_callable=lambda enum_class: [item.value for item in enum_class],
+    validate_strings=True,
+)
+
 
 class UserRecord(Base):
     __tablename__ = "users"
@@ -78,7 +85,7 @@ class PrazoEtapaRecord(Base):
     )
     nome_etapa: Mapped[str] = mapped_column(String, nullable=False)
     data_limite: Mapped[date] = mapped_column(Date, nullable=False)
-    tipo_tcc: Mapped[TipoTCC] = mapped_column(Enum(TipoTCC, name="TipoTCC"), nullable=False)
+    tipo_tcc: Mapped[TipoTCC] = mapped_column(TIPO_TCC_ENUM, nullable=False)
     criado_em: Mapped[datetime] = mapped_column(
         DateTime(timezone=False),
         server_default=func.now(),
@@ -95,7 +102,7 @@ class TCCRecord(Base):
 
     id: Mapped[str] = mapped_column(String, primary_key=True)
     titulo: Mapped[str] = mapped_column(String, nullable=False)
-    tipo_tcc: Mapped[TipoTCC] = mapped_column(Enum(TipoTCC, name="TipoTCC"), nullable=False)
+    tipo_tcc: Mapped[TipoTCC] = mapped_column(TIPO_TCC_ENUM, nullable=False)
     aluno_id: Mapped[str] = mapped_column(
         String,
         ForeignKey("users.id", ondelete="CASCADE"),
