@@ -8,6 +8,8 @@
     <button mat-stroked-button type="button" (click)="logout()">Sair</button>
   </header>
 
+  <app-painel-nav></app-painel-nav>
+
   <p class="status-message status-message--error" *ngIf="errorMessage">{{ errorMessage }}</p>
   <p class="status-message status-message--success" *ngIf="feedbackMessage">{{ feedbackMessage }}</p>
 

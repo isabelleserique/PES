@@ -37,11 +37,27 @@
 
 /* ── Filtro ── */
 .pp-filter-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
   margin-bottom: 24px;
 }
 
 .pp-filter-field {
   width: 220px;
+}
+
+.pp-filter-field--wide {
+  width: min(420px, 100%);
+}
+
+.pp-filter-stack {
+  margin-bottom: 4px;
+}
+
+.pp-context {
+  padding: 0;
+  text-align: left;
 }
 
 /* ── Grid principal ── */
@@ -238,5 +254,10 @@
   .tl-box {
     white-space: normal;
     max-width: 130px;
+  }
+
+  .pp-filter-field,
+  .pp-filter-field--wide {
+    width: 100%;
   }
 }

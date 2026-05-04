@@ -1,22 +1,31 @@
-<div class="app-shell">
-
-  <!-- Navbar -->
-  <nav class="app-navbar">
-    <div class="navbar-brand">
-      <div class="logo-badge">IC</div>
-      <span class="logo-name">IComp</span>
+<div class="painel-shell">
+  <header class="painel-header">
+    <div>
+      <span class="painel-eyebrow">US006</span>
+      <h1 class="painel-title">{{ pageTitle }}</h1>
+      <p class="painel-subtitle">
+        Defina o intervalo do período letivo e configure os prazos das etapas por tipo de TCC.
+      </p>
     </div>
-    <div class="navbar-sep"></div>
-    <span class="navbar-app-name">TCComp</span>
-  </nav>
+    <button mat-stroked-button type="button" (click)="cancelar()">Voltar</button>
+  </header>
 
-  <!-- Page content -->
-  <main class="app-page-content">
+  <app-painel-nav></app-painel-nav>
 
-    <p class="status-message status-message--error" *ngIf="errorMessage">{{ errorMessage }}</p>
-    <p class="status-message status-message--success" *ngIf="successMessage">{{ successMessage }}</p>
+  <p class="status-message status-message--error" *ngIf="errorMessage">{{ errorMessage }}</p>
+  <p class="status-message status-message--success" *ngIf="successMessage">{{ successMessage }}</p>
 
-    <h1 class="cp-page-title">Criação e Configuração do Período Letivo</h1>
+  <section class="painel-card" *ngIf="isLoadingPeriodo">
+    <p class="painel-loading">Carregando período letivo...</p>
+  </section>
+
+  <section class="painel-card" *ngIf="!isLoadingPeriodo">
+    <h2 class="cp-page-title">{{ isEditMode ? 'Dados do período ativo' : 'Novo período letivo' }}</h2>
+
+    <div class="painel-alert" *ngIf="isEditMode">
+      <strong>Edição habilitada</strong>
+      <p>Somente períodos ativos podem ser alterados. Ao desativar este período, novas edições serão bloqueadas.</p>
+    </div>
 
     <form [formGroup]="periodoForm" (ngSubmit)="salvarPeriodo()">
 
@@ -142,10 +151,10 @@
       <div class="cp-page-actions">
         <button mat-stroked-button type="button" (click)="cancelar()">Cancelar</button>
         <button mat-raised-button type="submit" class="cp-btn-salvar" [disabled]="isSubmitting">
-          {{ isSubmitting ? 'Salvando...' : 'Salvar Período' }}
+          {{ submitLabel }}
         </button>
       </div>
 
     </form>
-  </main>
+  </section>
 </div>
