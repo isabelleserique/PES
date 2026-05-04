@@ -1,12 +1,16 @@
 from __future__ import annotations
 
 from datetime import datetime
+from datetime import date, datetime
 from typing import Optional
 
 from sqlalchemy import Boolean, DateTime, Enum, ForeignKey, String, func
 from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy import Boolean, Date, DateTime, Enum, ForeignKey, String, func
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from backend.app.db.base import Base
+from backend.app.models.periodo import TipoTCC
 from backend.app.models.user import Perfil, StatusCadastro
 
 
@@ -33,6 +37,52 @@ class UserRecord(Base):
         server_default=func.now(),
         nullable=False,
     )
+
+
+class PeriodoLetivoRecord(Base):
+    __tablename__ = "periodos_letivos"
+
+    id: Mapped[str] = mapped_column(String, primary_key=True)
+    nome: Mapped[str] = mapped_column(String, nullable=False, index=True)
+    data_inicio: Mapped[date] = mapped_column(Date, nullable=False, index=True)
+    data_fim: Mapped[date] = mapped_column(Date, nullable=False, index=True)
+    ativo: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False, index=True)
+    criado_em: Mapped[datetime] = mapped_column(
+        DateTime(timezone=False),
+        server_default=func.now(),
+        nullable=False,
+    )
+    atualizado_em: Mapped[datetime] = mapped_column(
+        DateTime(timezone=False),
+        server_default=func.now(),
+        onupdate=func.now(),
+        nullable=False,
+    )
+    prazos: Mapped[list["PrazoEtapaRecord"]] = relationship(
+        back_populates="periodo",
+        cascade="all, delete-orphan",
+    )
+
+
+class PrazoEtapaRecord(Base):
+    __tablename__ = "prazos_etapas"
+
+    id: Mapped[str] = mapped_column(String, primary_key=True)
+    periodo_id: Mapped[str] = mapped_column(
+        String,
+        ForeignKey("periodos_letivos.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    nome_etapa: Mapped[str] = mapped_column(String, nullable=False)
+    data_limite: Mapped[date] = mapped_column(Date, nullable=False)
+    tipo_tcc: Mapped[TipoTCC] = mapped_column(Enum(TipoTCC, name="TipoTCC"), nullable=False)
+    criado_em: Mapped[datetime] = mapped_column(
+        DateTime(timezone=False),
+        server_default=func.now(),
+        nullable=False,
+    )
+    periodo: Mapped[PeriodoLetivoRecord] = relationship(back_populates="prazos")
 
 
 class PasswordResetTokenRecord(Base):
