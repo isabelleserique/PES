@@ -11,6 +11,7 @@ from sqlalchemy.orm import Session, selectinload
 
 from backend.app.db.models import PeriodoLetivoRecord, PrazoEtapaRecord, TCCRecord, UserRecord
 from backend.app.models.periodo import TipoTCC
+from backend.app.models.tcc import StatusTCC
 from backend.app.models.user import Perfil
 from backend.app.schemas.periodo import (
     CronogramaAlunoResponse,
@@ -345,6 +346,13 @@ class PeriodoService:
             .join(UserRecord, UserRecord.id == TCCRecord.aluno_id)
             .where(
                 TCCRecord.periodo_id == periodo.id,
+                TCCRecord.status.in_(
+                    [
+                        StatusTCC.AGUARDANDO_ACEITE,
+                        StatusTCC.EM_ANDAMENTO,
+                        StatusTCC.APROVADO,
+                    ]
+                ),
                 or_(
                     TCCRecord.orientador_id == current_user.id,
                     TCCRecord.coorientador_id == current_user.id,

@@ -205,6 +205,10 @@
   margin-bottom: 8px;
 }
 
+.pending-item__main--wide {
+  flex: 1;
+}
+
 .pending-item__main p {
   color: #4a5568;
   line-height: 1.5;
@@ -215,6 +219,16 @@
   flex-direction: column;
   gap: 10px;
   min-width: 140px;
+}
+
+.pending-item__actions--inline {
+  align-self: stretch;
+  justify-content: center;
+  min-width: 160px;
+}
+
+.pending-item--review {
+  align-items: stretch;
 }
 
 .approve-btn {

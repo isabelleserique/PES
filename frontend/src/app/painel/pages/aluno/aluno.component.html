@@ -59,11 +59,17 @@
         <p>{{ meuTcc?.alerta_prazo }}</p>
       </div>
 
+      <div class="painel-alert" *ngIf="meuTcc?.observacao_orientador">
+        <strong>Retorno do orientador</strong>
+        <p>{{ meuTcc?.observacao_orientador }}</p>
+      </div>
+
       <div class="painel-summary" *ngIf="meuTcc as tcc">
         <span class="painel-summary__chip">{{ tcc.tipo_tcc }}</span>
         <span class="painel-summary__chip">Orientador: {{ tcc.orientador_nome }}</span>
         <span class="painel-summary__chip" *ngIf="tcc.coorientador_nome">Coorientador: {{ tcc.coorientador_nome }}</span>
         <span class="painel-summary__chip">Periodo: {{ tcc.periodo_nome }}</span>
+        <span class="painel-summary__chip">Status: {{ tcc.status }}</span>
       </div>
 
       <p class="painel-empty" *ngIf="!meuTcc">

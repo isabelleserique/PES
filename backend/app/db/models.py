@@ -126,6 +126,7 @@ class TCCRecord(Base):
         default=StatusTCC.AGUARDANDO_ACEITE,
     )
     prazo_excedido: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    observacao_orientador: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     criado_em: Mapped[datetime] = mapped_column(
         DateTime(timezone=False),
         server_default=func.now(),
@@ -164,6 +165,7 @@ class TCCEditLogRecord(Base):
         Enum(AcaoEdicaoTCC, name="AcaoEdicaoTCC"),
         nullable=False,
     )
+    observacao: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     dados_anteriores: Mapped[Optional[dict[str, Any]]] = mapped_column(JSON, nullable=True)
     dados_novos: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False)
     criado_em: Mapped[datetime] = mapped_column(

@@ -38,7 +38,7 @@ export interface ReviewRegistrationResponse {
 
 export type TipoTcc = 'Todos' | 'Monografia' | 'Artigo' | 'Relatorio de Estagio';
 export type TipoTccAluno = Exclude<TipoTcc, 'Todos'>;
-export type StatusTcc = 'AGUARDANDO_ACEITE' | 'EM_ANDAMENTO' | 'APROVADO' | 'REJEITADO';
+export type StatusTcc = 'AGUARDANDO_ACEITE' | 'EM_ANDAMENTO' | 'SEM_ORIENTADOR' | 'APROVADO' | 'REJEITADO';
 export type StatusPrazo = 'A_VENCER' | 'PROXIMO' | 'HOJE' | 'VENCIDO';
 export type CorPrazo = 'verde' | 'amarelo' | 'laranja' | 'vermelho';
 
@@ -113,6 +113,7 @@ export interface TccResponse {
   status: StatusTcc;
   prazo_excedido: boolean;
   alerta_prazo: string | null;
+  observacao_orientador: string | null;
   criado_em: string;
   atualizado_em: string;
 }
@@ -121,6 +122,38 @@ export interface OrientadorDisponivel {
   id: string;
   nome_completo: string;
   email: string;
+}
+
+export interface PendingOrientationRequest {
+  tcc_id: string;
+  aluno_id: string;
+  aluno_nome: string;
+  aluno_email: string;
+  matricula: string | null;
+  titulo: string;
+  tipo_tcc: TipoTccAluno;
+  status: StatusTcc;
+  prazo_excedido: boolean;
+  alerta_submissao_prazo: string | null;
+  prazo_aceite: string | null;
+  acao_fora_do_prazo: boolean;
+  alerta_acao_prazo: string | null;
+  criado_em: string;
+}
+
+export interface OrientationDecisionPayload {
+  acao: 'ACEITAR' | 'RECUSAR';
+  observacao?: string;
+}
+
+export interface OrientationDecisionResponse {
+  tcc_id: string;
+  aluno_id: string;
+  aluno_nome: string;
+  status: StatusTcc;
+  observacao_orientador: string | null;
+  acao_fora_do_prazo: boolean;
+  alerta_acao_prazo: string | null;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -164,5 +197,16 @@ export class PainelService {
 
   atualizarMeuTcc(payload: TccPayload): Observable<TccResponse> {
     return this.http.patch<TccResponse>(`${this.api}/tcc/me`, payload);
+  }
+
+  listarSolicitacoesOrientacaoPendentes(): Observable<PendingOrientationRequest[]> {
+    return this.http.get<PendingOrientationRequest[]>(`${this.api}/tcc/orientacoes/pendentes`);
+  }
+
+  decidirSolicitacaoOrientacao(
+    tccId: string,
+    payload: OrientationDecisionPayload,
+  ): Observable<OrientationDecisionResponse> {
+    return this.http.patch<OrientationDecisionResponse>(`${this.api}/tcc/orientacoes/${tccId}/decisao`, payload);
   }
 }

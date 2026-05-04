@@ -393,3 +393,313 @@ def test_list_active_orientadores_returns_only_active_professors(client, db_sess
             "email": ativo.email,
         }
     ]
+
+
+def test_list_pending_orientation_requests_returns_only_current_orientador_requests(client, db_session) -> None:
+    orientador = _seed_user(
+        db_session,
+        nome_completo="Prof. Pendencias",
+        email="prof.pendencias@icomp.ufam.edu.br",
+        username="prof.pendencias",
+        perfil=Perfil.ORIENTADOR,
+        status=StatusCadastro.ATIVO,
+        ativo=True,
+    )
+    outro_orientador = _seed_user(
+        db_session,
+        nome_completo="Prof. Outro",
+        email="prof.outro@icomp.ufam.edu.br",
+        username="prof.outro",
+        perfil=Perfil.ORIENTADOR,
+        status=StatusCadastro.ATIVO,
+        ativo=True,
+    )
+    aluno_pendente = _seed_user(
+        db_session,
+        nome_completo="Aluno Pendente",
+        email="aluno.pendente.tcc@icomp.ufam.edu.br",
+        username="aluno.pendente.tcc",
+        perfil=Perfil.ALUNO,
+        status=StatusCadastro.ATIVO,
+        ativo=True,
+        matricula="2023123024",
+    )
+    aluno_outro = _seed_user(
+        db_session,
+        nome_completo="Aluno Outro",
+        email="aluno.outro.tcc@icomp.ufam.edu.br",
+        username="aluno.outro.tcc",
+        perfil=Perfil.ALUNO,
+        status=StatusCadastro.ATIVO,
+        ativo=True,
+        matricula="2023123025",
+    )
+    today = date.today()
+    periodo = _seed_periodo(
+        db_session,
+        nome="2026.1",
+        data_inicio=(today - timedelta(days=10)).isoformat(),
+        data_fim=(today + timedelta(days=45)).isoformat(),
+        ativo=True,
+        prazos=[
+            ("Aceite do Orientador", (today - timedelta(days=2)).isoformat(), TipoTCC.ARTIGO),
+            ("Aceite do Orientador", (today + timedelta(days=5)).isoformat(), TipoTCC.MONOGRAFIA),
+        ],
+    )
+    _seed_tcc(
+        db_session,
+        periodo_id=periodo.id,
+        aluno_id=aluno_pendente.id,
+        orientador_id=orientador.id,
+        titulo="Tema em IA",
+        tipo_tcc=TipoTCC.ARTIGO,
+        prazo_excedido=True,
+    )
+    _seed_tcc(
+        db_session,
+        periodo_id=periodo.id,
+        aluno_id=aluno_outro.id,
+        orientador_id=outro_orientador.id,
+        titulo="Tema em Dados",
+        tipo_tcc=TipoTCC.MONOGRAFIA,
+    )
+
+    response = client.request(
+        "GET",
+        "/tcc/orientacoes/pendentes",
+        headers=_build_auth_headers(user_id=orientador.id, perfil=orientador.perfil),
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert len(body) == 1
+    assert body[0]["aluno_id"] == aluno_pendente.id
+    assert body[0]["prazo_excedido"] is True
+    assert body[0]["acao_fora_do_prazo"] is True
+    assert body[0]["alerta_submissao_prazo"] is not None
+    assert body[0]["alerta_acao_prazo"] is not None
+
+
+def test_accept_orientation_updates_status_notifies_student_and_logs_late_action(
+    client,
+    db_session,
+    email_service,
+    caplog,
+) -> None:
+    orientador = _seed_user(
+        db_session,
+        nome_completo="Prof. Aceite",
+        email="prof.aceite@icomp.ufam.edu.br",
+        username="prof.aceite",
+        perfil=Perfil.ORIENTADOR,
+        status=StatusCadastro.ATIVO,
+        ativo=True,
+    )
+    aluno = _seed_user(
+        db_session,
+        nome_completo="Aluno Aceite",
+        email="aluno.aceite@icomp.ufam.edu.br",
+        username="aluno.aceite",
+        perfil=Perfil.ALUNO,
+        status=StatusCadastro.ATIVO,
+        ativo=True,
+        matricula="2023123026",
+    )
+    today = date.today()
+    periodo = _seed_periodo(
+        db_session,
+        nome="2026.1",
+        data_inicio=(today - timedelta(days=15)).isoformat(),
+        data_fim=(today + timedelta(days=30)).isoformat(),
+        ativo=True,
+        prazos=[("Aceite do Orientador", (today - timedelta(days=1)).isoformat(), TipoTCC.ARTIGO)],
+    )
+    tcc = _seed_tcc(
+        db_session,
+        periodo_id=periodo.id,
+        aluno_id=aluno.id,
+        orientador_id=orientador.id,
+        titulo="Tema Aceito",
+        tipo_tcc=TipoTCC.ARTIGO,
+        status=StatusTCC.AGUARDANDO_ACEITE,
+    )
+
+    with caplog.at_level(logging.INFO, logger="backend.audit"):
+        response = client.patch(
+            f"/tcc/orientacoes/{tcc.id}/decisao",
+            json={
+                "acao": "ACEITAR",
+                "observacao": "Vamos seguir com o tema.",
+            },
+            headers=_build_auth_headers(user_id=orientador.id, perfil=orientador.perfil),
+        )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["status"] == "EM_ANDAMENTO"
+    assert body["observacao_orientador"] == "Vamos seguir com o tema."
+    assert body["acao_fora_do_prazo"] is True
+    assert body["alerta_acao_prazo"] is not None
+
+    db_session.refresh(tcc)
+    assert tcc.status == StatusTCC.EM_ANDAMENTO
+    assert tcc.observacao_orientador == "Vamos seguir com o tema."
+
+    logs = db_session.query(TCCEditLogRecord).filter_by(tcc_id=tcc.id).all()
+    assert len(logs) == 1
+    assert logs[0].acao == AcaoEdicaoTCC.ACEITE_ORIENTACAO
+    assert logs[0].observacao == "Vamos seguir com o tema."
+
+    assert email_service.orientation_decisions == [
+        {
+            "to_email": aluno.email,
+            "aluno_nome": aluno.nome_completo,
+            "titulo": tcc.titulo,
+            "orientador_nome": orientador.nome_completo,
+            "accepted": True,
+            "observacao": "Vamos seguir com o tema.",
+            "outside_deadline": True,
+        }
+    ]
+    assert "action=ORIENTATION_DECISION" in caplog.text
+    assert "decision=ACEITAR" in caplog.text
+    assert "outside_deadline=True" in caplog.text
+
+
+def test_reject_orientation_requires_observation_and_sets_sem_orientador(
+    client,
+    db_session,
+    email_service,
+) -> None:
+    orientador = _seed_user(
+        db_session,
+        nome_completo="Prof. Recusa",
+        email="prof.recusa@icomp.ufam.edu.br",
+        username="prof.recusa",
+        perfil=Perfil.ORIENTADOR,
+        status=StatusCadastro.ATIVO,
+        ativo=True,
+    )
+    aluno = _seed_user(
+        db_session,
+        nome_completo="Aluno Recusa",
+        email="aluno.recusa@icomp.ufam.edu.br",
+        username="aluno.recusa",
+        perfil=Perfil.ALUNO,
+        status=StatusCadastro.ATIVO,
+        ativo=True,
+        matricula="2023123027",
+    )
+    today = date.today()
+    periodo = _seed_periodo(
+        db_session,
+        nome="2026.1",
+        data_inicio=(today - timedelta(days=3)).isoformat(),
+        data_fim=(today + timedelta(days=40)).isoformat(),
+        ativo=True,
+        prazos=[("Aceite do Orientador", (today + timedelta(days=4)).isoformat(), TipoTCC.MONOGRAFIA)],
+    )
+    tcc = _seed_tcc(
+        db_session,
+        periodo_id=periodo.id,
+        aluno_id=aluno.id,
+        orientador_id=orientador.id,
+        titulo="Tema Recusado",
+        tipo_tcc=TipoTCC.MONOGRAFIA,
+        status=StatusTCC.AGUARDANDO_ACEITE,
+    )
+
+    invalid_response = client.patch(
+        f"/tcc/orientacoes/{tcc.id}/decisao",
+        json={"acao": "RECUSAR"},
+        headers=_build_auth_headers(user_id=orientador.id, perfil=orientador.perfil),
+    )
+
+    assert invalid_response.status_code == 422
+    assert "Observacao e obrigatoria ao recusar a orientacao." in invalid_response.body.decode("utf-8")
+
+    response = client.patch(
+        f"/tcc/orientacoes/{tcc.id}/decisao",
+        json={
+            "acao": "RECUSAR",
+            "observacao": "Sem vagas para este tema",
+        },
+        headers=_build_auth_headers(user_id=orientador.id, perfil=orientador.perfil),
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["status"] == "SEM_ORIENTADOR"
+    assert body["observacao_orientador"] == "Sem vagas para este tema"
+    assert body["acao_fora_do_prazo"] is False
+
+    db_session.refresh(tcc)
+    assert tcc.status == StatusTCC.SEM_ORIENTADOR
+    assert tcc.observacao_orientador == "Sem vagas para este tema"
+
+    assert email_service.orientation_decisions[-1] == {
+        "to_email": aluno.email,
+        "aluno_nome": aluno.nome_completo,
+        "titulo": tcc.titulo,
+        "orientador_nome": orientador.nome_completo,
+        "accepted": False,
+        "observacao": "Sem vagas para este tema",
+        "outside_deadline": False,
+    }
+
+
+def test_orientation_decision_denies_other_orientador(client, db_session) -> None:
+    orientador = _seed_user(
+        db_session,
+        nome_completo="Prof. Dono",
+        email="prof.dono@icomp.ufam.edu.br",
+        username="prof.dono",
+        perfil=Perfil.ORIENTADOR,
+        status=StatusCadastro.ATIVO,
+        ativo=True,
+    )
+    outro_orientador = _seed_user(
+        db_session,
+        nome_completo="Prof. Intruso",
+        email="prof.intruso@icomp.ufam.edu.br",
+        username="prof.intruso",
+        perfil=Perfil.ORIENTADOR,
+        status=StatusCadastro.ATIVO,
+        ativo=True,
+    )
+    aluno = _seed_user(
+        db_session,
+        nome_completo="Aluno Dono",
+        email="aluno.dono@icomp.ufam.edu.br",
+        username="aluno.dono",
+        perfil=Perfil.ALUNO,
+        status=StatusCadastro.ATIVO,
+        ativo=True,
+        matricula="2023123028",
+    )
+    today = date.today()
+    periodo = _seed_periodo(
+        db_session,
+        nome="2026.1",
+        data_inicio=(today - timedelta(days=3)).isoformat(),
+        data_fim=(today + timedelta(days=20)).isoformat(),
+        ativo=True,
+        prazos=[("Aceite do Orientador", (today + timedelta(days=4)).isoformat(), TipoTCC.ARTIGO)],
+    )
+    tcc = _seed_tcc(
+        db_session,
+        periodo_id=periodo.id,
+        aluno_id=aluno.id,
+        orientador_id=orientador.id,
+        titulo="Tema Protegido",
+        tipo_tcc=TipoTCC.ARTIGO,
+    )
+
+    response = client.patch(
+        f"/tcc/orientacoes/{tcc.id}/decisao",
+        json={"acao": "ACEITAR"},
+        headers=_build_auth_headers(user_id=outro_orientador.id, perfil=outro_orientador.perfil),
+    )
+
+    assert response.status_code == 404
+    assert response.json()["detail"] == "Solicitacao de orientacao nao encontrada."

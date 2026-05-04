@@ -30,6 +30,7 @@ enum TipoTCC {
 enum StatusTCC {
   AGUARDANDO_ACEITE
   EM_ANDAMENTO
+  SEM_ORIENTADOR
   APROVADO
   REJEITADO
 }
@@ -37,6 +38,8 @@ enum StatusTCC {
 enum AcaoEdicaoTCC {
   CRIACAO
   EDICAO
+  ACEITE_ORIENTACAO
+  RECUSA_ORIENTACAO
 }
 
 model User {
@@ -102,6 +105,7 @@ model TCC {
   periodo_id       String
   status           StatusTCC    @default(AGUARDANDO_ACEITE)
   prazo_excedido   Boolean      @default(false)
+  observacao_orientador String?
   criado_em        DateTime     @default(now())
   atualizado_em    DateTime     @updatedAt
   aluno            User         @relation("AlunoTCC", fields: [aluno_id], references: [id], onDelete: Cascade)
@@ -122,6 +126,7 @@ model TCCEditLog {
   tcc_id           String
   actor_user_id    String
   acao             AcaoEdicaoTCC
+  observacao       String?
   dados_anteriores Json?
   dados_novos      Json
   criado_em        DateTime       @default(now())
