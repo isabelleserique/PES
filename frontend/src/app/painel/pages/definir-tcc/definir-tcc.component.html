@@ -1,0 +1,230 @@
+<div class="app-shell">
+
+  <!-- Navbar -->
+  <nav class="app-navbar">
+    <div class="navbar-brand">
+      <div class="logo-badge">IC</div>
+      <span class="logo-name">IComp</span>
+    </div>
+    <div class="navbar-sep"></div>
+    <span class="navbar-app-name">TCComp</span>
+  </nav>
+
+  <main class="app-page-content">
+
+    <!-- Tela de sucesso -->
+    <ng-container *ngIf="isSubmitted; else formView">
+      <div class="dt-success-card">
+        <mat-icon class="dt-success-icon">check_circle</mat-icon>
+        <h2>Solicitação enviada com sucesso!</h2>
+        <p>O orientador <strong>{{ orientadorSelecionado?.nome }}</strong> foi notificado e irá analisar sua solicitação.</p>
+        <p class="dt-success-status">Status: <span>Aguardando Aceite do Orientador</span></p>
+        <button mat-raised-button class="dt-btn-primary" (click)="cancelar()">Voltar ao painel</button>
+      </div>
+    </ng-container>
+
+    <!-- Formulário -->
+    <ng-template #formView>
+      <h1 class="dt-page-title">Formulário de Definição de TCC</h1>
+
+      <!-- Alerta fora do prazo -->
+      <div class="dt-alert dt-alert--warning" *ngIf="foraDoPrazo">
+        <mat-icon>warning</mat-icon>
+        <span>
+          O prazo para definição de tema expirou há <strong>{{ diasAtraso }} dia(s)</strong>
+          ({{ prazoDefinicao | date:'dd/MM/yyyy' }}). Você ainda pode submeter, mas o coordenador será notificado sobre o atraso.
+        </span>
+      </div>
+
+      <!-- Stepper -->
+      <mat-stepper orientation="horizontal" [linear]="true" #stepper class="dt-stepper">
+
+        <!-- ── Step 1: Tema e Tipo ── -->
+        <mat-step [stepControl]="step1Form" label="Tema e Tipo">
+          <form [formGroup]="step1Form">
+
+            <div class="dt-section-header">INFORMAÇÕES DO TCC</div>
+
+            <div class="dt-form-row">
+              <mat-form-field appearance="outline" class="dt-field-titulo">
+                <mat-label>1. Título do TCC</mat-label>
+                <input matInput formControlName="titulo" />
+                <mat-error *ngIf="step1Form.controls['titulo'].hasError('required')">Campo obrigatório</mat-error>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="dt-field-tipo">
+                <mat-label>2. Tipo de TCC</mat-label>
+                <mat-select formControlName="tipoDeTCC">
+                  <mat-option *ngFor="let tipo of tiposDeTCC" [value]="tipo">{{ tipo }}</mat-option>
+                </mat-select>
+                <mat-error *ngIf="step1Form.controls['tipoDeTCC'].hasError('required')">Campo obrigatório</mat-error>
+              </mat-form-field>
+            </div>
+
+            <mat-form-field appearance="outline" class="dt-field-full">
+              <mat-label>3. Resumo do Tema</mat-label>
+              <textarea matInput formControlName="resumo" rows="5"></textarea>
+              <mat-error *ngIf="step1Form.controls['resumo'].hasError('required')">Campo obrigatório</mat-error>
+            </mat-form-field>
+
+            <div class="dt-step-actions">
+              <button mat-stroked-button type="button" (click)="cancelar()">Cancelar</button>
+              <button mat-raised-button class="dt-btn-primary" matStepperNext type="button"
+                      (click)="step1Form.markAllAsTouched()">
+                Próximo
+              </button>
+            </div>
+          </form>
+        </mat-step>
+
+        <!-- ── Step 2: Seleção do Orientador ── -->
+        <mat-step [stepControl]="step2Form" label="Seleção do Orientador">
+
+          <div class="dt-professor-section">
+            <div class="dt-professor-header">
+              <span class="dt-professor-title">PROFESSOR ORIENTADOR</span>
+              <input
+                class="dt-search-input"
+                type="text"
+                placeholder="Pesquisar professor..."
+                (input)="onSearchOrientador($event)"
+              />
+            </div>
+
+            <div class="dt-professor-list">
+              <div class="dt-professor-row dt-professor-row--header">
+                <span>Nome do Professor</span>
+                <span>Área de Interesse</span>
+              </div>
+              <div
+                class="dt-professor-row"
+                *ngFor="let prof of professoresFiltrados"
+                [class.dt-professor-row--selected]="orientadorSelecionado?.id === prof.id"
+                (click)="selecionarOrientador(prof)"
+              >
+                <span>{{ prof.nome }}</span>
+                <span class="dt-area">{{ prof.area }}</span>
+              </div>
+              <p class="dt-empty" *ngIf="professoresFiltrados.length === 0">Nenhum professor encontrado.</p>
+            </div>
+
+            <div class="dt-orientador-selecionado" *ngIf="orientadorSelecionado">
+              <mat-icon>person</mat-icon>
+              <span>Selecionado: <strong>{{ orientadorSelecionado.nome }}</strong></span>
+            </div>
+          </div>
+
+          <div class="dt-step-actions">
+            <button mat-stroked-button type="button" matStepperPrevious>Anterior</button>
+            <button mat-raised-button class="dt-btn-primary" matStepperNext type="button"
+                    (click)="step2Form.markAllAsTouched()">
+              Próximo
+            </button>
+          </div>
+        </mat-step>
+
+        <!-- ── Step 3: Co-orientador ── -->
+        <mat-step label="Co-orientador">
+
+          <div class="dt-coorientador-note">
+            <mat-icon>info</mat-icon>
+            <span>Co-orientador é <strong>opcional</strong>. Você pode pular esta etapa.</span>
+          </div>
+
+          <div class="dt-professor-section">
+            <div class="dt-professor-header">
+              <span class="dt-professor-title">CO-ORIENTADOR</span>
+              <input
+                class="dt-search-input"
+                type="text"
+                placeholder="Pesquisar professor..."
+                (input)="onSearchCoorientador($event)"
+              />
+            </div>
+
+            <div class="dt-professor-list">
+              <div class="dt-professor-row dt-professor-row--header">
+                <span>Nome do Professor</span>
+                <span>Área de Interesse</span>
+              </div>
+              <div
+                class="dt-professor-row"
+                *ngFor="let prof of coorientadoresFiltrados"
+                [class.dt-professor-row--selected]="coorientadorSelecionado?.id === prof.id"
+                (click)="selecionarCoorientador(prof)"
+              >
+                <span>{{ prof.nome }}</span>
+                <span class="dt-area">{{ prof.area }}</span>
+              </div>
+            </div>
+
+            <div class="dt-orientador-selecionado" *ngIf="coorientadorSelecionado">
+              <mat-icon>person</mat-icon>
+              <span>Selecionado: <strong>{{ coorientadorSelecionado.nome }}</strong></span>
+              <button mat-icon-button type="button" (click)="limparCoorientador()" title="Remover">
+                <mat-icon>close</mat-icon>
+              </button>
+            </div>
+          </div>
+
+          <div class="dt-step-actions">
+            <button mat-stroked-button type="button" matStepperPrevious>Anterior</button>
+            <button mat-stroked-button type="button" matStepperNext>Pular</button>
+            <button mat-raised-button class="dt-btn-primary" matStepperNext type="button"
+                    *ngIf="coorientadorSelecionado">
+              Próximo
+            </button>
+          </div>
+        </mat-step>
+
+        <!-- ── Step 4: Revisão e Envio ── -->
+        <mat-step label="Revisão">
+
+          <div class="dt-review-card">
+            <h3 class="dt-review-title">Revise as informações antes de enviar</h3>
+
+            <div class="dt-review-grid">
+              <div class="dt-review-item">
+                <span class="dt-review-label">Título do TCC</span>
+                <span class="dt-review-value">{{ step1Form.value.titulo }}</span>
+              </div>
+              <div class="dt-review-item">
+                <span class="dt-review-label">Tipo de TCC</span>
+                <span class="dt-review-value">{{ step1Form.value.tipoDeTCC }}</span>
+              </div>
+              <div class="dt-review-item dt-review-item--full">
+                <span class="dt-review-label">Resumo do Tema</span>
+                <span class="dt-review-value">{{ step1Form.value.resumo }}</span>
+              </div>
+              <div class="dt-review-item">
+                <span class="dt-review-label">Orientador</span>
+                <span class="dt-review-value">{{ orientadorSelecionado?.nome }}</span>
+              </div>
+              <div class="dt-review-item" *ngIf="coorientadorSelecionado">
+                <span class="dt-review-label">Co-orientador</span>
+                <span class="dt-review-value">{{ coorientadorSelecionado?.nome }}</span>
+              </div>
+            </div>
+          </div>
+
+          <p class="status-message status-message--error" *ngIf="errorMessage">{{ errorMessage }}</p>
+
+          <div class="dt-step-actions">
+            <button mat-stroked-button type="button" matStepperPrevious>Anterior</button>
+            <button
+              mat-raised-button
+              type="button"
+              class="dt-btn-submeter"
+              [disabled]="isSubmitting"
+              (click)="submeter()"
+            >
+              {{ isSubmitting ? 'Enviando...' : 'Submeter para Aceite' }}
+            </button>
+          </div>
+        </mat-step>
+
+      </mat-stepper>
+    </ng-template>
+
+  </main>
+</div>

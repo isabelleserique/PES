@@ -1,0 +1,242 @@
+/* ── Header ── */
+.pp-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.pp-title {
+  color: #0d2137;
+  font-size: 1.55rem;
+  font-weight: 700;
+}
+
+.pp-status-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #fff;
+  border: 1.5px solid #27ae60;
+  border-radius: 999px;
+  padding: 6px 18px;
+  font-size: 0.88rem;
+}
+
+.pp-status-label {
+  color: #4a5568;
+  font-weight: 500;
+}
+
+.pp-status-value {
+  color: #27ae60;
+  font-weight: 700;
+}
+
+/* ── Filtro ── */
+.pp-filter-row {
+  margin-bottom: 24px;
+}
+
+.pp-filter-field {
+  width: 220px;
+}
+
+/* ── Grid principal ── */
+.pp-grid {
+  display: grid;
+  grid-template-columns: 1fr 260px;
+  gap: 20px;
+  align-items: start;
+}
+
+/* ── Cards ── */
+.pp-card {
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid rgba(13, 33, 55, 0.08);
+  border-radius: 16px;
+  box-shadow: 0 4px 24px rgba(13, 33, 55, 0.07);
+  padding: 24px;
+}
+
+.pp-card-title {
+  color: #0d2137;
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 28px;
+}
+
+.pp-empty {
+  color: #718096;
+  font-size: 0.9rem;
+  text-align: center;
+  padding: 20px 0;
+}
+
+/* ── Timeline zigzag ── */
+.timeline {
+  position: relative;
+  padding: 8px 0;
+}
+
+/* Linha vertical central */
+.timeline-track {
+  position: absolute;
+  top: 20px;
+  bottom: 20px;
+  left: calc(50% - 1px);
+  width: 2px;
+  background: #27ae60;
+  z-index: 0;
+}
+
+.tl-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 28px;
+  position: relative;
+  z-index: 1;
+}
+
+.tl-left {
+  flex: 1;
+  display: flex;
+  justify-content: flex-end;
+  padding-right: 20px;
+}
+
+.tl-right {
+  flex: 1;
+  display: flex;
+  justify-content: flex-start;
+  padding-left: 20px;
+}
+
+/* Dot na linha */
+.tl-dot-wrap {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+}
+
+.tl-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2.5px solid #fff;
+  flex-shrink: 0;
+}
+
+.tl-dot.status-ok      { background: #27ae60; box-shadow: 0 0 0 2px #27ae60; }
+.tl-dot.status-urgente { background: #ed8936; box-shadow: 0 0 0 2px #ed8936; }
+.tl-dot.status-atrasado { background: #e53e3e; box-shadow: 0 0 0 2px #e53e3e; }
+
+/* Box da etapa */
+.tl-box {
+  background: #fff;
+  border-radius: 8px;
+  padding: 9px 14px;
+  font-size: 0.82rem;
+  color: #0d2137;
+  font-weight: 500;
+  white-space: nowrap;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  border-left: 3px solid transparent;
+  box-shadow: 0 1px 6px rgba(13, 33, 55, 0.08);
+}
+
+.tl-box.status-ok       { border-left-color: #27ae60; }
+.tl-box.status-urgente  { border-left-color: #ed8936; background: #fff8f0; }
+.tl-box.status-atrasado { border-left-color: #e53e3e; background: #fff5f5; }
+
+.tl-num {
+  font-weight: 700;
+  color: #1565c0;
+}
+
+/* Label de dias dentro do box */
+.tl-dias {
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
+.tl-dias.status-ok       { color: #27ae60; }
+.tl-dias.status-urgente  { color: #c06030; }
+.tl-dias.status-atrasado { color: #e53e3e; }
+
+/* ── Entregas Pendentes ── */
+.pp-card--pendentes {
+  position: sticky;
+  top: 20px;
+}
+
+.pp-card--pendentes .pp-card-title {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.pp-pendentes-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.pp-pendentes-table th {
+  font-size: 0.78rem;
+  color: #718096;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 6px 8px;
+  border-bottom: 1px solid #e2e8f0;
+  text-align: left;
+}
+
+.pp-pendentes-table td {
+  padding: 10px 8px;
+  font-size: 0.88rem;
+  color: #0d2137;
+  border-bottom: 1px solid #f4f7fb;
+}
+
+.pp-pendentes-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.pp-date-cell {
+  font-weight: 600;
+}
+
+/* Row status nas pendentes */
+.pp-pendentes-table tbody tr.status-atrasado td {
+  color: #e53e3e;
+}
+
+.pp-pendentes-table tbody tr.status-urgente td {
+  color: #c06030;
+}
+
+/* ── Responsivo ── */
+@media (max-width: 768px) {
+  .pp-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .pp-card--pendentes {
+    position: static;
+  }
+
+  .tl-box {
+    white-space: normal;
+    max-width: 130px;
+  }
+}

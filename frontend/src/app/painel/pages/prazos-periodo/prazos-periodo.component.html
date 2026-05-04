@@ -1,0 +1,103 @@
+<div class="app-shell">
+
+  <!-- Navbar -->
+  <nav class="app-navbar">
+    <div class="navbar-brand">
+      <div class="logo-badge">IC</div>
+      <span class="logo-name">IComp</span>
+    </div>
+    <div class="navbar-sep"></div>
+    <span class="navbar-app-name">TCComp</span>
+  </nav>
+
+  <main class="app-page-content">
+
+    <!-- Header: título + badge de status -->
+    <div class="pp-header">
+      <h1 class="pp-title">Prazos do Período {{ nomePeriodo }}</h1>
+      <div class="pp-status-badge">
+        <span class="pp-status-label">Status:</span>
+        <span class="pp-status-value">{{ statusUsuario }}</span>
+      </div>
+    </div>
+
+    <!-- Filtro -->
+    <div class="pp-filter-row">
+      <mat-form-field appearance="outline" class="pp-filter-field">
+        <mat-label>Filtrar por tipo de TCC</mat-label>
+        <mat-select [formControl]="filtroTipo">
+          <mat-option *ngFor="let tipo of tiposDeTCC" [value]="tipo">{{ tipo }}</mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
+
+    <!-- Grid principal: cronograma + pendentes -->
+    <div class="pp-grid">
+
+      <!-- Card esquerdo: cronograma -->
+      <div class="pp-card pp-card--cronograma">
+        <h2 class="pp-card-title">CRONOGRAMA DE ETAPAS</h2>
+
+        <div class="timeline" *ngIf="prazos.length > 0; else emptyState">
+          <div class="timeline-track"></div>
+
+          <div class="tl-row" *ngFor="let prazo of prazos; let i = index">
+
+            <!-- Box esquerdo (índice par) -->
+            <div class="tl-left">
+              <div class="tl-box" *ngIf="i % 2 === 0" [ngClass]="getStatusClass(prazo)">
+                <span class="tl-num">{{ i + 1 }}.</span> {{ prazo.nomeEtapa }}
+                <span class="tl-dias" [ngClass]="getStatusClass(prazo)">
+                  {{ getDiasLabel(prazo) }}
+                </span>
+              </div>
+            </div>
+
+            <!-- Ponto na linha -->
+            <div class="tl-dot-wrap">
+              <div class="tl-dot" [ngClass]="getStatusClass(prazo)"></div>
+            </div>
+
+            <!-- Box direito (índice ímpar) -->
+            <div class="tl-right">
+              <div class="tl-box" *ngIf="i % 2 !== 0" [ngClass]="getStatusClass(prazo)">
+                <span class="tl-num">{{ i + 1 }}.</span> {{ prazo.nomeEtapa }}
+                <span class="tl-dias" [ngClass]="getStatusClass(prazo)">
+                  {{ getDiasLabel(prazo) }}
+                </span>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <ng-template #emptyState>
+          <p class="pp-empty">Nenhum prazo configurado para este período.</p>
+        </ng-template>
+      </div>
+
+      <!-- Card direito: entregas pendentes -->
+      <div class="pp-card pp-card--pendentes">
+        <h2 class="pp-card-title">ENTREGAS<br>PENDENTES</h2>
+
+        <table class="pp-pendentes-table" *ngIf="prazosPendentes.length > 0">
+          <thead>
+            <tr>
+              <th>Data</th>
+              <th>Tipo</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let prazo of prazosPendentes" [ngClass]="getStatusClass(prazo)">
+              <td class="pp-date-cell">{{ prazo.dataLimite | date:'dd/MM' }}</td>
+              <td>{{ getTipoEntrega(prazo.nomeEtapa) }}</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <p class="pp-empty" *ngIf="prazosPendentes.length === 0">Sem entregas pendentes.</p>
+      </div>
+
+    </div>
+  </main>
+</div>
