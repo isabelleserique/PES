@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { FormBuilder, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { finalize } from 'rxjs/operators';
@@ -11,7 +11,7 @@ import { getApiErrorMessage } from '../../utils/api-error.util';
   templateUrl: './login.component.html',
   styleUrls: ['./login.component.css'],
 })
-export class LoginComponent {
+export class LoginComponent implements OnInit {
   isSubmitting = false;
   errorMessage = '';
   successMessage = '';
@@ -26,6 +26,10 @@ export class LoginComponent {
     private readonly authService: AuthService,
     private readonly router: Router,
   ) {}
+
+  ngOnInit(): void {
+    this.authService.clearSession();
+  }
 
   submit(): void {
     this.form.markAllAsTouched();

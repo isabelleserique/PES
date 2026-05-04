@@ -1,34 +1,55 @@
-<div class="app-shell">
-
-  <!-- Navbar -->
-  <nav class="app-navbar">
-    <div class="navbar-brand">
-      <div class="logo-badge">IC</div>
-      <span class="logo-name">IComp</span>
+<div class="painel-shell">
+  <header class="painel-header">
+    <div>
+      <span class="painel-eyebrow">US007</span>
+      <h1 class="painel-title">Prazos do Período {{ nomePeriodo }}</h1>
+      <p class="painel-subtitle">
+        Visualize o cronograma ativo filtrado pelo tipo de TCC e, no caso do orientador, acompanhe os prazos por orientando.
+      </p>
     </div>
-    <div class="navbar-sep"></div>
-    <span class="navbar-app-name">TCComp</span>
-  </nav>
+    <div class="pp-status-badge" *ngIf="statusUsuario">
+      <span class="pp-status-label">Status:</span>
+      <span class="pp-status-value">{{ statusUsuario }}</span>
+    </div>
+  </header>
 
-  <main class="app-page-content">
+  <app-painel-nav></app-painel-nav>
 
-    <!-- Header: título + badge de status -->
+  <p class="status-message status-message--error" *ngIf="errorMessage">{{ errorMessage }}</p>
+
+  <section class="painel-card" *ngIf="isLoading">
+    <p class="painel-loading">Carregando cronograma do período...</p>
+  </section>
+
+  <main class="painel-card" *ngIf="!isLoading && !errorMessage">
+
     <div class="pp-header">
-      <h1 class="pp-title">Prazos do Período {{ nomePeriodo }}</h1>
-      <div class="pp-status-badge">
-        <span class="pp-status-label">Status:</span>
-        <span class="pp-status-value">{{ statusUsuario }}</span>
+      <div>
+        <h2 class="pp-title">{{ nomeContexto || 'Cronograma ativo' }}</h2>
+        <p class="painel-empty pp-context" *ngIf="isOrientador">
+          Selecione um orientando para focar nos prazos aplicáveis ao TCC dele.
+        </p>
       </div>
     </div>
 
-    <!-- Filtro -->
-    <div class="pp-filter-row">
-      <mat-form-field appearance="outline" class="pp-filter-field">
-        <mat-label>Filtrar por tipo de TCC</mat-label>
-        <mat-select [formControl]="filtroTipo">
-          <mat-option *ngFor="let tipo of tiposDeTCC" [value]="tipo">{{ tipo }}</mat-option>
-        </mat-select>
-      </mat-form-field>
+    <div class="pp-filter-stack">
+      <div class="pp-filter-row">
+        <mat-form-field appearance="outline" class="pp-filter-field">
+          <mat-label>Filtrar por tipo de TCC</mat-label>
+          <mat-select [formControl]="filtroTipo">
+            <mat-option *ngFor="let tipo of tiposDeTCC" [value]="tipo">{{ tipo }}</mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="pp-filter-field pp-filter-field--wide" *ngIf="isOrientador">
+          <mat-label>Selecionar orientando</mat-label>
+          <mat-select [formControl]="filtroOrientando" (selectionChange)="onOrientandoChange()">
+            <mat-option *ngFor="let orientando of orientandosDisponiveis" [value]="orientando.aluno_id">
+              {{ orientando.aluno_nome }} · {{ orientando.tipo_tcc }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
     </div>
 
     <!-- Grid principal: cronograma + pendentes -->

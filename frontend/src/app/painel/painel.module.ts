@@ -6,10 +6,12 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatStepperModule } from '@angular/material/stepper';
 
 import { SharedModule } from '../shared/shared.module';
+import { PainelNavComponent } from './components/painel-nav/painel-nav.component';
 import { PainelAlunoComponent } from './pages/aluno/aluno.component';
 import { CriarPeriodoComponent } from './pages/criar-periodo/criar-periodo.component';
 import { AceiteOrientacaoComponent } from './pages/aceite-orientacao/aceite-orientacao.component';
 import { DefinirTccComponent } from './pages/definir-tcc/definir-tcc.component';
+import { GerenciarPeriodosComponent } from './pages/gerenciar-periodos/gerenciar-periodos.component';
 import { PrazosPeriodoComponent } from './pages/prazos-periodo/prazos-periodo.component';
 import { PainelCoordenadorComponent } from './pages/painel/painel.component';
 import { PainelRedirectComponent } from './pages/redirect/redirect.component';
@@ -18,11 +20,13 @@ import { PainelRoutingModule } from './painel-routing.module';
 
 @NgModule({
   declarations: [
+    PainelNavComponent,
     PainelCoordenadorComponent,
     PainelAlunoComponent,
     PainelOrientadorComponent,
     PainelRedirectComponent,
     CriarPeriodoComponent,
+    GerenciarPeriodosComponent,
     PrazosPeriodoComponent,
     DefinirTccComponent,
     AceiteOrientacaoComponent,
