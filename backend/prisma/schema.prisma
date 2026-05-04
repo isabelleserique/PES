@@ -20,6 +20,12 @@ enum UserStatus {
   REJEITADO
 }
 
+enum TipoTCC {
+  TODOS       @map("Todos")
+  MONOGRAFIA  @map("Monografia")
+  ARTIGO      @map("Artigo")
+}
+
 model User {
   id                    String               @id @default(cuid())
   nome_completo         String
@@ -36,6 +42,36 @@ model User {
   password_reset_tokens PasswordResetToken[]
 
   @@map("users")
+}
+
+model PeriodoLetivo {
+  id           String       @id
+  nome         String
+  data_inicio  DateTime     @db.Date
+  data_fim     DateTime     @db.Date
+  ativo        Boolean      @default(false)
+  criado_em    DateTime     @default(now())
+  atualizado_em DateTime    @updatedAt
+  prazos       PrazoEtapa[]
+
+  @@index([nome])
+  @@index([data_inicio])
+  @@index([data_fim])
+  @@index([ativo])
+  @@map("periodos_letivos")
+}
+
+model PrazoEtapa {
+  id          String        @id
+  periodo_id  String
+  nome_etapa  String
+  data_limite DateTime      @db.Date
+  tipo_tcc    TipoTCC
+  criado_em   DateTime      @default(now())
+  periodo     PeriodoLetivo @relation(fields: [periodo_id], references: [id], onDelete: Cascade)
+
+  @@index([periodo_id])
+  @@map("prazos_etapas")
 }
 
 model PasswordResetToken {
