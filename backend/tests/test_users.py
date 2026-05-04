@@ -85,7 +85,7 @@ def test_create_coordenador_returns_201_and_never_exposes_password_hash(client, 
             "to_email": payload["email"],
             "full_name": payload["nome_completo"],
             "username": payload["username"],
-            "temporary_password": payload["senha"],
+            "password": payload["senha"],
         }
     ]
     assert "action=CADASTRO_USUARIO" in caplog.text
@@ -108,7 +108,14 @@ def test_create_coordenador_returns_409_when_email_or_username_already_exists(cl
     }
 
     first_response = client.post("/usuarios/coordenador", json=first_payload)
-    conflict_response = client.post("/usuarios/coordenador", json=conflict_payload)
+    conflict_response = client.post(
+        "/usuarios/coordenador",
+        json=conflict_payload,
+        headers=_build_auth_headers(
+            user_id=first_response.json()["id"],
+            perfil=Perfil.COORDENADOR,
+        ),
+    )
 
     assert first_response.status_code == 201
     assert conflict_response.status_code == 409
@@ -125,6 +132,56 @@ def test_create_coordenador_keeps_flow_alive_when_welcome_email_fails(client, em
     }
 
     response = client.post("/usuarios/coordenador", json=payload)
+
+    assert response.status_code == 201
+    assert response.json()["nome_completo"] == payload["nome_completo"]
+
+
+def test_create_coordenador_requires_authenticated_coordinator_when_one_already_exists(client, db_session) -> None:
+    _seed_user(
+        db_session,
+        nome_completo="Coordenadora Atual",
+        email="coordenadora.atual@icomp.ufam.edu.br",
+        username="coord.atual",
+        perfil=Perfil.COORDENADOR,
+        status=StatusCadastro.ATIVO,
+        ativo=True,
+    )
+    payload = {
+        "nome_completo": "Nova Coordenadora",
+        "email": "nova.coordenadora@icomp.ufam.edu.br",
+        "username": "nova.coord",
+        "senha": "SenhaNova@123",
+    }
+
+    response = client.post("/usuarios/coordenador", json=payload)
+
+    assert response.status_code == 403
+    assert response.json()["detail"] == "Perfil sem permissao para acessar este recurso."
+
+
+def test_create_coordenador_allows_authenticated_coordinator_when_one_already_exists(client, db_session) -> None:
+    coordinator = _seed_user(
+        db_session,
+        nome_completo="Coordenadora Atual",
+        email="coordenadora.atual@icomp.ufam.edu.br",
+        username="coord.atual",
+        perfil=Perfil.COORDENADOR,
+        status=StatusCadastro.ATIVO,
+        ativo=True,
+    )
+    payload = {
+        "nome_completo": "Nova Coordenadora",
+        "email": "nova.coordenadora@icomp.ufam.edu.br",
+        "username": "nova.coord",
+        "senha": "SenhaNova@123",
+    }
+
+    response = client.post(
+        "/usuarios/coordenador",
+        json=payload,
+        headers=_build_auth_headers(user_id=coordinator.id, perfil=coordinator.perfil),
+    )
 
     assert response.status_code == 201
     assert response.json()["nome_completo"] == payload["nome_completo"]
@@ -198,6 +255,24 @@ def test_request_registration_allows_orientador_without_matricula(client, db_ses
     assert response.status_code == 201
     stored_user = db_session.query(UserRecord).filter_by(email=payload["email"]).one()
     assert stored_user.perfil == Perfil.ORIENTADOR
+    assert stored_user.status == StatusCadastro.PENDENTE
+    assert stored_user.matricula is None
+
+
+def test_request_registration_allows_coordenador_without_matricula(client, db_session) -> None:
+    payload = {
+        "nome_completo": "Coordenadora Solicitante",
+        "email": "coordenadora.solicitante@icomp.ufam.edu.br",
+        "username": "coordenadora.solicitante",
+        "senha": "SenhaCoordenadora@123",
+        "perfil": "COORDENADOR",
+    }
+
+    response = client.post("/usuarios/solicitar-cadastro", json=payload)
+
+    assert response.status_code == 201
+    stored_user = db_session.query(UserRecord).filter_by(email=payload["email"]).one()
+    assert stored_user.perfil == Perfil.COORDENADOR
     assert stored_user.status == StatusCadastro.PENDENTE
     assert stored_user.matricula is None
 
@@ -397,6 +472,48 @@ def test_review_registration_approves_pending_user_and_logs_audit(client, db_ses
     assert f"actor_user_id={coordinator.id}" in caplog.text
     assert f"target_user_id={pending_user.id}" in caplog.text
     assert "status=ATIVO" in caplog.text
+
+
+def test_review_registration_approves_pending_coordinator(client, db_session, email_service) -> None:
+    coordinator = _seed_user(
+        db_session,
+        nome_completo="Maria Coordenadora",
+        email="maria@icomp.ufam.edu.br",
+        username="maria.coord",
+        perfil=Perfil.COORDENADOR,
+        status=StatusCadastro.ATIVO,
+        ativo=True,
+    )
+    pending_user = _seed_user(
+        db_session,
+        nome_completo="Nova Coordenadora",
+        email="nova.coordenadora@icomp.ufam.edu.br",
+        username="nova.coord",
+        perfil=Perfil.COORDENADOR,
+        status=StatusCadastro.PENDENTE,
+        ativo=False,
+    )
+
+    response = client.patch(
+        f"/usuarios/{pending_user.id}/aprovar",
+        json={"acao": "APROVAR"},
+        headers=_build_auth_headers(user_id=coordinator.id, perfil=coordinator.perfil),
+    )
+
+    assert response.status_code == 200
+    assert response.json()["perfil"] == "COORDENADOR"
+    assert response.json()["status"] == "ATIVO"
+
+    db_session.refresh(pending_user)
+    assert pending_user.status == StatusCadastro.ATIVO
+    assert pending_user.ativo is True
+    assert email_service.approval_calls == [
+        {
+            "to_email": pending_user.email,
+            "full_name": pending_user.nome_completo,
+            "username": pending_user.username,
+        }
+    ]
 
 
 def test_review_registration_rejects_pending_user_without_sending_welcome_email(client, db_session, email_service) -> None:

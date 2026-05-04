@@ -1,9 +1,15 @@
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from backend.app.api.deps import get_current_active_coordenador, get_current_authenticated_user
+from backend.app.api.deps import (
+    get_current_active_coordenador,
+    get_current_authenticated_user,
+    get_optional_current_active_coordenador,
+)
 from backend.app.db.models import UserRecord
 from backend.app.db.session import get_db_session
+from backend.app.models.user import Perfil, StatusCadastro
 from backend.app.schemas.user import (
     AuthenticatedUserProfileResponse,
     CadastroApprovalRequest,
@@ -54,7 +60,21 @@ async def create_coordenador(
     user_service: UserService = Depends(get_user_service),
     email_service: EmailService = Depends(get_email_service),
     audit_service: AuditService = Depends(get_audit_service),
+    current_coordenador: UserRecord | None = Depends(get_optional_current_active_coordenador),
 ) -> dict[str, str]:
+    active_coordenador = session.scalar(
+        select(UserRecord.id).where(
+            UserRecord.perfil == Perfil.COORDENADOR,
+            UserRecord.status == StatusCadastro.ATIVO,
+            UserRecord.ativo.is_(True),
+        )
+    )
+    if active_coordenador is not None and current_coordenador is None:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Perfil sem permissao para acessar este recurso.",
+        )
+
     response = user_service.create_coordenador(
         session=session,
         payload=payload,

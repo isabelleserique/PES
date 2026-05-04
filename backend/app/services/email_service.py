@@ -11,13 +11,13 @@ class EmailService:
     def __init__(self, settings: Settings) -> None:
         self.settings = settings
 
-    def build_welcome_email_body(self, full_name: str, username: str, temporary_password: str) -> str:
+    def build_welcome_email_body(self, full_name: str, username: str, password: str) -> str:
         return (
             f"Olá, {full_name}!\n\n"
             f"Seu usuário foi criado com sucesso.\n"
             f"Username: {username}\n"
-            f"Senha temporária: {temporary_password}\n"
-            "No primeiro acesso, confirme seus dados e altere a senha provisória.\n"
+            f"Senha cadastrada: {password}\n"
+            "Você já pode acessar o sistema com as credenciais definidas no cadastro.\n"
         )
 
     def build_registration_approved_email_body(self, full_name: str, username: str) -> str:
@@ -140,13 +140,13 @@ class EmailService:
         to_email: str,
         full_name: str,
         username: str,
-        temporary_password: str,
+        password: str,
     ) -> bool:
         subject = "Bem-vindo ao Sistema TCC ICOMP"
         body = self.build_welcome_email_body(
             full_name=full_name,
             username=username,
-            temporary_password=temporary_password,
+            password=password,
         )
 
         try:

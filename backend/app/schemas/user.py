@@ -60,8 +60,6 @@ class SolicitarCadastroRequest(UserBaseRequest):
 
     @model_validator(mode="after")
     def validate_profile_constraints(self) -> "SolicitarCadastroRequest":
-        if self.perfil == Perfil.COORDENADOR:
-            raise ValueError("Auto-cadastro nao permite perfil COORDENADOR.")
         if self.perfil == Perfil.ALUNO and not self.matricula:
             raise ValueError("Matricula e obrigatoria para perfil ALUNO.")
         return self
