@@ -121,14 +121,14 @@ class StubEmailService:
         to_email: str,
         full_name: str,
         username: str,
-        temporary_password: str,
+        password: str,
     ) -> bool:
         self.calls.append(
             {
                 "to_email": to_email,
                 "full_name": full_name,
                 "username": username,
-                "temporary_password": temporary_password,
+                "password": password,
             }
         )
         if self.should_fail:

@@ -13,6 +13,20 @@ from backend.app.models.user import Perfil, StatusCadastro
 from backend.app.schemas.auth import AccessTokenPayload
 
 
+async def get_optional_access_token_payload(request: Request) -> AccessTokenPayload | None:
+    raw_payload = getattr(request.state, "auth_payload", None)
+    if raw_payload is None:
+        return None
+
+    try:
+        return AccessTokenPayload.model_validate(raw_payload)
+    except ValidationError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token invalido.",
+        ) from exc
+
+
 async def get_access_token_payload(request: Request) -> AccessTokenPayload:
     raw_payload = getattr(request.state, "auth_payload", None)
     if raw_payload is None:
@@ -28,6 +42,29 @@ async def get_access_token_payload(request: Request) -> AccessTokenPayload:
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Token invalido.",
         ) from exc
+
+
+async def get_optional_authenticated_user(
+    token_payload: AccessTokenPayload | None = Depends(get_optional_access_token_payload),
+    session: Session = Depends(get_db_session),
+) -> UserRecord | None:
+    if token_payload is None:
+        return None
+
+    user = session.scalar(select(UserRecord).where(UserRecord.id == token_payload.user_id))
+    if user is None or user.perfil != token_payload.perfil:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token invalido.",
+        )
+
+    if user.status != StatusCadastro.ATIVO or user.ativo is not True:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Usuario autenticado nao esta ativo.",
+        )
+
+    return user
 
 
 async def get_current_authenticated_user(
@@ -69,4 +106,19 @@ def require_perfis(*allowed_profiles: Perfil) -> Callable[..., UserRecord]:
 async def get_current_active_coordenador(
     current_user: UserRecord = Depends(require_perfis(Perfil.COORDENADOR)),
 ) -> UserRecord:
+    return current_user
+
+
+async def get_optional_current_active_coordenador(
+    current_user: UserRecord | None = Depends(get_optional_authenticated_user),
+) -> UserRecord | None:
+    if current_user is None:
+        return None
+
+    if current_user.perfil != Perfil.COORDENADOR:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Perfil sem permissao para acessar este recurso.",
+        )
+
     return current_user

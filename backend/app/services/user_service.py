@@ -23,7 +23,6 @@ from backend.app.services.email_service import EmailService
 
 CONFLICT_DETAIL = "Nao foi possivel concluir o cadastro com os dados informados."
 REGISTRATION_REVIEW_CONFLICT_DETAIL = "Solicitacao de cadastro nao esta pendente."
-INVALID_REGISTRATION_TARGET_DETAIL = "Cadastro informado nao pode ser avaliado por este endpoint."
 
 
 class UserService:
@@ -65,7 +64,7 @@ class UserService:
             to_email=user.email,
             full_name=user.nome_completo,
             username=user.username,
-            temporary_password=payload.senha,
+            password=payload.senha,
         )
         return UserCreatedResponse.model_validate(user)
 
@@ -127,11 +126,6 @@ class UserService:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Usuario nao encontrado.",
-            )
-        if user.perfil == Perfil.COORDENADOR:
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
-                detail=INVALID_REGISTRATION_TARGET_DETAIL,
             )
         if user.status != StatusCadastro.PENDENTE:
             raise HTTPException(

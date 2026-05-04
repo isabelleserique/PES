@@ -28,7 +28,7 @@ export interface LoginResponse {
   user: AuthenticatedUser;
 }
 
-export type CadastroPerfil = 'ALUNO' | 'ORIENTADOR';
+export type CadastroPerfil = 'ALUNO' | 'ORIENTADOR' | 'COORDENADOR';
 
 export interface CadastroPayload {
   perfil: CadastroPerfil;
