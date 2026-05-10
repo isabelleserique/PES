@@ -47,19 +47,32 @@
     <section class="painel-card painel-card--accent">
       <div class="painel-card__header">
         <div>
-          <span class="painel-card__label">Proximos passos</span>
+          <span class="painel-card__label">Acoes rapidas</span>
           <h2 class="painel-card__title">Seu espaco de trabalho</h2>
         </div>
       </div>
 
       <div class="painel-grid">
         <div class="painel-note">
-          <span class="painel-field__label">Acesso</span>
-          <p>Seu token JWT foi validado pelo backend e o painel foi montado a partir de <code>/usuarios/me</code>.</p>
+          <span class="painel-field__label">Definir TCC</span>
+          <p>Informe o tema, tipo e orientador do seu TCC.</p>
+          <a mat-stroked-button routerLink="/painel/definir-tcc" style="margin-top:10px;display:inline-flex;align-items:center;gap:6px;">
+            Acessar
+          </a>
         </div>
         <div class="painel-note">
-          <span class="painel-field__label">Cadastro</span>
-          <p>Este painel foi separado para alunos. Aqui entram, na proxima etapa, as features de TCC, orientador e submissoes.</p>
+          <span class="painel-field__label">Submeter Artigo</span>
+          <p>Envie o arquivo do seu artigo e, se aceito, o comprovante de publicação.</p>
+          <a mat-stroked-button routerLink="/painel/submeter-artigo" style="margin-top:10px;display:inline-flex;align-items:center;gap:6px;">
+            Acessar
+          </a>
+        </div>
+        <div class="painel-note">
+          <span class="painel-field__label">Prazos</span>
+          <p>Acompanhe os prazos e cronograma do periodo letivo atual.</p>
+          <a mat-stroked-button routerLink="/painel/prazos-periodo" style="margin-top:10px;display:inline-flex;align-items:center;gap:6px;">
+            Acessar
+          </a>
         </div>
       </div>
     </section>

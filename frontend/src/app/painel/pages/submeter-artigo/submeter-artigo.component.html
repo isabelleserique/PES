@@ -1,0 +1,190 @@
+<div class="app-shell">
+
+  <!-- Navbar -->
+  <nav class="app-navbar">
+    <div class="navbar-brand">
+      <div class="logo-badge">IC</div>
+      <span class="logo-name">IComp</span>
+    </div>
+    <div class="navbar-sep"></div>
+    <span class="navbar-app-name">TCComp</span>
+  </nav>
+
+  <main class="app-page-content">
+
+    <!-- Tela de sucesso -->
+    <ng-container *ngIf="isSubmitted; else formView">
+      <div class="sa-success-card">
+        <mat-icon class="sa-success-icon">check_circle</mat-icon>
+        <h2>Artigo submetido com sucesso!</h2>
+        <p *ngIf="foiAceito">
+          Seu comprovante de aceite foi registrado.
+          <ng-container *ngIf="notaAtribuida !== null">
+            A nota <strong>{{ notaAtribuida }},0</strong> foi atribuída automaticamente.
+          </ng-container>
+        </p>
+        <p *ngIf="!foiAceito">
+          Seu artigo foi registrado e está aguardando avaliação do orientador.
+        </p>
+        <p class="sa-success-status">
+          Status: <span>{{ foiAceito ? 'Aceito para Publicação' : 'Aguardando Avaliação' }}</span>
+        </p>
+        <button mat-raised-button class="sa-btn-primary" (click)="cancelar()">Voltar ao painel</button>
+      </div>
+    </ng-container>
+
+    <!-- Formulário -->
+    <ng-template #formView>
+
+      <h1 class="sa-page-title">Submissão de Artigo Científico</h1>
+
+      <!-- Alerta fora do prazo -->
+      <div class="sa-alert sa-alert--warning" *ngIf="foraDoPrazo">
+        <mat-icon>warning</mat-icon>
+        <span>
+          O prazo para submissão expirou há <strong>{{ diasAtraso }} dia(s)</strong>
+          ({{ prazoSubmissao | date:'dd/MM/yyyy' }}).
+          Você ainda pode submeter, mas o atraso será registrado no histórico.
+        </span>
+      </div>
+
+      <div class="sa-layout">
+
+        <!-- ── Card: Nova submissão ── -->
+        <div class="sa-card">
+          <div class="sa-section-header">NOVA SUBMISSÃO</div>
+
+          <!-- Upload do artigo -->
+          <div class="sa-upload-group">
+            <label class="sa-upload-label">
+              Arquivo do Artigo <span class="sa-required">*</span>
+            </label>
+            <p class="sa-upload-hint">Formatos aceitos: PDF ou DOCX. Tamanho máximo: 50 MB.</p>
+
+            <div class="sa-upload-area"
+                 *ngIf="!artigoFile"
+                 (click)="artigoInput.click()">
+              <mat-icon>upload_file</mat-icon>
+              <span>Clique para selecionar o arquivo</span>
+            </div>
+
+            <div class="sa-file-selected" *ngIf="artigoFile">
+              <mat-icon>description</mat-icon>
+              <div class="sa-file-info">
+                <span class="sa-file-name">{{ artigoFile.name }}</span>
+                <span class="sa-file-size">{{ formatarTamanho(artigoFile.size) }}</span>
+              </div>
+              <button mat-icon-button type="button" (click)="removerArtigo()" title="Remover arquivo">
+                <mat-icon>close</mat-icon>
+              </button>
+            </div>
+
+            <input #artigoInput type="file" accept=".pdf,.docx" hidden (change)="onArtigoFileChange($event)" />
+          </div>
+
+          <!-- Toggle: artigo aceito para publicação -->
+          <div class="sa-aceite-section">
+            <mat-checkbox [formControl]="foiAceitoCtrl" color="primary">
+              O artigo já foi aceito para publicação em periódico ou conferência
+            </mat-checkbox>
+
+            <div class="sa-aceite-info" *ngIf="foiAceito">
+              <mat-icon>emoji_events</mat-icon>
+              <span>
+                Ao comprovar o aceite, a nota máxima <strong>(10,0)</strong> será atribuída automaticamente pelo sistema.
+              </span>
+            </div>
+          </div>
+
+          <!-- Upload do comprovante (condicional) -->
+          <div class="sa-upload-group sa-upload-group--comprovante" *ngIf="foiAceito">
+            <label class="sa-upload-label">
+              Comprovante de Aceite <span class="sa-required">*</span>
+            </label>
+            <p class="sa-upload-hint">Anexe o e-mail, carta ou documento oficial de aceite da publicação (PDF, DOCX, JPG ou PNG).</p>
+
+            <div class="sa-upload-area sa-upload-area--comprovante"
+                 *ngIf="!comprovanteFile"
+                 (click)="comprovanteInput.click()">
+              <mat-icon>attach_file</mat-icon>
+              <span>Clique para selecionar o comprovante</span>
+            </div>
+
+            <div class="sa-file-selected sa-file-selected--comprovante" *ngIf="comprovanteFile">
+              <mat-icon>task</mat-icon>
+              <div class="sa-file-info">
+                <span class="sa-file-name">{{ comprovanteFile.name }}</span>
+                <span class="sa-file-size">{{ formatarTamanho(comprovanteFile.size) }}</span>
+              </div>
+              <button mat-icon-button type="button" (click)="removerComprovante()" title="Remover comprovante">
+                <mat-icon>close</mat-icon>
+              </button>
+            </div>
+
+            <input #comprovanteInput type="file" accept=".pdf,.docx,.jpg,.jpeg,.png" hidden (change)="onComprovanteFileChange($event)" />
+          </div>
+
+          <!-- Mensagem de erro -->
+          <p class="status-message status-message--error" *ngIf="errorMessage">{{ errorMessage }}</p>
+
+          <!-- Ações -->
+          <div class="sa-actions">
+            <button mat-stroked-button type="button" (click)="cancelar()">Cancelar</button>
+            <button
+              mat-raised-button
+              type="button"
+              class="sa-btn-submeter"
+              [disabled]="!podeSubmeter || isSubmitting"
+              (click)="submeter()"
+            >
+              <mat-icon *ngIf="!isSubmitting">cloud_upload</mat-icon>
+              {{ isSubmitting ? 'Enviando...' : 'Submeter Artigo' }}
+            </button>
+          </div>
+        </div>
+
+        <!-- ── Card: Histórico ── -->
+        <div class="sa-card sa-card--historico">
+          <div class="sa-section-header">HISTÓRICO DE SUBMISSÕES</div>
+
+          <div class="sa-loading" *ngIf="isLoading">
+            <mat-icon>hourglass_empty</mat-icon>
+            <span>Carregando histórico...</span>
+          </div>
+
+          <div class="sa-empty" *ngIf="!isLoading && historico.length === 0">
+            <mat-icon>inbox</mat-icon>
+            <p>Nenhuma submissão registrada ainda.</p>
+          </div>
+
+          <div class="sa-historico-table" *ngIf="!isLoading && historico.length > 0">
+            <div class="sa-historico-row sa-historico-row--header">
+              <span>Versão</span>
+              <span>Arquivo</span>
+              <span>Data</span>
+              <span>Status</span>
+            </div>
+            <div class="sa-historico-row" *ngFor="let s of historico">
+              <span class="sa-versao">v{{ s.versao }}</span>
+              <span class="sa-arquivo-nome" [title]="s.nome_arquivo">{{ s.nome_arquivo }}</span>
+              <span class="sa-data">{{ formatarData(s.data_submissao) }}</span>
+              <div class="sa-badges">
+                <span class="sa-badge sa-badge--aceito" *ngIf="s.foi_aceito">
+                  <mat-icon>verified</mat-icon> Aceito
+                </span>
+                <span class="sa-badge sa-badge--pendente" *ngIf="!s.foi_aceito">
+                  <mat-icon>hourglass_empty</mat-icon> Aguardando
+                </span>
+                <span class="sa-badge sa-badge--atraso" *ngIf="s.fora_do_prazo">
+                  Fora do prazo
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </ng-template>
+
+  </main>
+</div>

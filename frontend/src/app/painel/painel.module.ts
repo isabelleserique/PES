@@ -14,6 +14,7 @@ import { PrazosPeriodoComponent } from './pages/prazos-periodo/prazos-periodo.co
 import { PainelCoordenadorComponent } from './pages/painel/painel.component';
 import { PainelRedirectComponent } from './pages/redirect/redirect.component';
 import { PainelOrientadorComponent } from './pages/orientador/orientador.component';
+import { SubmeterArtigoComponent } from './pages/submeter-artigo/submeter-artigo.component';
 import { PainelRoutingModule } from './painel-routing.module';
 
 @NgModule({
@@ -26,6 +27,7 @@ import { PainelRoutingModule } from './painel-routing.module';
     PrazosPeriodoComponent,
     DefinirTccComponent,
     AceiteOrientacaoComponent,
+    SubmeterArtigoComponent,
   ],
   imports: [
     SharedModule,

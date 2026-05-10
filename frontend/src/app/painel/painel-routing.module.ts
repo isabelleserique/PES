@@ -11,6 +11,7 @@ import { PrazosPeriodoComponent } from './pages/prazos-periodo/prazos-periodo.co
 import { PainelCoordenadorComponent } from './pages/painel/painel.component';
 import { PainelRedirectComponent } from './pages/redirect/redirect.component';
 import { PainelOrientadorComponent } from './pages/orientador/orientador.component';
+import { SubmeterArtigoComponent } from './pages/submeter-artigo/submeter-artigo.component';
 
 const routes: Routes = [
   {
@@ -46,6 +47,12 @@ const routes: Routes = [
     component: AceiteOrientacaoComponent,
     canActivate: [AuthGuard, ProfileGuard],
     data: { perfil: 'ORIENTADOR' },
+  },
+  {
+    path: 'submeter-artigo',
+    component: SubmeterArtigoComponent,
+    canActivate: [AuthGuard, ProfileGuard],
+    data: { perfil: 'ALUNO' },
   },
   {
     path: 'aluno',
