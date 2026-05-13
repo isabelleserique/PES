@@ -1,8 +1,124 @@
+.gp-navbar-spacer {
+  flex: 1;
+}
+
+.gp-nav-btn {
+  border-color: rgba(255, 255, 255, 0.32) !important;
+  color: #fff !important;
+}
+
+.gp-page-header {
+  align-items: flex-start;
+  display: flex;
+  gap: 24px;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+
+.gp-eyebrow,
+.gp-card-label,
+.gp-field-label {
+  color: #1565c0;
+  display: block;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+}
+
+.gp-page-title {
+  color: #0d2137;
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.gp-page-subtitle,
+.gp-empty {
+  color: #4a5568;
+  line-height: 1.6;
+}
+
+.gp-card {
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid rgba(13, 33, 55, 0.08);
+  border-radius: 16px;
+  box-shadow: 0 12px 36px rgba(13, 33, 55, 0.08);
+  margin-bottom: 20px;
+  padding: 28px;
+}
+
+.gp-card--active {
+  border-top: 5px solid #27ae60;
+}
+
+.gp-card-header {
+  align-items: center;
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+  margin-bottom: 22px;
+}
+
+.gp-card-title {
+  color: #0d2137;
+  font-size: 1.35rem;
+  font-weight: 700;
+}
+
+.gp-badge {
+  background: #0d2137;
+  border-radius: 999px;
+  color: #fff;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  padding: 8px 14px;
+  white-space: nowrap;
+}
+
+.gp-badge--soft {
+  background: rgba(21, 101, 192, 0.12);
+  color: #1565c0;
+}
+
+.gp-info-grid {
+  display: grid;
+  gap: 18px;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.gp-field-label {
+  color: #718096;
+  margin-bottom: 6px;
+}
+
 .gp-chip-list {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
   margin: 20px 0;
+}
+
+.gp-chip {
+  background: rgba(13, 33, 55, 0.06);
+  border-radius: 999px;
+  color: #0d2137;
+  font-size: 0.88rem;
+  font-weight: 600;
+  padding: 8px 14px;
+}
+
+.gp-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.gp-btn-primary {
+  background: #0d2137 !important;
+  color: #fff !important;
 }
 
 .gp-table-wrap {
@@ -56,4 +172,12 @@
   color: #718096;
   font-size: 0.86rem;
   font-weight: 600;
+}
+
+@media (max-width: 768px) {
+  .gp-page-header,
+  .gp-card-header {
+    align-items: stretch;
+    flex-direction: column;
+  }
 }

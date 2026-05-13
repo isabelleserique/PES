@@ -42,11 +42,13 @@ export class PainelNavComponent {
         ];
       case 'ALUNO':
         return [
+          { label: 'Painel do Aluno', path: '/painel/aluno' },
           { label: 'Definição de Tema, Tipo e Orientador', path: '/painel/definir-tcc' },
           { label: 'Prazos do Período', path: '/painel/prazos-periodo' },
         ];
       case 'ORIENTADOR':
         return [
+          { label: 'Painel do Orientador', path: '/painel/orientador' },
           { label: 'Aceite do Orientador', path: '/painel/aceite-orientacao' },
           { label: 'Prazos do Período', path: '/painel/prazos-periodo' },
         ];

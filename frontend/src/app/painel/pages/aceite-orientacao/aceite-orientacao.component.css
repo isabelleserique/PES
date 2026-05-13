@@ -1,3 +1,12 @@
+.ao-navbar-spacer {
+  flex: 1;
+}
+
+.ao-nav-btn {
+  border-color: rgba(255, 255, 255, 0.32) !important;
+  color: #fff !important;
+}
+
 /* ── Título ── */
 .ao-page-title {
   color: #0d2137;

@@ -1,3 +1,46 @@
+.pp-page {
+  display: grid;
+  gap: 22px;
+}
+
+.pp-navbar-spacer {
+  flex: 1;
+}
+
+.pp-nav-btn {
+  border-color: rgba(255, 255, 255, 0.32) !important;
+  color: #fff !important;
+}
+
+.pp-page-header {
+  align-items: flex-end;
+  display: flex;
+  gap: 24px;
+  justify-content: space-between;
+}
+
+.pp-eyebrow {
+  color: #1565c0;
+  display: block;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+}
+
+.pp-page-title {
+  color: #0d2137;
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.pp-page-subtitle {
+  color: #4a5568;
+  line-height: 1.6;
+}
+
 /* ── Header ── */
 .pp-header {
   display: flex;
@@ -73,7 +116,7 @@
   background: rgba(255, 255, 255, 0.95);
   border: 1px solid rgba(13, 33, 55, 0.08);
   border-radius: 16px;
-  box-shadow: 0 4px 24px rgba(13, 33, 55, 0.07);
+  box-shadow: 0 12px 36px rgba(13, 33, 55, 0.08);
   padding: 24px;
 }
 
@@ -243,6 +286,11 @@
 
 /* ── Responsivo ── */
 @media (max-width: 768px) {
+  .pp-page-header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
   .pp-grid {
     grid-template-columns: 1fr;
   }

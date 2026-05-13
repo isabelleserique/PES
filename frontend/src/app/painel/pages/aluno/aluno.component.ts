@@ -20,7 +20,7 @@ import {
 @Component({
   selector: 'app-painel-aluno',
   templateUrl: './aluno.component.html',
-  styleUrls: ['../../painel-page.css'],
+  styleUrls: ['./aluno.component.css'],
 })
 export class PainelAlunoComponent implements OnInit {
   isLoading = true;

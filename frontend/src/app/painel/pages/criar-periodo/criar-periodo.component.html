@@ -1,31 +1,42 @@
-<div class="painel-shell">
-  <header class="painel-header">
-    <div>
-      <span class="painel-eyebrow">US006</span>
-      <h1 class="painel-title">{{ pageTitle }}</h1>
-      <p class="painel-subtitle">
-        Defina o intervalo do período letivo e configure os prazos das etapas por tipo de TCC.
-      </p>
+<div class="app-shell">
+  <nav class="app-navbar">
+    <div class="navbar-brand">
+      <div class="logo-badge">IC</div>
+      <span class="logo-name">IComp</span>
     </div>
-    <button mat-stroked-button type="button" (click)="cancelar()">Voltar</button>
-  </header>
+    <div class="navbar-sep"></div>
+    <span class="navbar-app-name">TCComp</span>
+    <span class="cp-navbar-spacer"></span>
+    <a mat-stroked-button class="cp-nav-btn" routerLink="/painel/coordenador">Home</a>
+  </nav>
 
-  <app-painel-nav></app-painel-nav>
-
-  <p class="status-message status-message--error" *ngIf="errorMessage">{{ errorMessage }}</p>
-  <p class="status-message status-message--success" *ngIf="successMessage">{{ successMessage }}</p>
+  <main class="app-page-content">
+    <div class="cp-page-header">
+      <div>
+        <span class="cp-eyebrow">US006</span>
+        <h1 class="cp-page-title">{{ pageTitle }}</h1>
+        <p class="cp-page-subtitle">
+          Defina o intervalo do período letivo e configure os prazos das etapas por tipo de TCC.
+        </p>
+      </div>
+      <button mat-stroked-button type="button" (click)="cancelar()">Voltar</button>
+    </div>
 
   <section class="painel-card" *ngIf="isLoadingPeriodo">
     <p class="painel-loading">Carregando período letivo...</p>
   </section>
 
-  <section class="painel-card" *ngIf="!isLoadingPeriodo">
-    <h2 class="cp-page-title">{{ isEditMode ? 'Dados do período ativo' : 'Novo período letivo' }}</h2>
+    <section class="cp-card" *ngIf="isLoadingPeriodo">
+      <p class="cp-empty">Carregando período letivo...</p>
+    </section>
 
-    <div class="painel-alert" *ngIf="isEditMode">
-      <strong>Edição habilitada</strong>
-      <p>Somente períodos ativos podem ser alterados. Ao desativar este período, novas edições serão bloqueadas.</p>
-    </div>
+    <section class="cp-card" *ngIf="!isLoadingPeriodo">
+      <h2 class="cp-section-heading">{{ isEditMode ? 'Dados do período ativo' : 'Novo período letivo' }}</h2>
+
+      <div class="cp-alert" *ngIf="isEditMode">
+        <strong>Edição habilitada</strong>
+        <p>Somente períodos ativos podem ser alterados. Ao desativar este período, novas edições serão bloqueadas.</p>
+      </div>
 
     <form [formGroup]="periodoForm" (ngSubmit)="salvarPeriodo()">
 
@@ -156,5 +167,6 @@
       </div>
 
     </form>
-  </section>
+    </section>
+  </main>
 </div>
