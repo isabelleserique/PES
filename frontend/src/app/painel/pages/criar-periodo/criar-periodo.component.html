@@ -22,8 +22,9 @@
       <button mat-stroked-button type="button" (click)="cancelar()">Voltar</button>
     </div>
 
-    <p class="status-message status-message--error" *ngIf="errorMessage">{{ errorMessage }}</p>
-    <p class="status-message status-message--success" *ngIf="successMessage">{{ successMessage }}</p>
+  <section class="painel-card" *ngIf="isLoadingPeriodo">
+    <p class="painel-loading">Carregando período letivo...</p>
+  </section>
 
     <section class="cp-card" *ngIf="isLoadingPeriodo">
       <p class="cp-empty">Carregando período letivo...</p>

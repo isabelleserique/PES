@@ -24,7 +24,7 @@ export interface PrazoDisplay {
 @Component({
   selector: 'app-prazos-periodo',
   templateUrl: './prazos-periodo.component.html',
-  styleUrls: ['./prazos-periodo.component.css'],
+  styleUrls: ['../../painel-page.css', './prazos-periodo.component.css'],
 })
 export class PrazosPeriodoComponent implements OnInit {
   readonly filtroTipo = new FormControl<string>('Todos');
