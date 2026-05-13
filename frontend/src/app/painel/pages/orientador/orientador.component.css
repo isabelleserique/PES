@@ -1,0 +1,260 @@
+.or-page {
+  display: grid;
+  gap: 22px;
+}
+
+.or-navbar-spacer {
+  flex: 1;
+}
+
+.or-logout-btn {
+  border-color: rgba(255, 255, 255, 0.32) !important;
+  color: #fff !important;
+}
+
+.or-hero {
+  align-items: flex-end;
+  display: flex;
+  gap: 24px;
+  justify-content: space-between;
+}
+
+.or-eyebrow,
+.or-card-label,
+.or-field-label {
+  color: #b45309;
+  display: block;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+}
+
+.or-title {
+  color: #0d2137;
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.or-subtitle,
+.or-empty {
+  color: #4a5568;
+  line-height: 1.6;
+}
+
+.or-hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.or-card {
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid rgba(13, 33, 55, 0.08);
+  border-radius: 16px;
+  box-shadow: 0 12px 36px rgba(13, 33, 55, 0.08);
+  padding: 28px;
+}
+
+.or-card--accent {
+  border-top: 5px solid #b45309;
+}
+
+.or-profile-card {
+  background:
+    linear-gradient(135deg, rgba(180, 83, 9, 0.12), transparent 42%),
+    rgba(255, 255, 255, 0.96);
+}
+
+.or-card-header,
+.or-orientando-header {
+  align-items: center;
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+  margin-bottom: 22px;
+}
+
+.or-card-title,
+.or-orientando-header h3 {
+  color: #0d2137;
+  font-size: 1.35rem;
+  font-weight: 700;
+}
+
+.or-badge {
+  background: #0d2137;
+  border-radius: 999px;
+  color: #fff;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  padding: 8px 14px;
+  white-space: nowrap;
+}
+
+.or-badge--soft {
+  background: rgba(180, 83, 9, 0.12);
+  color: #92400e;
+}
+
+.or-info-grid {
+  display: grid;
+  gap: 18px;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.or-field-label {
+  color: #718096;
+  margin-bottom: 6px;
+}
+
+.or-request-list,
+.or-orientando-list,
+.or-timeline {
+  display: grid;
+  gap: 16px;
+}
+
+.or-request-card {
+  align-items: stretch;
+  background: #fffaf5;
+  border: 1px solid rgba(180, 83, 9, 0.14);
+  border-radius: 14px;
+  display: grid;
+  gap: 20px;
+  grid-template-columns: minmax(0, 1fr) 150px;
+  padding: 20px;
+}
+
+.or-request-main h3 {
+  color: #0d2137;
+  font-size: 1.15rem;
+  margin-bottom: 8px;
+}
+
+.or-request-main p {
+  color: #4a5568;
+  line-height: 1.5;
+}
+
+.or-request-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  justify-content: center;
+}
+
+.or-alert {
+  background: #fff8e1;
+  border: 1px solid rgba(245, 158, 11, 0.42);
+  border-radius: 12px;
+  color: #92400e;
+  margin: 14px 0;
+  padding: 14px 16px;
+}
+
+.or-alert strong {
+  display: block;
+  margin-bottom: 6px;
+}
+
+.or-alert p {
+  line-height: 1.6;
+}
+
+.or-field-full {
+  width: 100%;
+}
+
+.or-toolbar {
+  max-width: 360px;
+}
+
+.or-orientando-card {
+  background: #f9fbfd;
+  border: 1px solid rgba(13, 33, 55, 0.08);
+  border-radius: 16px;
+  padding: 22px;
+}
+
+.or-timeline {
+  margin-top: 18px;
+}
+
+.or-timeline-item {
+  align-items: center;
+  background: #fff;
+  border: 1px solid rgba(13, 33, 55, 0.08);
+  border-left: 6px solid #2e7d32;
+  border-radius: 14px;
+  display: grid;
+  gap: 16px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  padding: 18px;
+}
+
+.or-timeline-item--verde {
+  border-left-color: #2e7d32;
+}
+
+.or-timeline-item--amarelo {
+  border-left-color: #f9a825;
+}
+
+.or-timeline-item--laranja {
+  border-left-color: #ef6c00;
+}
+
+.or-timeline-item--vermelho {
+  border-left-color: #c62828;
+}
+
+.or-timeline-item h3 {
+  color: #0d2137;
+  font-size: 1.04rem;
+}
+
+.or-timeline-meta {
+  color: #4a5568;
+  display: grid;
+  gap: 4px;
+  min-width: 220px;
+  text-align: right;
+}
+
+.or-timeline-meta span {
+  color: #b45309;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.or-btn-primary {
+  background: #0d2137 !important;
+  color: #fff !important;
+}
+
+.or-btn-danger {
+  border-color: rgba(179, 38, 30, 0.32) !important;
+  color: #b3261e !important;
+}
+
+@media (max-width: 768px) {
+  .or-hero,
+  .or-card-header,
+  .or-orientando-header,
+  .or-request-card,
+  .or-timeline-item {
+    align-items: stretch;
+    grid-template-columns: 1fr;
+    flex-direction: column;
+  }
+
+  .or-timeline-meta {
+    min-width: 0;
+    text-align: left;
+  }
+}

@@ -1,3 +1,4 @@
+import { Location } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { FormControl } from '@angular/forms';
 
@@ -23,7 +24,7 @@ export interface PrazoDisplay {
 @Component({
   selector: 'app-prazos-periodo',
   templateUrl: './prazos-periodo.component.html',
-  styleUrls: ['../../painel-page.css', './prazos-periodo.component.css'],
+  styleUrls: ['./prazos-periodo.component.css'],
 })
 export class PrazosPeriodoComponent implements OnInit {
   readonly filtroTipo = new FormControl<string>('Todos');
@@ -41,7 +42,10 @@ export class PrazosPeriodoComponent implements OnInit {
   private orientandos: CronogramaOrientando[] = [];
   private cronogramaAlunoData: CronogramaAluno | null = null;
 
-  constructor(private readonly painelService: PainelService) {}
+  constructor(
+    private readonly location: Location,
+    private readonly painelService: PainelService,
+  ) {}
 
   ngOnInit(): void {
     this.carregarCronograma();
@@ -49,6 +53,13 @@ export class PrazosPeriodoComponent implements OnInit {
 
   get isOrientador(): boolean {
     return this.perfil === 'ORIENTADOR';
+  }
+
+  get homeRoute(): string {
+    if (this.perfil === 'ALUNO') return '/painel/aluno';
+    if (this.perfil === 'ORIENTADOR') return '/painel/orientador';
+    if (this.perfil === 'COORDENADOR') return '/painel/coordenador';
+    return '/painel';
   }
 
   get orientandosDisponiveis(): CronogramaOrientando[] {
@@ -92,6 +103,10 @@ export class PrazosPeriodoComponent implements OnInit {
     this.sincronizarContextoOrientador();
   }
 
+  voltar(): void {
+    this.location.back();
+  }
+
   private carregarCronograma(): void {
     this.isLoading = true;
     this.errorMessage = '';
@@ -125,7 +140,12 @@ export class PrazosPeriodoComponent implements OnInit {
       const selectedId = cronograma.filtro_orientando_id ?? cronograma.orientandos[0]?.aluno_id ?? '';
       this.filtroOrientando.setValue(selectedId, { emitEvent: false });
       this.sincronizarContextoOrientador();
+      return;
     }
+
+    this.nomeContexto = 'Cronograma do período ativo';
+    this.statusUsuario = cronograma.perfil || 'PERFIL';
+    this._prazos = [];
   }
 
   private sincronizarContextoOrientador(): void {

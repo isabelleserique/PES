@@ -22,7 +22,7 @@ interface LocalPrazo {
 @Component({
   selector: 'app-criar-periodo',
   templateUrl: './criar-periodo.component.html',
-  styleUrls: ['../../painel-page.css', './criar-periodo.component.css'],
+  styleUrls: ['./criar-periodo.component.css'],
 })
 export class CriarPeriodoComponent implements OnInit {
   readonly periodoForm = this.fb.group({

@@ -18,7 +18,7 @@ import {
 @Component({
   selector: 'app-painel-orientador',
   templateUrl: './orientador.component.html',
-  styleUrls: ['../../painel-page.css'],
+  styleUrls: ['./orientador.component.css'],
 })
 export class PainelOrientadorComponent implements OnInit {
   isLoading = true;

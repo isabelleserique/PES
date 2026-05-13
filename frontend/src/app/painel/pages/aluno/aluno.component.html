@@ -1,182 +1,193 @@
-<div class="painel-shell painel-shell--aluno">
-  <header class="painel-header">
-    <div>
-      <span class="painel-eyebrow">Area do aluno</span>
-      <h1 class="painel-title">Painel do aluno</h1>
-      <p class="painel-subtitle">Registre seu TCC, acompanhe o cronograma do periodo letivo atual e evite perder entregas.</p>
+<div class="app-shell">
+  <nav class="app-navbar">
+    <div class="navbar-brand">
+      <div class="logo-badge">IC</div>
+      <span class="logo-name">IComp</span>
     </div>
-    <button mat-stroked-button type="button" (click)="logout()">Sair</button>
-  </header>
+    <div class="navbar-sep"></div>
+    <span class="navbar-app-name">TCComp</span>
+    <span class="al-navbar-spacer"></span>
+    <button mat-stroked-button type="button" class="al-logout-btn" (click)="logout()">Sair</button>
+  </nav>
 
-  <app-painel-nav></app-painel-nav>
-
-  <p class="status-message status-message--error" *ngIf="errorMessage">{{ errorMessage }}</p>
-  <p class="status-message status-message--success" *ngIf="feedbackMessage">{{ feedbackMessage }}</p>
-
-  <section class="painel-card" *ngIf="isLoading">
-    <p class="painel-loading">Carregando painel do aluno...</p>
-  </section>
-
-  <ng-container *ngIf="!isLoading && currentUser as user">
-    <section class="painel-card">
-      <div class="painel-card__header">
-        <div>
-          <span class="painel-card__label">Conta autenticada</span>
-          <h2 class="painel-card__title">{{ user.nome_completo }}</h2>
-        </div>
-        <span class="painel-badge">{{ user.perfil }}</span>
+  <main class="app-page-content al-page">
+    <header class="al-hero">
+      <div>
+        <span class="al-eyebrow">Área do aluno</span>
+        <h1 class="al-title">Painel do aluno</h1>
+        <p class="al-subtitle">
+          Acompanhe sua formalização de TCC, orientador e prazos do período letivo atual.
+        </p>
       </div>
-
-      <div class="painel-grid">
-        <div>
-          <span class="painel-field__label">E-mail</span>
-          <strong>{{ user.email }}</strong>
-        </div>
-        <div>
-          <span class="painel-field__label">Username</span>
-          <strong>{{ user.username }}</strong>
-        </div>
-        <div>
-          <span class="painel-field__label">Status</span>
-          <strong>{{ user.status }}</strong>
-        </div>
-        <div *ngIf="user.matricula">
-          <span class="painel-field__label">Matricula</span>
-          <strong>{{ user.matricula }}</strong>
-        </div>
+      <div class="al-hero-actions">
+        <a mat-raised-button class="al-btn-primary" routerLink="/painel/definir-tcc">Definir TCC</a>
+        <a mat-stroked-button routerLink="/painel/prazos-periodo">Ver prazos</a>
       </div>
+    </header>
+
+    <p class="status-message status-message--error" *ngIf="errorMessage">{{ errorMessage }}</p>
+    <p class="status-message status-message--success" *ngIf="feedbackMessage">{{ feedbackMessage }}</p>
+
+    <section class="al-card" *ngIf="isLoading">
+      <p class="al-empty">Carregando painel do aluno...</p>
     </section>
 
-    <section class="painel-card painel-card--accent">
-      <div class="painel-card__header">
-        <div>
-          <span class="painel-card__label">US008</span>
-          <h2 class="painel-card__title">Formalizacao do TCC</h2>
+    <ng-container *ngIf="!isLoading && currentUser as user">
+      <section class="al-card al-profile-card">
+        <div class="al-card-header">
+          <div>
+            <span class="al-card-label">Conta autenticada</span>
+            <h2 class="al-card-title">{{ user.nome_completo }}</h2>
+          </div>
+          <span class="al-badge">{{ user.perfil }}</span>
         </div>
-        <span class="painel-badge painel-badge--subtle">{{ meuTcc ? meuTcc.status : 'SEM ENVIO' }}</span>
-      </div>
 
-      <div class="painel-alert" *ngIf="meuTcc?.alerta_prazo">
-        <strong>Alerta de prazo</strong>
-        <p>{{ meuTcc?.alerta_prazo }}</p>
-      </div>
+        <div class="al-info-grid">
+          <div>
+            <span class="al-field-label">E-mail</span>
+            <strong>{{ user.email }}</strong>
+          </div>
+          <div>
+            <span class="al-field-label">Username</span>
+            <strong>{{ user.username }}</strong>
+          </div>
+          <div>
+            <span class="al-field-label">Status</span>
+            <strong>{{ user.status }}</strong>
+          </div>
+          <div *ngIf="user.matricula">
+            <span class="al-field-label">Matrícula</span>
+            <strong>{{ user.matricula }}</strong>
+          </div>
+        </div>
+      </section>
 
-      <div class="painel-alert" *ngIf="meuTcc?.observacao_orientador">
-        <strong>Retorno do orientador</strong>
-        <p>{{ meuTcc?.observacao_orientador }}</p>
-      </div>
+      <section class="al-card al-card--accent">
+        <div class="al-card-header">
+          <div>
+            <span class="al-card-label">US008</span>
+            <h2 class="al-card-title">Formalização do TCC</h2>
+          </div>
+          <span class="al-badge al-badge--soft">{{ meuTcc ? meuTcc.status : 'SEM ENVIO' }}</span>
+        </div>
 
-      <div class="painel-summary" *ngIf="meuTcc as tcc">
-        <span class="painel-summary__chip">{{ tcc.tipo_tcc }}</span>
-        <span class="painel-summary__chip">Orientador: {{ tcc.orientador_nome }}</span>
-        <span class="painel-summary__chip" *ngIf="tcc.coorientador_nome">Coorientador: {{ tcc.coorientador_nome }}</span>
-        <span class="painel-summary__chip">Periodo: {{ tcc.periodo_nome }}</span>
-        <span class="painel-summary__chip">Status: {{ tcc.status }}</span>
-      </div>
+        <div class="al-alert" *ngIf="meuTcc?.alerta_prazo">
+          <strong>Alerta de prazo</strong>
+          <p>{{ meuTcc?.alerta_prazo }}</p>
+        </div>
 
-      <p class="painel-empty" *ngIf="!meuTcc">
-        Voce ainda nao informou seu TCC neste periodo. O cadastro e unico por periodo, mas pode ser atualizado com log de edicoes.
-      </p>
+        <div class="al-alert" *ngIf="meuTcc?.observacao_orientador">
+          <strong>Retorno do orientador</strong>
+          <p>{{ meuTcc?.observacao_orientador }}</p>
+        </div>
 
-      <form [formGroup]="tccForm" class="painel-form" (ngSubmit)="submitTcc()">
-        <mat-form-field appearance="outline" class="full-width">
-          <mat-label>Titulo do TCC</mat-label>
-          <input matInput formControlName="titulo">
-          <mat-error *ngIf="tccForm.controls.titulo.touched && tccForm.controls.titulo.hasError('required')">
-            Informe o tema do TCC.
-          </mat-error>
-          <mat-error *ngIf="tccForm.controls.titulo.touched && tccForm.controls.titulo.hasError('minlength')">
-            Use pelo menos 3 caracteres.
-          </mat-error>
-        </mat-form-field>
+        <div class="al-summary" *ngIf="meuTcc as tcc">
+          <span>{{ tcc.tipo_tcc }}</span>
+          <span>Orientador: {{ tcc.orientador_nome }}</span>
+          <span *ngIf="tcc.coorientador_nome">Coorientador: {{ tcc.coorientador_nome }}</span>
+          <span>Período: {{ tcc.periodo_nome }}</span>
+        </div>
 
-        <div class="painel-form__row">
-          <mat-form-field appearance="outline" class="full-width">
-            <mat-label>Tipo de TCC</mat-label>
-            <mat-select formControlName="tipo_tcc">
-              <mat-option *ngFor="let tipo of tiposTcc" [value]="tipo.value">{{ tipo.label }}</mat-option>
-            </mat-select>
+        <p class="al-empty" *ngIf="!meuTcc">
+          Você ainda não informou seu TCC neste período. O cadastro é único por período, mas pode ser atualizado.
+        </p>
+
+        <form [formGroup]="tccForm" class="al-form" (ngSubmit)="submitTcc()">
+          <mat-form-field appearance="outline" class="al-field-full">
+            <mat-label>Título do TCC</mat-label>
+            <input matInput formControlName="titulo">
+            <mat-error *ngIf="tccForm.controls.titulo.touched && tccForm.controls.titulo.hasError('required')">
+              Informe o tema do TCC.
+            </mat-error>
+            <mat-error *ngIf="tccForm.controls.titulo.touched && tccForm.controls.titulo.hasError('minlength')">
+              Use pelo menos 3 caracteres.
+            </mat-error>
           </mat-form-field>
 
-          <mat-form-field appearance="outline" class="full-width">
-            <mat-label>Professor orientador</mat-label>
-            <mat-select formControlName="orientador_id">
-              <mat-option *ngFor="let orientador of orientadores" [value]="orientador.id">
+          <div class="al-form-row">
+            <mat-form-field appearance="outline">
+              <mat-label>Tipo de TCC</mat-label>
+              <mat-select formControlName="tipo_tcc">
+                <mat-option *ngFor="let tipo of tiposTcc" [value]="tipo.value">{{ tipo.label }}</mat-option>
+              </mat-select>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Professor orientador</mat-label>
+              <mat-select formControlName="orientador_id">
+                <mat-option *ngFor="let orientador of orientadores" [value]="orientador.id">
+                  {{ orientador.nome_completo }}
+                </mat-option>
+              </mat-select>
+              <mat-error *ngIf="tccForm.controls.orientador_id.touched && tccForm.controls.orientador_id.hasError('required')">
+                Selecione um orientador.
+              </mat-error>
+            </mat-form-field>
+          </div>
+
+          <mat-form-field appearance="outline" class="al-field-full">
+            <mat-label>Coorientador opcional</mat-label>
+            <mat-select formControlName="coorientador_id">
+              <mat-option value="">Sem coorientador</mat-option>
+              <mat-option *ngFor="let orientador of coorientadoresDisponiveis" [value]="orientador.id">
                 {{ orientador.nome_completo }}
               </mat-option>
             </mat-select>
-            <mat-error *ngIf="tccForm.controls.orientador_id.touched && tccForm.controls.orientador_id.hasError('required')">
-              Selecione um orientador.
-            </mat-error>
           </mat-form-field>
+
+          <div class="al-form-actions">
+            <button mat-raised-button type="submit" class="al-btn-primary" [disabled]="isSavingTcc || orientadores.length === 0">
+              {{ isSavingTcc ? 'SALVANDO...' : (meuTcc ? 'ATUALIZAR TCC' : 'REGISTRAR TCC') }}
+            </button>
+            <p class="al-empty" *ngIf="orientadores.length === 0">
+              Nenhum orientador ativo está disponível no momento.
+            </p>
+          </div>
+        </form>
+      </section>
+
+      <section class="al-card" *ngIf="cronogramaAluno as cronogramaAlunoData">
+        <div class="al-card-header">
+          <div>
+            <span class="al-card-label">US007</span>
+            <h2 class="al-card-title">Cronograma do período {{ cronograma?.periodo?.nome }}</h2>
+          </div>
+          <span class="al-badge al-badge--soft">{{ cronogramaAlunoData.tipo_tcc || 'Prazos gerais' }}</span>
         </div>
 
-        <mat-form-field appearance="outline" class="full-width">
-          <mat-label>Coorientador opcional</mat-label>
-          <mat-select formControlName="coorientador_id">
-            <mat-option value="">Sem coorientador</mat-option>
-            <mat-option *ngFor="let orientador of coorientadoresDisponiveis" [value]="orientador.id">
-              {{ orientador.nome_completo }}
-            </mat-option>
-          </mat-select>
-        </mat-form-field>
-
-        <div class="painel-form__actions">
-          <button mat-raised-button type="submit" class="approve-btn" [disabled]="isSavingTcc || orientadores.length === 0">
-            {{ isSavingTcc ? 'SALVANDO...' : (meuTcc ? 'ATUALIZAR TCC' : 'REGISTRAR TCC') }}
-          </button>
-          <p class="painel-empty" *ngIf="orientadores.length === 0">
-            Nenhum orientador ativo esta disponivel no momento.
-          </p>
+        <div class="al-alert" *ngIf="cronogramaAlunoData.alerta_prazo">
+          <strong>Envio fora do prazo</strong>
+          <p>{{ cronogramaAlunoData.alerta_prazo }}</p>
         </div>
-      </form>
-    </section>
 
-    <section class="painel-card" *ngIf="cronogramaAluno as cronogramaAlunoData">
-      <div class="painel-card__header">
-        <div>
-          <span class="painel-card__label">US007</span>
-          <h2 class="painel-card__title">Cronograma do periodo {{ cronograma?.periodo?.nome }}</h2>
-        </div>
-        <span class="painel-badge painel-badge--subtle">
-          {{ cronogramaAlunoData.tipo_tcc || 'Prazos gerais' }}
-        </span>
-      </div>
+        <p class="al-empty" *ngIf="!cronogramaAlunoData.titulo_tcc">
+          Sem TCC cadastrado neste período, o cronograma mostra apenas os prazos gerais aplicáveis.
+        </p>
 
-      <div class="painel-alert" *ngIf="cronogramaAlunoData.alerta_prazo">
-        <strong>Envio fora do prazo</strong>
-        <p>{{ cronogramaAlunoData.alerta_prazo }}</p>
-      </div>
-
-      <p class="painel-empty" *ngIf="!cronogramaAlunoData.titulo_tcc">
-        Sem TCC cadastrado neste periodo, o cronograma mostra apenas os prazos gerais aplicaveis a todos os alunos.
-      </p>
-
-      <div class="cronograma-list" *ngIf="cronogramaAlunoData.prazos.length; else semPrazosAluno">
-        <article
-          class="cronograma-item"
-          *ngFor="let prazo of cronogramaAlunoData.prazos"
-          [class.cronograma-item--verde]="prazo.cor === 'verde'"
-          [class.cronograma-item--amarelo]="prazo.cor === 'amarelo'"
-          [class.cronograma-item--laranja]="prazo.cor === 'laranja'"
-          [class.cronograma-item--vermelho]="prazo.cor === 'vermelho'">
-          <div class="cronograma-item__header">
+        <div class="al-timeline" *ngIf="cronogramaAlunoData.prazos.length; else semPrazosAluno">
+          <article
+            class="al-timeline-item"
+            *ngFor="let prazo of cronogramaAlunoData.prazos"
+            [class.al-timeline-item--verde]="prazo.cor === 'verde'"
+            [class.al-timeline-item--amarelo]="prazo.cor === 'amarelo'"
+            [class.al-timeline-item--laranja]="prazo.cor === 'laranja'"
+            [class.al-timeline-item--vermelho]="prazo.cor === 'vermelho'">
             <div>
-              <span class="painel-card__label">{{ prazo.tipo_tcc }}</span>
+              <span class="al-card-label">{{ prazo.tipo_tcc }}</span>
               <h3>{{ prazo.nome_etapa }}</h3>
             </div>
-            <span class="cronograma-status">{{ prazo.status }}</span>
-          </div>
-          <div class="cronograma-item__meta">
-            <strong>{{ prazo.data_limite | date:'dd/MM/yyyy' }}</strong>
-            <span>{{ prazo.mensagem }}</span>
-          </div>
-        </article>
-      </div>
+            <div class="al-timeline-meta">
+              <strong>{{ prazo.data_limite | date:'dd/MM/yyyy' }}</strong>
+              <span>{{ prazo.status }}</span>
+              <p>{{ prazo.mensagem }}</p>
+            </div>
+          </article>
+        </div>
 
-      <ng-template #semPrazosAluno>
-        <p class="painel-empty">Nao ha prazos configurados para o seu contexto no periodo letivo ativo.</p>
-      </ng-template>
-    </section>
-  </ng-container>
+        <ng-template #semPrazosAluno>
+          <p class="al-empty">Não há prazos configurados para o seu contexto no período letivo ativo.</p>
+        </ng-template>
+      </section>
+    </ng-container>
+  </main>
 </div>

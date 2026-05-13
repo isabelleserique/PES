@@ -1,10 +1,19 @@
+import { Location } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, Validators } from '@angular/forms';
+import { forkJoin } from 'rxjs';
 import { finalize } from 'rxjs/operators';
 
 import { getApiErrorMessage } from '../../../auth/utils/api-error.util';
-import { PainelService } from '../../services/painel.service';
-import { OrientadorService, SolicitacaoOrientacao } from '../../services/orientador.service';
+import { PainelService, PendingOrientationRequest } from '../../services/painel.service';
+
+interface SolicitacaoOrientacaoView {
+  id: string;
+  nomeAluno: string;
+  tituloDeTCC: string;
+  tipo: string;
+  prazoAceite: string | null;
+}
 
 @Component({
   selector: 'app-aceite-orientacao',
@@ -12,10 +21,10 @@ import { OrientadorService, SolicitacaoOrientacao } from '../../services/orienta
   styleUrls: ['./aceite-orientacao.component.css'],
 })
 export class AceiteOrientacaoComponent implements OnInit {
-  solicitacoes: SolicitacaoOrientacao[] = [];
+  solicitacoes: SolicitacaoOrientacaoView[] = [];
   expandedId: string | null = null;
   acaoAtual: 'ACEITAR' | 'REJEITAR' | null = null;
-  solicitacaoAtiva: SolicitacaoOrientacao | null = null;
+  solicitacaoAtiva: SolicitacaoOrientacaoView | null = null;
   nomeOrientador = '';
 
   isLoading = false;
@@ -26,7 +35,7 @@ export class AceiteOrientacaoComponent implements OnInit {
   prazoAceite: Date | null = null;
 
   readonly acaoForm = this.fb.group({
-    observacao: [''],
+    observacao: ['', [Validators.maxLength(1000)]],
     statusTCC: ['', Validators.required],
   });
 
@@ -37,8 +46,8 @@ export class AceiteOrientacaoComponent implements OnInit {
 
   constructor(
     private readonly fb: FormBuilder,
+    private readonly location: Location,
     private readonly painelService: PainelService,
-    private readonly orientadorService: OrientadorService,
   ) {}
 
   ngOnInit(): void {
@@ -59,7 +68,7 @@ export class AceiteOrientacaoComponent implements OnInit {
     return Math.ceil((hoje.getTime() - this.prazoAceite.getTime()) / (1000 * 60 * 60 * 24));
   }
 
-  abrirAcao(solicitacao: SolicitacaoOrientacao, acao: 'ACEITAR' | 'REJEITAR'): void {
+  abrirAcao(solicitacao: SolicitacaoOrientacaoView, acao: 'ACEITAR' | 'REJEITAR'): void {
     if (this.expandedId === solicitacao.id && this.acaoAtual === acao) {
       this.fecharPainel();
       return;
@@ -88,24 +97,31 @@ export class AceiteOrientacaoComponent implements OnInit {
     this.acaoForm.markAllAsTouched();
     if (this.acaoForm.invalid || !this.solicitacaoAtiva || !this.acaoAtual || this.isConfirmando) return;
 
+    const observacao = this.acaoForm.controls.observacao.getRawValue()?.trim() ?? '';
+    if (this.acaoAtual === 'REJEITAR' && observacao.length === 0) {
+      this.errorMessage = 'Informe uma observação para recusar a solicitação de orientação.';
+      return;
+    }
+
     this.isConfirmando = true;
     this.errorMessage = '';
+    const acaoBackend = this.acaoAtual === 'REJEITAR' ? 'RECUSAR' : 'ACEITAR';
 
-    const { observacao, statusTCC } = this.acaoForm.getRawValue();
-
-    this.orientadorService
-      .responderSolicitacao(this.solicitacaoAtiva.id, {
-        acao: this.acaoAtual,
-        observacao: observacao ?? '',
-        status_tcc: statusTCC!,
+    this.painelService
+      .decidirSolicitacaoOrientacao(this.solicitacaoAtiva.id, {
+        acao: acaoBackend,
+        ...(observacao ? { observacao } : {}),
       })
       .pipe(finalize(() => (this.isConfirmando = false)))
       .subscribe({
-        next: () => {
-          const nome = this.solicitacaoAtiva!.nomeAluno;
+        next: (response) => {
           const acao = this.acaoAtual === 'ACEITAR' ? 'aceita' : 'recusada';
-          this.successMessage = `Solicitação de ${nome} ${acao} com sucesso. O aluno será notificado.`;
+          this.successMessage = `Solicitação de ${response.aluno_nome} ${acao} com sucesso.`;
+          if (response.alerta_acao_prazo) {
+            this.successMessage = `${this.successMessage} ${response.alerta_acao_prazo}`;
+          }
           this.solicitacoes = this.solicitacoes.filter((s) => s.id !== this.solicitacaoAtiva!.id);
+          this.prazoAceite = this.resolvePrazoAceite(this.solicitacoes);
           this.fecharPainel();
         },
         error: (err: unknown) => {
@@ -114,29 +130,53 @@ export class AceiteOrientacaoComponent implements OnInit {
       });
   }
 
+  voltar(): void {
+    this.location.back();
+  }
+
   private carregarDados(): void {
     this.isLoading = true;
+    this.errorMessage = '';
+    this.successMessage = '';
 
-    this.painelService
-      .getMeuPerfil()
+    forkJoin({
+      user: this.painelService.getMeuPerfil(),
+      solicitacoes: this.painelService.listarSolicitacoesOrientacaoPendentes(),
+    })
       .pipe(finalize(() => (this.isLoading = false)))
       .subscribe({
-        next: (user) => {
+        next: ({ user, solicitacoes }) => {
           this.nomeOrientador = user.nome_completo;
-          this.carregarSolicitacoes();
+          this.solicitacoes = solicitacoes.map((solicitacao) => this.mapSolicitacao(solicitacao));
+          this.prazoAceite = this.resolvePrazoAceite(this.solicitacoes);
         },
         error: (err: unknown) => {
-          this.errorMessage = getApiErrorMessage(err, 'Não foi possível carregar seus dados.');
+          this.errorMessage = getApiErrorMessage(err, 'Não foi possível carregar as solicitações.');
         },
       });
   }
 
-  private carregarSolicitacoes(): void {
-    this.orientadorService.listarSolicitacoes().subscribe({
-      next: (lista) => (this.solicitacoes = lista),
-      error: (err: unknown) => {
-        this.errorMessage = getApiErrorMessage(err, 'Não foi possível carregar as solicitações.');
-      },
-    });
+  private mapSolicitacao(solicitacao: PendingOrientationRequest): SolicitacaoOrientacaoView {
+    return {
+      id: solicitacao.tcc_id,
+      nomeAluno: solicitacao.aluno_nome,
+      tituloDeTCC: solicitacao.titulo,
+      tipo: solicitacao.tipo_tcc,
+      prazoAceite: solicitacao.prazo_aceite,
+    };
+  }
+
+  private resolvePrazoAceite(solicitacoes: SolicitacaoOrientacaoView[]): Date | null {
+    const datas = solicitacoes
+      .map((solicitacao) => solicitacao.prazoAceite)
+      .filter((prazo): prazo is string => prazo !== null)
+      .sort();
+
+    if (datas.length === 0) {
+      return null;
+    }
+
+    const [year, month, day] = datas[0].split('-').map(Number);
+    return new Date(year, month - 1, day);
   }
 }

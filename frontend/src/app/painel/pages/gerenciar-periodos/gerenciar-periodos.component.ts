@@ -8,7 +8,7 @@ import { PeriodoResponse, PeriodoService } from '../../services/periodo.service'
 @Component({
   selector: 'app-gerenciar-periodos',
   templateUrl: './gerenciar-periodos.component.html',
-  styleUrls: ['../../painel-page.css', './gerenciar-periodos.component.css'],
+  styleUrls: ['./gerenciar-periodos.component.css'],
 })
 export class GerenciarPeriodosComponent implements OnInit {
   periodos: PeriodoResponse[] = [];
