@@ -8,6 +8,9 @@
     </div>
     <div class="navbar-sep"></div>
     <span class="navbar-app-name">TCComp</span>
+    <span class="sa-navbar-spacer"></span>
+    <a mat-stroked-button class="sa-nav-btn" routerLink="/painel/aluno">Home</a>
+    <button mat-stroked-button type="button" class="sa-nav-btn" (click)="voltar()">Voltar</button>
   </nav>
 
   <main class="app-page-content">
@@ -16,18 +19,18 @@
     <ng-container *ngIf="isSubmitted; else formView">
       <div class="sa-success-card">
         <mat-icon class="sa-success-icon">check_circle</mat-icon>
-        <h2>Artigo submetido com sucesso!</h2>
-        <p *ngIf="foiAceito">
+        <h2>Entregável submetido com sucesso!</h2>
+        <p *ngIf="isArtigo && foiAceito">
           Seu comprovante de aceite foi registrado.
           <ng-container *ngIf="notaAtribuida !== null">
             A nota <strong>{{ notaAtribuida }},0</strong> foi atribuída automaticamente.
           </ng-container>
         </p>
-        <p *ngIf="!foiAceito">
-          Seu artigo foi registrado e está aguardando avaliação do orientador.
+        <p *ngIf="!isArtigo || !foiAceito">
+          Sua submissão foi registrada e está aguardando avaliação do orientador.
         </p>
         <p class="sa-success-status">
-          Status: <span>{{ foiAceito ? 'Aceito para Publicação' : 'Aguardando Avaliação' }}</span>
+          Status: <span>{{ isArtigo && foiAceito ? 'Aceito para Publicação' : 'Aguardando Avaliação' }}</span>
         </p>
         <button mat-raised-button class="sa-btn-primary" (click)="cancelar()">Voltar ao painel</button>
       </div>
@@ -36,7 +39,7 @@
     <!-- Formulário -->
     <ng-template #formView>
 
-      <h1 class="sa-page-title">Submissão de Artigo Científico</h1>
+      <h1 class="sa-page-title">{{ pageTitle }}</h1>
 
       <!-- Alerta fora do prazo -->
       <div class="sa-alert sa-alert--warning" *ngIf="foraDoPrazo">
@@ -54,25 +57,32 @@
         <div class="sa-card">
           <div class="sa-section-header">NOVA SUBMISSÃO</div>
 
-          <!-- Upload do artigo -->
+          <mat-form-field appearance="outline" class="sa-field-full" *ngIf="!isArtigo">
+            <mat-label>Etapa do entregável</mat-label>
+            <mat-select [formControl]="etapaCtrl">
+              <mat-option *ngFor="let etapa of etapasDisponiveis" [value]="etapa">{{ etapa }}</mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <!-- Upload do arquivo -->
           <div class="sa-upload-group">
             <label class="sa-upload-label">
-              Arquivo do Artigo <span class="sa-required">*</span>
+              {{ arquivoLabel }} <span class="sa-required">*</span>
             </label>
             <p class="sa-upload-hint">Formatos aceitos: PDF ou DOCX. Tamanho máximo: 50 MB.</p>
 
             <div class="sa-upload-area"
-                 *ngIf="!artigoFile"
+                 *ngIf="!arquivoFile"
                  (click)="artigoInput.click()">
               <mat-icon>upload_file</mat-icon>
               <span>Clique para selecionar o arquivo</span>
             </div>
 
-            <div class="sa-file-selected" *ngIf="artigoFile">
+            <div class="sa-file-selected" *ngIf="arquivoFile">
               <mat-icon>description</mat-icon>
               <div class="sa-file-info">
-                <span class="sa-file-name">{{ artigoFile.name }}</span>
-                <span class="sa-file-size">{{ formatarTamanho(artigoFile.size) }}</span>
+                <span class="sa-file-name">{{ arquivoFile.name }}</span>
+                <span class="sa-file-size">{{ formatarTamanho(arquivoFile.size) }}</span>
               </div>
               <button mat-icon-button type="button" (click)="removerArtigo()" title="Remover arquivo">
                 <mat-icon>close</mat-icon>
@@ -82,8 +92,8 @@
             <input #artigoInput type="file" accept=".pdf,.docx" hidden (change)="onArtigoFileChange($event)" />
           </div>
 
-          <!-- Toggle: artigo aceito para publicação -->
-          <div class="sa-aceite-section">
+          <!-- Toggle: artigo aceito para publicação (apenas para Artigo) -->
+          <div class="sa-aceite-section" *ngIf="isArtigo">
             <mat-checkbox [formControl]="foiAceitoCtrl" color="primary">
               O artigo já foi aceito para publicação em periódico ou conferência
             </mat-checkbox>
@@ -96,7 +106,7 @@
             </div>
           </div>
 
-          <!-- Upload do comprovante (condicional) -->
+          <!-- Upload do comprovante (condicional para Artigo aceito) -->
           <div class="sa-upload-group sa-upload-group--comprovante" *ngIf="foiAceito">
             <label class="sa-upload-label">
               Comprovante de Aceite <span class="sa-required">*</span>
@@ -138,7 +148,7 @@
               (click)="submeter()"
             >
               <mat-icon *ngIf="!isSubmitting">cloud_upload</mat-icon>
-              {{ isSubmitting ? 'Enviando...' : 'Submeter Artigo' }}
+              {{ submitLabel }}
             </button>
           </div>
         </div>
@@ -160,12 +170,14 @@
           <div class="sa-historico-table" *ngIf="!isLoading && historico.length > 0">
             <div class="sa-historico-row sa-historico-row--header">
               <span>Versão</span>
+              <span>Etapa</span>
               <span>Arquivo</span>
               <span>Data</span>
               <span>Status</span>
             </div>
             <div class="sa-historico-row" *ngFor="let s of historico">
               <span class="sa-versao">v{{ s.versao }}</span>
+              <span>{{ s.etapa }}</span>
               <span class="sa-arquivo-nome" [title]="s.nome_arquivo">{{ s.nome_arquivo }}</span>
               <span class="sa-data">{{ formatarData(s.data_submissao) }}</span>
               <div class="sa-badges">

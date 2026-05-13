@@ -15,7 +15,7 @@ import {
 @Component({
   selector: 'app-painel-coordenador',
   templateUrl: './painel.component.html',
-  styleUrls: ['../../painel-page.css'],
+  styleUrls: ['./painel.component.css'],
 })
 export class PainelCoordenadorComponent implements OnInit {
   isLoading = true;

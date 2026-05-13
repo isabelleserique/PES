@@ -1,0 +1,202 @@
+.hs-spacer { flex: 1; }
+
+.hs-nav-btn {
+  border-color: rgba(255, 255, 255, 0.32) !important;
+  color: #fff !important;
+}
+
+.hs-page { display: grid; gap: 22px; }
+
+.hs-hero { margin-bottom: 4px; }
+
+.hs-eyebrow {
+  color: #1565c0;
+  display: block;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+}
+
+.hs-title {
+  color: #0d2137;
+  font-size: 1.8rem;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+.hs-subtitle { color: #4a5568; line-height: 1.6; }
+
+/* ── Filtros ── */
+.hs-filters {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.hs-filter-field { width: 220px; }
+
+.hs-total {
+  margin-left: auto;
+  font-size: 0.85rem;
+  color: #718096;
+  font-weight: 600;
+}
+
+/* ── Card / Tabela ── */
+.hs-card {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.hs-table-wrap { overflow-x: auto; }
+
+.hs-table-header,
+.hs-table-row {
+  display: grid;
+  grid-template-columns: 180px 200px 180px 70px 200px 150px 1fr;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 20px;
+  border-bottom: 1px solid #f0f4f8;
+  font-size: 0.85rem;
+}
+
+.hs-table-header {
+  background: #f0f4f8;
+  font-weight: 700;
+  font-size: 0.75rem;
+  color: #718096;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.hs-table-row:last-child { border-bottom: none; }
+.hs-table-row:hover { background: #f8fafc; }
+
+/* ── Células ── */
+.hs-aluno-nome {
+  font-weight: 600;
+  color: #0d2137;
+  display: block;
+}
+
+.hs-aluno-mat {
+  font-size: 0.78rem;
+  color: #718096;
+  display: block;
+}
+
+.hs-tcc-titulo {
+  display: block;
+  font-weight: 500;
+  color: #0d2137;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 190px;
+}
+
+.hs-tcc-tipo {
+  display: block;
+  font-size: 0.75rem;
+  color: #718096;
+}
+
+.hs-etapa { color: #1565c0; font-size: 0.83rem; }
+
+.hs-versao {
+  font-weight: 700;
+  color: #1565c0;
+}
+
+.hs-arquivo {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 0.8rem;
+  color: #4a5568;
+  overflow: hidden;
+}
+
+.hs-arquivo mat-icon {
+  font-size: 14px;
+  width: 14px;
+  height: 14px;
+  vertical-align: middle;
+  color: #1565c0;
+}
+
+.hs-arquivo span {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.hs-comprovante {
+  color: #27ae60;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.hs-data { color: #4a5568; font-size: 0.8rem; }
+
+/* ── Badges ── */
+.hs-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.hs-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  border-radius: 20px;
+  padding: 3px 9px;
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
+.hs-badge mat-icon { font-size: 12px; width: 12px; height: 12px; }
+
+.hs-badge--aceito  { background: #e8f5e9; color: #1b5e20; }
+.hs-badge--pendente { background: #e3f2fd; color: #0d47a1; }
+.hs-badge--atraso  { background: #fff3e0; color: #bf360c; }
+.hs-badge--nota    { background: #f3e5f5; color: #6a1b9a; }
+
+/* ── Estados ── */
+.hs-loading,
+.hs-empty,
+.hs-empty-filter {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 48px;
+  color: #a0aec0;
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+.hs-loading mat-icon,
+.hs-empty mat-icon,
+.hs-empty-filter mat-icon {
+  font-size: 36px;
+  width: 36px;
+  height: 36px;
+}
+
+@media (max-width: 900px) {
+  .hs-table-header,
+  .hs-table-row {
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto;
+  }
+}

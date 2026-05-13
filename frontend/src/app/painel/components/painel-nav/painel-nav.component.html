@@ -1,0 +1,14 @@
+<nav class="painel-nav" *ngIf="links.length > 0">
+  <div class="painel-nav__links">
+    <a
+      *ngFor="let link of links"
+      class="painel-nav__link"
+      [routerLink]="link.path"
+      routerLinkActive="painel-nav__link--active"
+      [routerLinkActiveOptions]="{ exact: false }">
+      {{ link.label }}
+    </a>
+  </div>
+
+  <span class="painel-nav__perfil">{{ perfilLabel }}</span>
+</nav>

@@ -1,0 +1,120 @@
+<div class="app-shell">
+
+  <nav class="app-navbar">
+    <div class="navbar-brand">
+      <div class="logo-badge">IC</div>
+      <span class="logo-name">IComp</span>
+    </div>
+    <div class="navbar-sep"></div>
+    <span class="navbar-app-name">TCComp</span>
+    <span class="hs-spacer"></span>
+    <a mat-stroked-button class="hs-nav-btn" routerLink="/painel/coordenador">Home</a>
+    <button mat-stroked-button type="button" class="hs-nav-btn" (click)="voltar()">Voltar</button>
+  </nav>
+
+  <main class="app-page-content hs-page">
+
+    <header class="hs-hero">
+      <div>
+        <span class="hs-eyebrow">US016 — Coordenador</span>
+        <h1 class="hs-title">Histórico de Submissões</h1>
+        <p class="hs-subtitle">Visualize todas as versões enviadas pelos alunos. Nenhum arquivo pode ser excluído.</p>
+      </div>
+    </header>
+
+    <p class="status-message status-message--error" *ngIf="errorMessage">{{ errorMessage }}</p>
+
+    <!-- Filtros -->
+    <div class="hs-filters" *ngIf="!isLoading && historico.length > 0">
+      <mat-form-field appearance="outline" class="hs-filter-field">
+        <mat-label>Tipo de TCC</mat-label>
+        <mat-select [(ngModel)]="filtroTipo">
+          <mat-option value="">Todos</mat-option>
+          <mat-option *ngFor="let tipo of tiposDisponiveis" [value]="tipo">{{ tipo }}</mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <mat-checkbox color="warn" [(ngModel)]="filtroForaDoPrazo">
+        Apenas fora do prazo
+      </mat-checkbox>
+
+      <span class="hs-total">
+        {{ historicoFiltrado.length }} registro(s)
+      </span>
+    </div>
+
+    <!-- Loading -->
+    <div class="hs-loading" *ngIf="isLoading">
+      <mat-icon>hourglass_empty</mat-icon>
+      <span>Carregando histórico...</span>
+    </div>
+
+    <!-- Vazio -->
+    <div class="hs-empty" *ngIf="!isLoading && historico.length === 0">
+      <mat-icon>inbox</mat-icon>
+      <p>Nenhuma submissão registrada no sistema.</p>
+    </div>
+
+    <!-- Tabela -->
+    <div class="hs-card" *ngIf="!isLoading && historico.length > 0">
+      <div class="hs-table-wrap">
+        <div class="hs-table-header">
+          <span>Aluno</span>
+          <span>TCC</span>
+          <span>Etapa</span>
+          <span>Versão</span>
+          <span>Arquivo</span>
+          <span>Data</span>
+          <span>Status</span>
+        </div>
+
+        <div class="hs-empty-filter" *ngIf="historicoFiltrado.length === 0">
+          <mat-icon>search_off</mat-icon>
+          <p>Nenhum resultado para os filtros selecionados.</p>
+        </div>
+
+        <div class="hs-table-row" *ngFor="let s of historicoFiltrado">
+          <div class="hs-aluno">
+            <span class="hs-aluno-nome">{{ s.aluno_nome }}</span>
+            <span class="hs-aluno-mat" *ngIf="s.matricula">{{ s.matricula }}</span>
+          </div>
+
+          <div class="hs-tcc">
+            <span class="hs-tcc-titulo" [title]="s.titulo_tcc">{{ s.titulo_tcc }}</span>
+            <span class="hs-tcc-tipo">{{ s.tipo_tcc }}</span>
+          </div>
+
+          <span class="hs-etapa">{{ s.etapa }}</span>
+
+          <span class="hs-versao">v{{ s.versao }}</span>
+
+          <div class="hs-arquivo">
+            <mat-icon>description</mat-icon>
+            <span [title]="s.nome_arquivo">{{ s.nome_arquivo }}</span>
+            <span class="hs-comprovante" *ngIf="s.nome_comprovante" [title]="s.nome_comprovante">
+              <mat-icon>attach_file</mat-icon>{{ s.nome_comprovante }}
+            </span>
+          </div>
+
+          <span class="hs-data">{{ formatarData(s.data_submissao) }}</span>
+
+          <div class="hs-badges">
+            <span class="hs-badge hs-badge--aceito" *ngIf="s.foi_aceito">
+              <mat-icon>verified</mat-icon> Aceito
+            </span>
+            <span class="hs-badge hs-badge--pendente" *ngIf="!s.foi_aceito">
+              <mat-icon>hourglass_empty</mat-icon> Aguardando
+            </span>
+            <span class="hs-badge hs-badge--atraso" *ngIf="s.fora_do_prazo">
+              Fora do prazo
+            </span>
+            <span class="hs-badge hs-badge--nota" *ngIf="s.nota_automatica !== null">
+              Nota {{ s.nota_automatica }},0
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>

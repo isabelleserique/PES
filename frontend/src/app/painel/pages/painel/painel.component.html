@@ -1,108 +1,141 @@
-<div class="painel-shell">
-  <header class="painel-header">
-    <div>
-      <span class="painel-eyebrow">Area do coordenador</span>
-      <h1 class="painel-title">Painel do coordenador</h1>
-      <p class="painel-subtitle">Gerencie o seu acesso autenticado e acompanhe as solicitacoes pendentes de cadastro.</p>
+<div class="app-shell">
+  <nav class="app-navbar">
+    <div class="navbar-brand">
+      <div class="logo-badge">IC</div>
+      <span class="logo-name">IComp</span>
     </div>
-    <button mat-stroked-button type="button" (click)="logout()">Sair</button>
-  </header>
+    <div class="navbar-sep"></div>
+    <span class="navbar-app-name">TCComp</span>
+    <span class="coord-navbar-spacer"></span>
+    <button mat-stroked-button type="button" class="coord-logout-btn" (click)="logout()">Sair</button>
+  </nav>
 
-  <p class="status-message status-message--error" *ngIf="errorMessage">{{ errorMessage }}</p>
-  <p class="status-message status-message--success" *ngIf="feedbackMessage">{{ feedbackMessage }}</p>
+  <main class="app-page-content coord-page">
+    <header class="coord-hero">
+      <div>
+        <span class="coord-eyebrow">Área do coordenador</span>
+        <h1 class="coord-title">Painel do coordenador</h1>
+        <p class="coord-subtitle">
+          Gerencie períodos letivos, prazos do TCC e solicitações pendentes de cadastro.
+        </p>
+      </div>
+      <div class="coord-hero-actions" *ngIf="isCoordenador">
+        <a mat-raised-button class="coord-btn-primary" routerLink="/painel/gerenciar-periodos">Gerenciar períodos</a>
+        <a mat-stroked-button routerLink="/painel/criar-periodo">Definir prazos</a>
+      </div>
+    </header>
 
-  <section class="painel-card" *ngIf="isLoading">
-    <p class="painel-loading">Carregando painel...</p>
-  </section>
+    <p class="status-message status-message--error" *ngIf="errorMessage">{{ errorMessage }}</p>
+    <p class="status-message status-message--success" *ngIf="feedbackMessage">{{ feedbackMessage }}</p>
 
-  <ng-container *ngIf="!isLoading">
-    <ng-container *ngIf="currentUser as user">
-      <section class="painel-card">
-        <div class="painel-card__header">
-          <div>
-            <span class="painel-card__label">Sessao atual</span>
-            <h2 class="painel-card__title">{{ user.nome_completo }}</h2>
-          </div>
-          <span class="painel-badge">{{ user.perfil }}</span>
-        </div>
+    <section class="coord-card" *ngIf="isLoading">
+      <p class="coord-empty">Carregando painel do coordenador...</p>
+    </section>
 
-        <div class="painel-grid">
-          <div>
-            <span class="painel-field__label">E-mail</span>
-            <strong>{{ user.email }}</strong>
-          </div>
-          <div>
-            <span class="painel-field__label">Username</span>
-            <strong>{{ user.username }}</strong>
-          </div>
-          <div>
-            <span class="painel-field__label">Status</span>
-            <strong>{{ user.status }}</strong>
-          </div>
-          <div *ngIf="user.matricula">
-            <span class="painel-field__label">Matricula</span>
-            <strong>{{ user.matricula }}</strong>
-          </div>
-        </div>
-      </section>
-
-      <section class="painel-card" *ngIf="isCoordenador; else genericUserState">
-        <div class="painel-card__header">
-          <div>
-            <span class="painel-card__label">Aprovacoes</span>
-            <h2 class="painel-card__title">Cadastros pendentes</h2>
-          </div>
-          <span class="painel-badge painel-badge--subtle">{{ pendingRegistrations.length }} pendente(s)</span>
-        </div>
-
-        <div class="pending-list" *ngIf="pendingRegistrations.length; else emptyPendingState">
-          <article class="pending-item" *ngFor="let pending of pendingRegistrations">
-            <div class="pending-item__main">
-              <h3>{{ pending.nome_completo }}</h3>
-              <p>{{ pending.email }}</p>
-              <p>Username: {{ pending.username }}</p>
-              <p>Perfil: {{ pending.perfil }}</p>
-              <p *ngIf="pending.matricula">Matricula: {{ pending.matricula }}</p>
-            </div>
-            <div class="pending-item__actions">
-              <button
-                mat-raised-button
-                type="button"
-                class="approve-btn"
-                [disabled]="isReviewing"
-                (click)="revisarCadastro(pending.id, 'APROVAR')">
-                Aprovar
-              </button>
-              <button
-                mat-stroked-button
-                type="button"
-                class="reject-btn"
-                [disabled]="isReviewing"
-                (click)="revisarCadastro(pending.id, 'REJEITAR')">
-                Rejeitar
-              </button>
-            </div>
-          </article>
-        </div>
-      </section>
-
-      <ng-template #emptyPendingState>
-        <p class="painel-empty">Nao ha solicitacoes pendentes no momento.</p>
-      </ng-template>
-
-      <ng-template #genericUserState>
-        <section class="painel-card">
-          <div class="painel-card__header">
+    <ng-container *ngIf="!isLoading">
+      <ng-container *ngIf="currentUser as user">
+        <section class="coord-card coord-profile-card">
+          <div class="coord-card-header">
             <div>
-              <span class="painel-card__label">Acesso liberado</span>
-              <h2 class="painel-card__title">Painel autenticado ativo</h2>
+              <span class="coord-card-label">Sessão atual</span>
+              <h2 class="coord-card-title">{{ user.nome_completo }}</h2>
+            </div>
+            <span class="coord-badge">{{ user.perfil }}</span>
+          </div>
+
+          <div class="coord-info-grid">
+            <div>
+              <span class="coord-field-label">E-mail</span>
+              <strong>{{ user.email }}</strong>
+            </div>
+            <div>
+              <span class="coord-field-label">Username</span>
+              <strong>{{ user.username }}</strong>
+            </div>
+            <div>
+              <span class="coord-field-label">Status</span>
+              <strong>{{ user.status }}</strong>
+            </div>
+            <div *ngIf="user.matricula">
+              <span class="coord-field-label">Matrícula</span>
+              <strong>{{ user.matricula }}</strong>
             </div>
           </div>
-          <p class="painel-empty">
-            Seu token JWT foi validado e o painel carregou seus dados a partir do endpoint protegido <code>/usuarios/me</code>.
-          </p>
         </section>
-      </ng-template>
+
+        <section class="coord-card coord-card--accent" *ngIf="isCoordenador; else genericUserState">
+          <div class="coord-card-header">
+            <div>
+              <span class="coord-card-label">US006</span>
+              <h2 class="coord-card-title">Ações rápidas do período</h2>
+            </div>
+          </div>
+
+          <div class="coord-action-grid">
+            <a mat-raised-button class="coord-btn-primary" routerLink="/painel/gerenciar-periodos">Gerenciar períodos</a>
+            <a mat-stroked-button routerLink="/painel/criar-periodo">Definir prazos do período</a>
+            <a mat-stroked-button routerLink="/painel/historico-submissoes">Histórico de submissões</a>
+          </div>
+        </section>
+
+        <section class="coord-card" *ngIf="isCoordenador">
+          <div class="coord-card-header">
+            <div>
+              <span class="coord-card-label">Aprovações</span>
+              <h2 class="coord-card-title">Cadastros pendentes</h2>
+            </div>
+            <span class="coord-badge coord-badge--soft">{{ pendingRegistrations.length }} pendente(s)</span>
+          </div>
+
+          <div class="coord-pending-list" *ngIf="pendingRegistrations.length; else emptyPendingState">
+            <article class="coord-pending-item" *ngFor="let pending of pendingRegistrations">
+              <div class="coord-pending-main">
+                <h3>{{ pending.nome_completo }}</h3>
+                <p>{{ pending.email }}</p>
+                <p>Username: {{ pending.username }}</p>
+                <p>Perfil: {{ pending.perfil }}</p>
+                <p *ngIf="pending.matricula">Matrícula: {{ pending.matricula }}</p>
+              </div>
+              <div class="coord-pending-actions">
+                <button
+                  mat-raised-button
+                  type="button"
+                  class="coord-btn-primary"
+                  [disabled]="isReviewing"
+                  (click)="revisarCadastro(pending.id, 'APROVAR')">
+                  Aprovar
+                </button>
+                <button
+                  mat-stroked-button
+                  type="button"
+                  class="coord-btn-danger"
+                  [disabled]="isReviewing"
+                  (click)="revisarCadastro(pending.id, 'REJEITAR')">
+                  Rejeitar
+                </button>
+              </div>
+            </article>
+          </div>
+        </section>
+
+        <ng-template #emptyPendingState>
+          <p class="coord-empty">Não há solicitações pendentes no momento.</p>
+        </ng-template>
+
+        <ng-template #genericUserState>
+          <section class="coord-card">
+            <div class="coord-card-header">
+              <div>
+                <span class="coord-card-label">Acesso liberado</span>
+                <h2 class="coord-card-title">Painel autenticado ativo</h2>
+              </div>
+            </div>
+            <p class="coord-empty">
+              Seu token JWT foi validado e o painel carregou seus dados a partir do endpoint protegido <code>/usuarios/me</code>.
+            </p>
+          </section>
+        </ng-template>
+      </ng-container>
     </ng-container>
-  </ng-container>
+  </main>
 </div>

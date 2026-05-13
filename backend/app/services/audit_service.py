@@ -106,5 +106,63 @@ class AuditService:
             timestamp,
         )
 
+    def log_tcc_submission(
+        self,
+        *,
+        aluno_id: str,
+        tcc_id: str,
+        orientador_id: str,
+        prazo_excedido: bool,
+    ) -> None:
+        timestamp = datetime.now(UTC).isoformat()
+        logger.info(
+            "AUDIT action=TCC_SUBMISSION aluno_id=%s tcc_id=%s orientador_id=%s prazo_excedido=%s timestamp=%s",
+            aluno_id,
+            tcc_id,
+            orientador_id,
+            prazo_excedido,
+            timestamp,
+        )
+
+    def log_tcc_update(
+        self,
+        *,
+        aluno_id: str,
+        tcc_id: str,
+        orientador_id: str,
+        prazo_excedido: bool,
+    ) -> None:
+        timestamp = datetime.now(UTC).isoformat()
+        logger.info(
+            "AUDIT action=TCC_UPDATE aluno_id=%s tcc_id=%s orientador_id=%s prazo_excedido=%s timestamp=%s",
+            aluno_id,
+            tcc_id,
+            orientador_id,
+            prazo_excedido,
+            timestamp,
+        )
+
+    def log_orientation_decision(
+        self,
+        *,
+        actor_user_id: str,
+        aluno_id: str,
+        tcc_id: str,
+        decision: str,
+        resulting_status: str,
+        outside_deadline: bool,
+    ) -> None:
+        timestamp = datetime.now(UTC).isoformat()
+        logger.info(
+            "AUDIT action=ORIENTATION_DECISION actor_user_id=%s aluno_id=%s tcc_id=%s decision=%s status=%s outside_deadline=%s timestamp=%s",
+            actor_user_id,
+            aluno_id,
+            tcc_id,
+            decision,
+            resulting_status,
+            outside_deadline,
+            timestamp,
+        )
+
 async def get_audit_service() -> AuditService:
     return AuditService()

@@ -50,6 +50,8 @@ class Settings(BaseSettings):
     mailtrap_user: str = ""
     mailtrap_pass: str = ""
 
+    upload_dir: Path = PROJECT_ROOT / "backend" / "storage"
+
 
 @lru_cache
 def get_settings() -> Settings:

@@ -1,3 +1,12 @@
+.dt-navbar-spacer {
+  flex: 1;
+}
+
+.dt-nav-btn {
+  border-color: rgba(255, 255, 255, 0.32) !important;
+  color: #fff !important;
+}
+
 /* ── Título ── */
 .dt-page-title {
   color: #0d2137;

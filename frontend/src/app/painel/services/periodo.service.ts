@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
 
-export type TipoDeTCC = 'Todos' | 'Monografia' | 'Artigo';
+export type TipoDeTCC = 'Todos' | 'Monografia' | 'Artigo' | 'Relatorio de Estagio';
 
 export interface PrazoPayload {
   nome_etapa: string;
@@ -18,6 +18,14 @@ export interface CreatePeriodoPayload {
   data_fim: string;
   ativo: boolean;
   prazos: PrazoPayload[];
+}
+
+export interface UpdatePeriodoPayload {
+  nome?: string;
+  data_inicio?: string;
+  data_fim?: string;
+  ativo?: boolean;
+  prazos?: PrazoPayload[];
 }
 
 export interface PrazoResponse {
@@ -48,5 +56,13 @@ export class PeriodoService {
 
   listarPeriodos(): Observable<PeriodoResponse[]> {
     return this.http.get<PeriodoResponse[]>(`${this.api}/periodos`);
+  }
+
+  getPeriodoById(periodoId: string): Observable<PeriodoResponse> {
+    return this.http.get<PeriodoResponse>(`${this.api}/periodos/${periodoId}`);
+  }
+
+  atualizarPeriodo(periodoId: string, payload: UpdatePeriodoPayload): Observable<PeriodoResponse> {
+    return this.http.patch<PeriodoResponse>(`${this.api}/periodos/${periodoId}`, payload);
   }
 }

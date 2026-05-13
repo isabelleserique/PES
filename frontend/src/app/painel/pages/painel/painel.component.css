@@ -1,0 +1,165 @@
+.coord-page {
+  display: grid;
+  gap: 22px;
+}
+
+.coord-navbar-spacer {
+  flex: 1;
+}
+
+.coord-logout-btn {
+  border-color: rgba(255, 255, 255, 0.32) !important;
+  color: #fff !important;
+}
+
+.coord-hero {
+  align-items: flex-end;
+  display: flex;
+  gap: 24px;
+  justify-content: space-between;
+}
+
+.coord-eyebrow,
+.coord-card-label,
+.coord-field-label {
+  color: #1565c0;
+  display: block;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+}
+
+.coord-title {
+  color: #0d2137;
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.coord-subtitle,
+.coord-empty {
+  color: #4a5568;
+  line-height: 1.6;
+}
+
+.coord-hero-actions,
+.coord-action-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.coord-card {
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid rgba(13, 33, 55, 0.08);
+  border-radius: 16px;
+  box-shadow: 0 12px 36px rgba(13, 33, 55, 0.08);
+  padding: 28px;
+}
+
+.coord-card--accent {
+  border-top: 5px solid #1565c0;
+}
+
+.coord-profile-card {
+  background:
+    linear-gradient(135deg, rgba(21, 101, 192, 0.12), transparent 42%),
+    rgba(255, 255, 255, 0.96);
+}
+
+.coord-card-header {
+  align-items: center;
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+  margin-bottom: 22px;
+}
+
+.coord-card-title {
+  color: #0d2137;
+  font-size: 1.35rem;
+  font-weight: 700;
+}
+
+.coord-badge {
+  background: #0d2137;
+  border-radius: 999px;
+  color: #fff;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  padding: 8px 14px;
+  white-space: nowrap;
+}
+
+.coord-badge--soft {
+  background: rgba(21, 101, 192, 0.12);
+  color: #1565c0;
+}
+
+.coord-info-grid {
+  display: grid;
+  gap: 18px;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.coord-field-label {
+  color: #718096;
+  margin-bottom: 6px;
+}
+
+.coord-pending-list {
+  display: grid;
+  gap: 16px;
+}
+
+.coord-pending-item {
+  align-items: center;
+  background: #f9fbfd;
+  border: 1px solid rgba(13, 33, 55, 0.08);
+  border-radius: 14px;
+  display: grid;
+  gap: 20px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  padding: 20px;
+}
+
+.coord-pending-main h3 {
+  color: #0d2137;
+  font-size: 1.12rem;
+  margin-bottom: 8px;
+}
+
+.coord-pending-main p {
+  color: #4a5568;
+  line-height: 1.5;
+}
+
+.coord-pending-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.coord-btn-primary {
+  background: #0d2137 !important;
+  color: #fff !important;
+}
+
+.coord-btn-danger {
+  border-color: rgba(179, 38, 30, 0.32) !important;
+  color: #b3261e !important;
+}
+
+@media (max-width: 768px) {
+  .coord-hero,
+  .coord-card-header,
+  .coord-pending-item {
+    align-items: stretch;
+    flex-direction: column;
+    grid-template-columns: 1fr;
+  }
+}

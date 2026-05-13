@@ -1,0 +1,18 @@
+from __future__ import annotations
+
+from enum import Enum
+
+
+class StatusTCC(str, Enum):
+    AGUARDANDO_ACEITE = "AGUARDANDO_ACEITE"
+    EM_ANDAMENTO = "EM_ANDAMENTO"
+    SEM_ORIENTADOR = "SEM_ORIENTADOR"
+    APROVADO = "APROVADO"
+    REJEITADO = "REJEITADO"
+
+
+class AcaoEdicaoTCC(str, Enum):
+    CRIACAO = "CRIACAO"
+    EDICAO = "EDICAO"
+    ACEITE_ORIENTACAO = "ACEITE_ORIENTACAO"
+    RECUSA_ORIENTACAO = "RECUSA_ORIENTACAO"

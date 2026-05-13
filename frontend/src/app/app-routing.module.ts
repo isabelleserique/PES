@@ -2,7 +2,7 @@ import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 
 const routes: Routes = [
-  { path: '', pathMatch: 'full', redirectTo: 'painel' },
+  { path: '', pathMatch: 'full', redirectTo: 'auth/login' },
   {
     path: 'auth',
     loadChildren: () =>
@@ -13,7 +13,7 @@ const routes: Routes = [
     loadChildren: () =>
       import('./painel/painel.module').then((module) => module.PainelModule),
   },
-  { path: '**', redirectTo: 'painel' },
+  { path: '**', redirectTo: 'auth/login' },
 ];
 
 @NgModule({

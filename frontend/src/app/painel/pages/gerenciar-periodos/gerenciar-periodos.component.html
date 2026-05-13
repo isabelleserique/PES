@@ -1,0 +1,136 @@
+<div class="app-shell">
+  <nav class="app-navbar">
+    <div class="navbar-brand">
+      <div class="logo-badge">IC</div>
+      <span class="logo-name">IComp</span>
+    </div>
+    <div class="navbar-sep"></div>
+    <span class="navbar-app-name">TCComp</span>
+    <span class="gp-navbar-spacer"></span>
+    <a mat-stroked-button class="gp-nav-btn" routerLink="/painel/coordenador">Home</a>
+  </nav>
+
+  <main class="app-page-content">
+    <header class="gp-page-header">
+      <div>
+        <span class="gp-eyebrow">US006</span>
+        <h1 class="gp-page-title">Gerenciamento de Períodos Letivos</h1>
+        <p class="gp-page-subtitle">
+          Consulte o histórico, acompanhe o período ativo e abra a edição apenas enquanto o período permanecer ativo.
+        </p>
+      </div>
+      <button mat-raised-button type="button" class="gp-btn-primary" (click)="abrirCriacao()">
+        Novo período
+      </button>
+    </header>
+
+    <p class="status-message status-message--error" *ngIf="errorMessage">{{ errorMessage }}</p>
+
+    <section class="gp-card" *ngIf="isLoading">
+      <p class="gp-empty">Carregando períodos letivos...</p>
+    </section>
+
+    <ng-container *ngIf="!isLoading">
+      <section class="gp-card gp-card--active" *ngIf="periodoAtivo as periodoAtivoAtual; else semPeriodoAtivo">
+        <div class="gp-card-header">
+          <div>
+            <span class="gp-card-label">Período ativo</span>
+            <h2 class="gp-card-title">{{ periodoAtivoAtual.nome }}</h2>
+          </div>
+          <span class="gp-badge">ATIVO</span>
+        </div>
+
+        <div class="gp-info-grid">
+          <div>
+            <span class="gp-field-label">Data de início</span>
+            <strong>{{ periodoAtivoAtual.data_inicio | date:'dd/MM/yyyy' }}</strong>
+          </div>
+          <div>
+            <span class="gp-field-label">Data de fim</span>
+            <strong>{{ periodoAtivoAtual.data_fim | date:'dd/MM/yyyy' }}</strong>
+          </div>
+          <div>
+            <span class="gp-field-label">Prazos configurados</span>
+            <strong>{{ periodoAtivoAtual.prazos.length }}</strong>
+          </div>
+        </div>
+
+        <div class="gp-chip-list" *ngIf="periodoAtivoAtual.prazos.length > 0">
+          <span class="gp-chip" *ngFor="let prazo of periodoAtivoAtual.prazos">
+            {{ prazo.nome_etapa }} · {{ prazo.tipo_tcc }} · {{ prazo.data_limite | date:'dd/MM' }}
+          </span>
+        </div>
+
+        <div class="gp-actions">
+          <button mat-raised-button type="button" class="gp-btn-primary" (click)="editarPeriodo(periodoAtivoAtual.id)">
+            Editar período ativo
+          </button>
+        </div>
+      </section>
+
+      <ng-template #semPeriodoAtivo>
+        <section class="gp-card">
+          <p class="gp-empty">
+            Não há período ativo no momento. Você ainda pode consultar o histórico ou cadastrar um novo período.
+          </p>
+        </section>
+      </ng-template>
+
+      <section class="gp-card">
+        <div class="gp-card-header">
+          <div>
+            <span class="gp-card-label">Histórico</span>
+            <h2 class="gp-card-title">Períodos cadastrados</h2>
+          </div>
+          <span class="gp-badge gp-badge--soft">{{ periodos.length }} registro(s)</span>
+        </div>
+
+        <div class="gp-table-wrap" *ngIf="periodos.length > 0; else semHistorico">
+        <table class="gp-table">
+          <thead>
+            <tr>
+              <th>Período</th>
+              <th>Início</th>
+              <th>Fim</th>
+              <th>Status</th>
+              <th>Prazos</th>
+              <th>Ação</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let periodo of periodos">
+              <td>
+                <strong>{{ periodo.nome }}</strong>
+              </td>
+              <td>{{ periodo.data_inicio | date:'dd/MM/yyyy' }}</td>
+              <td>{{ periodo.data_fim | date:'dd/MM/yyyy' }}</td>
+              <td>
+                <span class="gp-status" [class.gp-status--active]="periodo.ativo">
+                  {{ periodo.ativo ? 'Ativo' : 'Histórico' }}
+                </span>
+              </td>
+              <td>{{ periodo.prazos.length }}</td>
+              <td>
+                <button
+                  mat-stroked-button
+                  type="button"
+                  *ngIf="periodo.ativo; else semEdicao"
+                  (click)="editarPeriodo(periodo.id)">
+                  Editar
+                </button>
+                <ng-template #semEdicao>
+                  <span class="gp-disabled">Somente consulta</span>
+                </ng-template>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        </div>
+
+        <ng-template #semHistorico>
+          <p class="gp-empty">Nenhum período letivo foi cadastrado ainda.</p>
+        </ng-template>
+      </section>
+    </ng-container>
+  </main>
+</div>

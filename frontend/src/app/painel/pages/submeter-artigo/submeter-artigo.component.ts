@@ -1,8 +1,19 @@
+import { Location } from '@angular/common';
 import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { FormControl } from '@angular/forms';
 import { Router } from '@angular/router';
+import { forkJoin } from 'rxjs';
+import { finalize } from 'rxjs/operators';
 
-import { SubmissaoArtigo, SubmissaoService } from '../../services/submissao.service';
+import { getApiErrorMessage } from '../../../auth/utils/api-error.util';
+import { CronogramaPrazo, PainelService, TccResponse, TipoTccAluno } from '../../services/painel.service';
+import { EtapaEntregavel, SubmissaoEntregavel, SubmissaoService } from '../../services/submissao.service';
+
+const ETAPAS_BY_TIPO: Record<TipoTccAluno, EtapaEntregavel[]> = {
+  Monografia: ['Revisão Bibliográfica', '1ª Entrega', '2ª Entrega', 'Monografia Final'],
+  'Relatorio de Estagio': ['1º Entregável intermediário', '2º Entregável intermediário', 'Relatório Final'],
+  Artigo: ['Artigo Científico'],
+};
 
 @Component({
   selector: 'app-submeter-artigo',
@@ -13,18 +24,21 @@ export class SubmeterArtigoComponent implements OnInit {
   @ViewChild('artigoInput') artigoInput!: ElementRef<HTMLInputElement>;
   @ViewChild('comprovanteInput') comprovanteInput!: ElementRef<HTMLInputElement>;
 
-  artigoFile: File | null = null;
+  arquivoFile: File | null = null;
   comprovanteFile: File | null = null;
   readonly foiAceitoCtrl = new FormControl(false);
+  readonly etapaCtrl = new FormControl<EtapaEntregavel | null>(null);
 
   isSubmitting = false;
   isSubmitted = false;
   isLoading = true;
   errorMessage = '';
   notaAtribuida: number | null = null;
+  meuTcc: TccResponse | null = null;
+  prazos: CronogramaPrazo[] = [];
 
   prazoSubmissao: Date | null = null;
-  historico: SubmissaoArtigo[] = [];
+  historico: SubmissaoEntregavel[] = [];
 
   get foiAceito(): boolean {
     return !!this.foiAceitoCtrl.value;
@@ -45,28 +59,100 @@ export class SubmeterArtigoComponent implements OnInit {
   }
 
   get podeSubmeter(): boolean {
-    if (!this.artigoFile) return false;
+    if (!this.arquivoFile) return false;
+    if (!this.isArtigo && !this.etapaCtrl.value) return false;
     if (this.foiAceito && !this.comprovanteFile) return false;
     return true;
   }
 
+  get isArtigo(): boolean {
+    return this.meuTcc?.tipo_tcc === 'Artigo';
+  }
+
+  get tipoTccLabel(): string {
+    if (this.meuTcc?.tipo_tcc === 'Relatorio de Estagio') return 'Relatório de Estágio';
+    return this.meuTcc?.tipo_tcc ?? 'TCC';
+  }
+
+  get pageTitle(): string {
+    return this.isArtigo ? 'Submissão de Artigo Científico' : `Submissão de Entregáveis - ${this.tipoTccLabel}`;
+  }
+
+  get arquivoLabel(): string {
+    return this.isArtigo ? 'Arquivo do Artigo' : 'Arquivo do Entregável';
+  }
+
+  get submitLabel(): string {
+    return this.isSubmitting ? 'Enviando...' : (this.isArtigo ? 'Submeter Artigo' : 'Submeter Entregável');
+  }
+
+  get etapasDisponiveis(): EtapaEntregavel[] {
+    return this.meuTcc ? ETAPAS_BY_TIPO[this.meuTcc.tipo_tcc] : [];
+  }
+
   constructor(
+    private readonly location: Location,
+    private readonly painelService: PainelService,
     private readonly submissaoService: SubmissaoService,
     private readonly router: Router,
   ) {}
 
   ngOnInit(): void {
-    this.carregarHistorico();
+    this.carregarDados();
+    this.etapaCtrl.valueChanges.subscribe(() => this.atualizarPrazo());
+  }
+
+  carregarDados(): void {
+    this.isLoading = true;
+    this.errorMessage = '';
+    forkJoin({
+      tcc: this.painelService.getMeuTcc(),
+      cronograma: this.painelService.getCronogramaAtivo(),
+    }).subscribe({
+      next: ({ tcc, cronograma }) => {
+        this.meuTcc = tcc;
+        this.prazos = cronograma.aluno?.prazos ?? [];
+        const etapas = ETAPAS_BY_TIPO[tcc.tipo_tcc];
+        this.etapaCtrl.setValue(etapas[0] ?? null);
+        this.atualizarPrazo();
+        this.carregarHistorico();
+      },
+      error: (error: unknown) => {
+        this.errorMessage = getApiErrorMessage(error, 'Não foi possível carregar os dados.');
+        this.isLoading = false;
+      },
+    });
+  }
+
+  atualizarPrazo(): void {
+    const etapa = this.etapaCtrl.value;
+    if (!etapa || !this.prazos.length) {
+      this.prazoSubmissao = null;
+      return;
+    }
+    const normalizar = (s: string) =>
+      s.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase().trim();
+    const etapaNorm = normalizar(etapa);
+    const prazo = this.prazos.find((p) => {
+      const nomeNorm = normalizar(p.nome_etapa);
+      return nomeNorm.includes(etapaNorm) || etapaNorm.includes(nomeNorm);
+    });
+    if (prazo) {
+      const [year, month, day] = prazo.data_limite.split('-').map(Number);
+      this.prazoSubmissao = new Date(year, month - 1, day);
+    } else {
+      this.prazoSubmissao = null;
+    }
   }
 
   carregarHistorico(): void {
-    this.isLoading = true;
-    this.submissaoService.listarSubmissoesArtigo().subscribe({
+    this.submissaoService.listarSubmissoesEntregaveis().subscribe({
       next: (historico) => {
         this.historico = historico;
         this.isLoading = false;
       },
-      error: () => {
+      error: (error: unknown) => {
+        this.errorMessage = getApiErrorMessage(error, 'Não foi possível carregar o histórico de submissões.');
         this.isLoading = false;
       },
     });
@@ -75,7 +161,7 @@ export class SubmeterArtigoComponent implements OnInit {
   onArtigoFileChange(event: Event): void {
     const input = event.target as HTMLInputElement;
     if (input.files && input.files.length > 0) {
-      this.artigoFile = input.files[0];
+      this.arquivoFile = input.files[0];
     }
   }
 
@@ -87,7 +173,7 @@ export class SubmeterArtigoComponent implements OnInit {
   }
 
   removerArtigo(): void {
-    this.artigoFile = null;
+    this.arquivoFile = null;
     this.artigoInput.nativeElement.value = '';
   }
 
@@ -102,27 +188,33 @@ export class SubmeterArtigoComponent implements OnInit {
     this.errorMessage = '';
 
     const formData = new FormData();
-    formData.append('artigo', this.artigoFile!);
+    formData.append('arquivo', this.arquivoFile!);
+    if (this.etapaCtrl.value) {
+      formData.append('etapa', this.etapaCtrl.value);
+    }
     formData.append('foi_aceito', String(this.foiAceito));
     if (this.foiAceito && this.comprovanteFile) {
       formData.append('comprovante', this.comprovanteFile);
     }
 
-    this.submissaoService.submeterArtigo(formData).subscribe({
+    this.submissaoService.submeterEntregavel(formData).pipe(finalize(() => (this.isSubmitting = false))).subscribe({
       next: (res) => {
-        this.isSubmitting = false;
         this.isSubmitted = true;
         this.notaAtribuida = res.nota_automatica ?? null;
+        this.carregarHistorico();
       },
-      error: () => {
-        this.isSubmitting = false;
-        this.errorMessage = 'Erro ao submeter o artigo. Tente novamente.';
+      error: (error: unknown) => {
+        this.errorMessage = getApiErrorMessage(error, 'Erro ao submeter. Tente novamente.');
       },
     });
   }
 
   cancelar(): void {
     void this.router.navigate(['/painel/aluno']);
+  }
+
+  voltar(): void {
+    this.location.back();
   }
 
   formatarTamanho(bytes: number): string {

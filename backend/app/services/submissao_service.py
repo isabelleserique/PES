@@ -1,0 +1,286 @@
+from __future__ import annotations
+
+import re
+import unicodedata
+from datetime import date
+from pathlib import Path
+from uuid import uuid4
+
+from fastapi import HTTPException, UploadFile, status
+from sqlalchemy import func, select
+from sqlalchemy.orm import Session, selectinload
+
+from backend.app.core.config import Settings, get_settings
+from backend.app.db.models import (
+    PeriodoLetivoRecord,
+    PrazoEtapaRecord,
+    SubmissaoEntregavelRecord,
+    TCCRecord,
+    UserRecord,
+)
+from backend.app.models.periodo import TipoTCC
+from backend.app.schemas.submissao import SubmissaoEntregavelCreateResponse, SubmissaoEntregavelResponse
+
+NO_ACTIVE_PERIODO_FOUND_DETAIL = "Nenhum periodo letivo ativo encontrado."
+NO_ACTIVE_TCC_DETAIL = "Aluno nao possui TCC no periodo letivo ativo."
+INVALID_ETAPA_DETAIL = "Etapa de entrega invalida para o tipo de TCC do aluno."
+COMPROVANTE_REQUIRED_DETAIL = "Comprovante de aceite e obrigatorio quando o artigo ja foi aceito."
+INVALID_FILE_DETAIL = "Arquivo deve estar nos formatos PDF ou DOCX."
+INVALID_COMPROVANTE_FILE_DETAIL = "Comprovante deve estar nos formatos PDF, DOCX, JPG ou PNG."
+MAX_FILE_SIZE_BYTES = 50 * 1024 * 1024
+DELIVERABLE_EXTENSIONS = {".pdf", ".docx"}
+PROOF_EXTENSIONS = {".pdf", ".docx", ".jpg", ".jpeg", ".png"}
+
+ETAPAS_BY_TIPO: dict[TipoTCC, tuple[str, ...]] = {
+    TipoTCC.MONOGRAFIA: (
+        "Revisão Bibliográfica",
+        "1ª Entrega",
+        "2ª Entrega",
+        "Monografia Final",
+    ),
+    TipoTCC.RELATORIO_ESTAGIO: (
+        "1º Entregável intermediário",
+        "2º Entregável intermediário",
+        "Relatório Final",
+    ),
+    TipoTCC.ARTIGO: ("Artigo Científico",),
+}
+
+
+class SubmissaoService:
+    def __init__(self, settings: Settings | None = None) -> None:
+        self.settings = settings or get_settings()
+
+    def listar_entregaveis(
+        self,
+        *,
+        session: Session,
+        current_user: UserRecord,
+    ) -> list[SubmissaoEntregavelResponse]:
+        tcc = self._get_active_tcc(session=session, current_user=current_user, raise_if_missing=False)
+        if tcc is None:
+            return []
+
+        submissoes = session.scalars(
+            select(SubmissaoEntregavelRecord)
+            .where(SubmissaoEntregavelRecord.tcc_id == tcc.id)
+            .order_by(SubmissaoEntregavelRecord.criado_em.desc(), SubmissaoEntregavelRecord.versao.desc())
+        ).all()
+        return [self._build_response(submissao) for submissao in submissoes]
+
+    async def submeter_entregavel(
+        self,
+        *,
+        session: Session,
+        current_user: UserRecord,
+        etapa: str | None,
+        arquivo: UploadFile,
+        foi_aceito: bool,
+        comprovante: UploadFile | None,
+    ) -> SubmissaoEntregavelCreateResponse:
+        tcc = self._get_active_tcc(session=session, current_user=current_user, raise_if_missing=True)
+        if tcc is None:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=NO_ACTIVE_TCC_DETAIL)
+
+        etapa_normalizada = self._resolve_etapa(tipo_tcc=tcc.tipo_tcc, etapa=etapa)
+        if tcc.tipo_tcc != TipoTCC.ARTIGO and foi_aceito:
+            foi_aceito = False
+            comprovante = None
+        if tcc.tipo_tcc == TipoTCC.ARTIGO and foi_aceito and comprovante is None:
+            raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=COMPROVANTE_REQUIRED_DETAIL)
+
+        arquivo_bytes = await self._read_and_validate_file(
+            upload=arquivo,
+            allowed_extensions=DELIVERABLE_EXTENSIONS,
+            invalid_detail=INVALID_FILE_DETAIL,
+        )
+        comprovante_bytes = None
+        if comprovante is not None:
+            comprovante_bytes = await self._read_and_validate_file(
+                upload=comprovante,
+                allowed_extensions=PROOF_EXTENSIONS,
+                invalid_detail=INVALID_COMPROVANTE_FILE_DETAIL,
+            )
+
+        versao = self._next_version(session=session, tcc_id=tcc.id, etapa=etapa_normalizada)
+        base_dir = self.settings.upload_dir / "submissoes-entregaveis" / tcc.id / self._safe_filename(etapa_normalizada) / f"v{versao}"
+        base_dir.mkdir(parents=True, exist_ok=True)
+
+        arquivo_path = self._write_file(base_dir=base_dir, upload=arquivo, content=arquivo_bytes, prefix="entregavel")
+        comprovante_path = None
+        if comprovante is not None and comprovante_bytes is not None:
+            comprovante_path = self._write_file(
+                base_dir=base_dir,
+                upload=comprovante,
+                content=comprovante_bytes,
+                prefix="comprovante",
+            )
+
+        fora_do_prazo = self._is_submission_late(periodo=tcc.periodo, tipo_tcc=tcc.tipo_tcc, etapa=etapa_normalizada)
+        submissao = SubmissaoEntregavelRecord(
+            id=str(uuid4()),
+            tcc_id=tcc.id,
+            aluno_id=current_user.id,
+            tipo_tcc=tcc.tipo_tcc,
+            etapa=etapa_normalizada,
+            versao=versao,
+            nome_arquivo=Path(arquivo.filename or "entregavel").name,
+            caminho_arquivo=str(arquivo_path),
+            tipo_conteudo=arquivo.content_type,
+            tamanho_bytes=len(arquivo_bytes),
+            foi_aceito=foi_aceito,
+            nome_comprovante=(
+                Path(comprovante.filename).name
+                if comprovante is not None and comprovante.filename
+                else None
+            ),
+            caminho_comprovante=str(comprovante_path) if comprovante_path is not None else None,
+            tipo_conteudo_comprovante=comprovante.content_type if comprovante is not None else None,
+            tamanho_comprovante_bytes=len(comprovante_bytes) if comprovante_bytes is not None else None,
+            fora_do_prazo=fora_do_prazo,
+            nota_automatica=10 if tcc.tipo_tcc == TipoTCC.ARTIGO and foi_aceito else None,
+        )
+        session.add(submissao)
+        session.commit()
+        session.refresh(submissao)
+
+        return SubmissaoEntregavelCreateResponse(
+            id=submissao.id,
+            tipo_tcc=submissao.tipo_tcc.value,
+            etapa=submissao.etapa,
+            versao=submissao.versao,
+            mensagem="Entregavel submetido com sucesso.",
+            nota_automatica=submissao.nota_automatica,
+        )
+
+    def _get_active_tcc(
+        self,
+        *,
+        session: Session,
+        current_user: UserRecord,
+        raise_if_missing: bool,
+    ) -> TCCRecord | None:
+        periodo = self._get_active_periodo_record(session=session)
+        tcc = session.scalar(
+            select(TCCRecord)
+            .options(selectinload(TCCRecord.periodo).selectinload(PeriodoLetivoRecord.prazos))
+            .where(
+                TCCRecord.aluno_id == current_user.id,
+                TCCRecord.periodo_id == periodo.id,
+            )
+        )
+        if tcc is None and raise_if_missing:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=NO_ACTIVE_TCC_DETAIL)
+        return tcc
+
+    def _get_active_periodo_record(self, *, session: Session) -> PeriodoLetivoRecord:
+        periodo = session.scalar(
+            select(PeriodoLetivoRecord)
+            .options(selectinload(PeriodoLetivoRecord.prazos))
+            .where(PeriodoLetivoRecord.ativo.is_(True))
+            .order_by(PeriodoLetivoRecord.data_inicio.desc())
+        )
+        if periodo is None:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=NO_ACTIVE_PERIODO_FOUND_DETAIL)
+        return periodo
+
+    def _resolve_etapa(self, *, tipo_tcc: TipoTCC, etapa: str | None) -> str:
+        etapas = ETAPAS_BY_TIPO.get(tipo_tcc, ())
+        if not etapas:
+            raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=INVALID_ETAPA_DETAIL)
+        if tipo_tcc == TipoTCC.ARTIGO:
+            return etapas[0]
+
+        normalized = self._normalize_text(etapa or "")
+        for allowed in etapas:
+            if self._normalize_text(allowed) == normalized:
+                return allowed
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=INVALID_ETAPA_DETAIL)
+
+    def _next_version(self, *, session: Session, tcc_id: str, etapa: str) -> int:
+        current_version = session.scalar(
+            select(func.max(SubmissaoEntregavelRecord.versao)).where(
+                SubmissaoEntregavelRecord.tcc_id == tcc_id,
+                SubmissaoEntregavelRecord.etapa == etapa,
+            )
+        )
+        return int(current_version or 0) + 1
+
+    async def _read_and_validate_file(
+        self,
+        *,
+        upload: UploadFile,
+        allowed_extensions: set[str],
+        invalid_detail: str,
+    ) -> bytes:
+        filename = Path(upload.filename or "").name
+        extension = Path(filename).suffix.lower()
+        if extension not in allowed_extensions:
+            raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=invalid_detail)
+
+        content = await upload.read()
+        if len(content) == 0:
+            raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Arquivo enviado esta vazio.")
+        if len(content) > MAX_FILE_SIZE_BYTES:
+            raise HTTPException(
+                status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+                detail="Arquivo excede o limite de 50 MB.",
+            )
+        return content
+
+    def _write_file(self, *, base_dir: Path, upload: UploadFile, content: bytes, prefix: str) -> Path:
+        filename = self._safe_filename(upload.filename or prefix)
+        path = base_dir / f"{prefix}-{uuid4().hex}-{filename}"
+        path.write_bytes(content)
+        return path
+
+    def _safe_filename(self, filename: str) -> str:
+        name = Path(filename).name
+        sanitized = re.sub(r"[^A-Za-z0-9._-]+", "-", name).strip(".-")
+        return sanitized or "arquivo"
+
+    def _is_submission_late(self, *, periodo: PeriodoLetivoRecord, tipo_tcc: TipoTCC, etapa: str) -> bool:
+        prazo = self._find_deadline(periodo=periodo, tipo_tcc=tipo_tcc, etapa=etapa)
+        if prazo is None:
+            return False
+        return date.today() > prazo.data_limite
+
+    def _find_deadline(self, *, periodo: PeriodoLetivoRecord, tipo_tcc: TipoTCC, etapa: str) -> PrazoEtapaRecord | None:
+        etapa_normalizada = self._normalize_text(etapa)
+        matching = [
+            prazo
+            for prazo in periodo.prazos
+            if prazo.tipo_tcc in {TipoTCC.TODOS, tipo_tcc}
+            and self._deadline_matches_etapa(prazo.nome_etapa, etapa_normalizada)
+        ]
+        if not matching:
+            return None
+        return min(matching, key=lambda prazo: (prazo.data_limite, prazo.nome_etapa.casefold(), prazo.id))
+
+    def _deadline_matches_etapa(self, nome_etapa: str, etapa_normalizada: str) -> bool:
+        nome_normalizado = self._normalize_text(nome_etapa)
+        if "artigo" in etapa_normalizada and "artigo" in nome_normalizado:
+            return True
+        return etapa_normalizada in nome_normalizado or nome_normalizado in etapa_normalizada
+
+    def _normalize_text(self, value: str) -> str:
+        normalized = unicodedata.normalize("NFKD", value.strip().casefold())
+        without_accents = "".join(char for char in normalized if not unicodedata.combining(char))
+        return " ".join(without_accents.split())
+
+    def _build_response(self, submissao: SubmissaoEntregavelRecord) -> SubmissaoEntregavelResponse:
+        return SubmissaoEntregavelResponse(
+            id=submissao.id,
+            tipo_tcc=submissao.tipo_tcc.value,
+            etapa=submissao.etapa,
+            versao=submissao.versao,
+            nome_arquivo=submissao.nome_arquivo,
+            data_submissao=submissao.criado_em,
+            fora_do_prazo=submissao.fora_do_prazo,
+            foi_aceito=submissao.foi_aceito,
+            nome_comprovante=submissao.nome_comprovante,
+        )
+
+
+async def get_submissao_service() -> SubmissaoService:
+    return SubmissaoService()

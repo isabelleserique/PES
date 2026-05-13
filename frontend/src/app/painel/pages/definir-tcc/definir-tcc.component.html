@@ -8,6 +8,9 @@
     </div>
     <div class="navbar-sep"></div>
     <span class="navbar-app-name">TCComp</span>
+    <span class="dt-navbar-spacer"></span>
+    <a mat-stroked-button class="dt-nav-btn" routerLink="/painel/aluno">Home</a>
+    <button mat-stroked-button type="button" class="dt-nav-btn" (click)="voltar()">Voltar</button>
   </nav>
 
   <main class="app-page-content">
@@ -16,9 +19,9 @@
     <ng-container *ngIf="isSubmitted; else formView">
       <div class="dt-success-card">
         <mat-icon class="dt-success-icon">check_circle</mat-icon>
-        <h2>Solicitação enviada com sucesso!</h2>
-        <p>O orientador <strong>{{ orientadorSelecionado?.nome }}</strong> foi notificado e irá analisar sua solicitação.</p>
-        <p class="dt-success-status">Status: <span>Aguardando Aceite do Orientador</span></p>
+        <h2>{{ successTitle }}</h2>
+        <p>{{ successDescription }}</p>
+        <p class="dt-success-status">Status: <span>{{ successStatusLabel }}</span></p>
         <button mat-raised-button class="dt-btn-primary" (click)="cancelar()">Voltar ao painel</button>
       </div>
     </ng-container>
@@ -202,7 +205,7 @@
               </div>
               <div class="dt-review-item" *ngIf="coorientadorSelecionado">
                 <span class="dt-review-label">Co-orientador</span>
-                <span class="dt-review-value">{{ coorientadorSelecionado?.nome }}</span>
+                <span class="dt-review-value">{{ coorientadorSelecionado.nome }}</span>
               </div>
             </div>
           </div>
@@ -218,7 +221,7 @@
               [disabled]="isSubmitting"
               (click)="submeter()"
             >
-              {{ isSubmitting ? 'Enviando...' : 'Submeter para Aceite' }}
+              {{ submitButtonLabel }}
             </button>
           </div>
         </mat-step>

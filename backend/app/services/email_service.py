@@ -11,13 +11,13 @@ class EmailService:
     def __init__(self, settings: Settings) -> None:
         self.settings = settings
 
-    def build_welcome_email_body(self, full_name: str, username: str, temporary_password: str) -> str:
+    def build_welcome_email_body(self, full_name: str, username: str, password: str) -> str:
         return (
             f"Olá, {full_name}!\n\n"
             f"Seu usuário foi criado com sucesso.\n"
             f"Username: {username}\n"
-            f"Senha temporária: {temporary_password}\n"
-            "No primeiro acesso, confirme seus dados e altere a senha provisória.\n"
+            f"Senha cadastrada: {password}\n"
+            "Você já pode acessar o sistema com as credenciais definidas no cadastro.\n"
         )
 
     def build_registration_approved_email_body(self, full_name: str, username: str) -> str:
@@ -50,6 +50,57 @@ class EmailService:
             f"Acesse o link a seguir para criar uma nova senha:\n{reset_link}\n\n"
             f"Este link expira em {self.settings.password_reset_token_ttl_hours} horas.\n"
             "Se voce nao solicitou esta alteracao, ignore esta mensagem.\n"
+        )
+
+    def build_tcc_submission_notification_body(
+        self,
+        *,
+        aluno_nome: str,
+        titulo: str,
+        tipo_tcc: str,
+        periodo_nome: str,
+        prazo_excedido: bool,
+    ) -> str:
+        late_notice = (
+            "\nAtencao: o envio foi registrado fora do prazo configurado para a etapa de tema/orientador.\n"
+            if prazo_excedido
+            else "\n"
+        )
+        return (
+            "Ha um TCC aguardando aceite no Sistema TCC ICOMP.\n\n"
+            f"Aluno: {aluno_nome}\n"
+            f"Periodo letivo: {periodo_nome}\n"
+            f"Titulo: {titulo}\n"
+            f"Tipo: {tipo_tcc}\n"
+            f"{late_notice}"
+            "Acesse o sistema para acompanhar o cronograma e as informacoes do aluno.\n"
+        )
+
+    def build_orientation_decision_notification_body(
+        self,
+        *,
+        aluno_nome: str,
+        titulo: str,
+        orientador_nome: str,
+        accepted: bool,
+        observacao: str | None,
+        outside_deadline: bool,
+    ) -> str:
+        decision_text = "aceitou" if accepted else "recusou"
+        resulting_status = "Em andamento" if accepted else "Sem orientador"
+        observacao_block = f"\nObservacao do orientador: {observacao}\n" if observacao else "\n"
+        late_notice = (
+            "\nAtencao: a decisao foi registrada fora do prazo configurado para o aceite do orientador.\n"
+            if outside_deadline
+            else "\n"
+        )
+        return (
+            f"O professor {orientador_nome} {decision_text} sua solicitacao de orientacao.\n\n"
+            f"TCC: {titulo}\n"
+            f"Novo status: {resulting_status}\n"
+            f"{observacao_block}"
+            f"{late_notice}"
+            f"Aluno: {aluno_nome}\n"
         )
 
     def send_email(self, to_email: str, subject: str, body: str) -> None:
@@ -89,13 +140,13 @@ class EmailService:
         to_email: str,
         full_name: str,
         username: str,
-        temporary_password: str,
+        password: str,
     ) -> bool:
         subject = "Bem-vindo ao Sistema TCC ICOMP"
         body = self.build_welcome_email_body(
             full_name=full_name,
             username=username,
-            temporary_password=temporary_password,
+            password=password,
         )
 
         try:
@@ -166,6 +217,66 @@ class EmailService:
             self.send_email(to_email=to_email, subject=subject, body=body)
         except Exception:
             logger.exception("Falha ao enviar e-mail de reset de senha para %s", to_email)
+            return False
+
+        return True
+
+    def send_tcc_submission_notification(
+        self,
+        *,
+        to_email: str,
+        aluno_nome: str,
+        titulo: str,
+        tipo_tcc: str,
+        periodo_nome: str,
+        prazo_excedido: bool,
+    ) -> bool:
+        subject = "Novo TCC aguardando aceite no Sistema TCC ICOMP"
+        body = self.build_tcc_submission_notification_body(
+            aluno_nome=aluno_nome,
+            titulo=titulo,
+            tipo_tcc=tipo_tcc,
+            periodo_nome=periodo_nome,
+            prazo_excedido=prazo_excedido,
+        )
+
+        try:
+            self.send_email(to_email=to_email, subject=subject, body=body)
+        except Exception:
+            logger.exception("Falha ao enviar notificacao de TCC para %s", to_email)
+            return False
+
+        return True
+
+    def send_orientation_decision_notification(
+        self,
+        *,
+        to_email: str,
+        aluno_nome: str,
+        titulo: str,
+        orientador_nome: str,
+        accepted: bool,
+        observacao: str | None,
+        outside_deadline: bool,
+    ) -> bool:
+        subject = (
+            "Orientacao aceita no Sistema TCC ICOMP"
+            if accepted
+            else "Orientacao recusada no Sistema TCC ICOMP"
+        )
+        body = self.build_orientation_decision_notification_body(
+            aluno_nome=aluno_nome,
+            titulo=titulo,
+            orientador_nome=orientador_nome,
+            accepted=accepted,
+            observacao=observacao,
+            outside_deadline=outside_deadline,
+        )
+
+        try:
+            self.send_email(to_email=to_email, subject=subject, body=body)
+        except Exception:
+            logger.exception("Falha ao enviar decisao de orientacao para %s", to_email)
             return False
 
         return True

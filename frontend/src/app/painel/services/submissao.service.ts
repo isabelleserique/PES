@@ -4,8 +4,20 @@ import { Observable } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
 
-export interface SubmissaoArtigo {
+export type EtapaEntregavel =
+  | 'Revisão Bibliográfica'
+  | '1ª Entrega'
+  | '2ª Entrega'
+  | 'Monografia Final'
+  | '1º Entregável intermediário'
+  | '2º Entregável intermediário'
+  | 'Relatório Final'
+  | 'Artigo Científico';
+
+export interface SubmissaoEntregavel {
   id: string;
+  tipo_tcc: string;
+  etapa: EtapaEntregavel;
   versao: number;
   nome_arquivo: string;
   data_submissao: string;
@@ -14,11 +26,31 @@ export interface SubmissaoArtigo {
   nome_comprovante?: string;
 }
 
-export interface SubmissaoArtigoResponse {
+export interface SubmissaoEntregavelResponse {
   id: string;
+  tipo_tcc: string;
+  etapa: EtapaEntregavel;
   versao: number;
   mensagem: string;
   nota_automatica?: number;
+}
+
+export interface SubmissaoHistorico {
+  id: string;
+  aluno_id: string;
+  aluno_nome: string;
+  matricula: string | null;
+  tcc_id: string;
+  titulo_tcc: string;
+  tipo_tcc: string;
+  etapa: string;
+  versao: number;
+  nome_arquivo: string;
+  data_submissao: string;
+  fora_do_prazo: boolean;
+  foi_aceito: boolean;
+  nome_comprovante: string | null;
+  nota_automatica: number | null;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -27,11 +59,15 @@ export class SubmissaoService {
 
   constructor(private readonly http: HttpClient) {}
 
-  submeterArtigo(payload: FormData): Observable<SubmissaoArtigoResponse> {
-    return this.http.post<SubmissaoArtigoResponse>(`${this.api}/submissoes/artigo`, payload);
+  submeterEntregavel(payload: FormData): Observable<SubmissaoEntregavelResponse> {
+    return this.http.post<SubmissaoEntregavelResponse>(`${this.api}/submissoes/entregaveis`, payload);
   }
 
-  listarSubmissoesArtigo(): Observable<SubmissaoArtigo[]> {
-    return this.http.get<SubmissaoArtigo[]>(`${this.api}/submissoes/artigo`);
+  listarSubmissoesEntregaveis(): Observable<SubmissaoEntregavel[]> {
+    return this.http.get<SubmissaoEntregavel[]>(`${this.api}/submissoes/entregaveis`);
+  }
+
+  listarHistoricoSubmissoes(): Observable<SubmissaoHistorico[]> {
+    return this.http.get<SubmissaoHistorico[]>(`${this.api}/submissoes/historico`);
   }
 }

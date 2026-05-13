@@ -1,63 +1,214 @@
-<div class="painel-shell painel-shell--orientador">
-  <header class="painel-header">
-    <div>
-      <span class="painel-eyebrow">Area do orientador</span>
-      <h1 class="painel-title">Painel do orientador</h1>
-      <p class="painel-subtitle">Visualizacao dedicada para docentes orientadores autenticados no sistema.</p>
+<div class="app-shell">
+  <nav class="app-navbar">
+    <div class="navbar-brand">
+      <div class="logo-badge">IC</div>
+      <span class="logo-name">IComp</span>
     </div>
-    <button mat-stroked-button type="button" (click)="logout()">Sair</button>
-  </header>
+    <div class="navbar-sep"></div>
+    <span class="navbar-app-name">TCComp</span>
+    <span class="or-navbar-spacer"></span>
+    <button mat-stroked-button type="button" class="or-logout-btn" (click)="logout()">Sair</button>
+  </nav>
 
-  <p class="status-message status-message--error" *ngIf="errorMessage">{{ errorMessage }}</p>
-
-  <section class="painel-card" *ngIf="isLoading">
-    <p class="painel-loading">Carregando painel do orientador...</p>
-  </section>
-
-  <ng-container *ngIf="!isLoading && currentUser as user">
-    <section class="painel-card">
-      <div class="painel-card__header">
-        <div>
-          <span class="painel-card__label">Conta autenticada</span>
-          <h2 class="painel-card__title">{{ user.nome_completo }}</h2>
-        </div>
-        <span class="painel-badge">{{ user.perfil }}</span>
+  <main class="app-page-content or-page">
+    <header class="or-hero">
+      <div>
+        <span class="or-eyebrow">Área do orientador</span>
+        <h1 class="or-title">Painel do orientador</h1>
+        <p class="or-subtitle">
+          Acompanhe solicitações de orientação, cronogramas por orientando e alertas de prazo.
+        </p>
       </div>
-
-      <div class="painel-grid">
-        <div>
-          <span class="painel-field__label">E-mail</span>
-          <strong>{{ user.email }}</strong>
-        </div>
-        <div>
-          <span class="painel-field__label">Username</span>
-          <strong>{{ user.username }}</strong>
-        </div>
-        <div>
-          <span class="painel-field__label">Status</span>
-          <strong>{{ user.status }}</strong>
-        </div>
+      <div class="or-hero-actions">
+        <a mat-raised-button class="or-btn-primary" routerLink="/painel/aceite-orientacao">Aceites pendentes</a>
+        <a mat-stroked-button routerLink="/painel/prazos-periodo">Ver prazos</a>
       </div>
+    </header>
+
+    <p class="status-message status-message--error" *ngIf="errorMessage">{{ errorMessage }}</p>
+    <p class="status-message status-message--success" *ngIf="feedbackMessage">{{ feedbackMessage }}</p>
+
+    <section class="or-card" *ngIf="isLoading">
+      <p class="or-empty">Carregando painel do orientador...</p>
     </section>
 
-    <section class="painel-card painel-card--accent">
-      <div class="painel-card__header">
-        <div>
-          <span class="painel-card__label">Visao do perfil</span>
-          <h2 class="painel-card__title">Workspace do orientador</h2>
+    <ng-container *ngIf="!isLoading && currentUser as user">
+      <section class="or-card or-profile-card">
+        <div class="or-card-header">
+          <div>
+            <span class="or-card-label">Conta autenticada</span>
+            <h2 class="or-card-title">{{ user.nome_completo }}</h2>
+          </div>
+          <span class="or-badge">{{ user.perfil }}</span>
         </div>
-      </div>
 
-      <div class="painel-grid">
-        <div class="painel-note">
-          <span class="painel-field__label">Autenticacao</span>
-          <p>O backend validou o JWT e retornou seus dados protegidos via <code>/usuarios/me</code>.</p>
+        <div class="or-info-grid">
+          <div>
+            <span class="or-field-label">E-mail</span>
+            <strong>{{ user.email }}</strong>
+          </div>
+          <div>
+            <span class="or-field-label">Username</span>
+            <strong>{{ user.username }}</strong>
+          </div>
+          <div>
+            <span class="or-field-label">Status</span>
+            <strong>{{ user.status }}</strong>
+          </div>
         </div>
-        <div class="painel-note">
-          <span class="painel-field__label">Proxima iteracao</span>
-          <p>Este painel ja esta isolado por perfil e esta pronto para receber orientandos, bancas e atividades do orientador.</p>
+      </section>
+
+      <section class="or-card" *ngIf="hasPendingRequests; else semSolicitacoesPendentes">
+        <div class="or-card-header">
+          <div>
+            <span class="or-card-label">US009</span>
+            <h2 class="or-card-title">Solicitações pendentes de orientação</h2>
+          </div>
+          <span class="or-badge or-badge--soft">{{ pendingRequests.length }} pendente(s)</span>
         </div>
-      </div>
-    </section>
-  </ng-container>
+
+        <div class="or-request-list">
+          <article class="or-request-card" *ngFor="let request of pendingRequests">
+            <div class="or-request-main">
+              <span class="or-card-label">{{ request.tipo_tcc }}</span>
+              <h3>{{ request.aluno_nome }}</h3>
+              <p>Tema: {{ request.titulo }}</p>
+              <p *ngIf="request.matricula">Matrícula: {{ request.matricula }}</p>
+              <p>Solicitado em: {{ request.criado_em | date:'dd/MM/yyyy HH:mm' }}</p>
+              <p *ngIf="request.prazo_aceite">Prazo de aceite: {{ request.prazo_aceite | date:'dd/MM/yyyy' }}</p>
+
+              <div class="or-alert" *ngIf="request.alerta_submissao_prazo">
+                <strong>Alerta de submissão</strong>
+                <p>{{ request.alerta_submissao_prazo }}</p>
+              </div>
+
+              <div class="or-alert" *ngIf="request.alerta_acao_prazo">
+                <strong>Alerta de decisão</strong>
+                <p>{{ request.alerta_acao_prazo }}</p>
+              </div>
+
+              <mat-form-field appearance="outline" class="or-field-full">
+                <mat-label>Observação para o aluno</mat-label>
+                <textarea
+                  matInput
+                  rows="4"
+                  [value]="observacoes[request.tcc_id] || ''"
+                  (input)="updateObservacao(request.tcc_id, $any($event.target).value)"></textarea>
+                <mat-hint>Obrigatória para recusa. Opcional para aceite.</mat-hint>
+              </mat-form-field>
+            </div>
+
+            <div class="or-request-actions">
+              <button
+                mat-raised-button
+                type="button"
+                class="or-btn-primary"
+                [disabled]="isReviewing"
+                (click)="decidirSolicitacao(request, 'ACEITAR')">
+                Aceitar
+              </button>
+              <button
+                mat-stroked-button
+                type="button"
+                class="or-btn-danger"
+                [disabled]="isReviewing"
+                (click)="decidirSolicitacao(request, 'RECUSAR')">
+                Recusar
+              </button>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="or-card or-card--accent">
+        <div class="or-card-header">
+          <div>
+            <span class="or-card-label">US007</span>
+            <h2 class="or-card-title">Cronograma do período {{ cronograma?.periodo?.nome }}</h2>
+          </div>
+          <span class="or-badge or-badge--soft">{{ orientandosVisiveis.length }} orientando(s)</span>
+        </div>
+
+        <div class="or-toolbar" [formGroup]="filtroForm" *ngIf="(cronograma?.orientandos?.length || 0) > 1">
+          <mat-form-field appearance="outline" class="or-field-full">
+            <mat-label>Filtrar por orientando</mat-label>
+            <mat-select formControlName="orientando_id">
+              <mat-option value="">Todos os orientandos</mat-option>
+              <mat-option *ngFor="let orientando of cronograma?.orientandos" [value]="orientando.aluno_id">
+                {{ orientando.aluno_nome }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+
+        <div class="or-orientando-list" *ngIf="orientandosVisiveis.length; else semOrientandos">
+          <article class="or-orientando-card" *ngFor="let orientando of orientandosVisiveis">
+            <div class="or-orientando-header">
+              <div>
+                <span class="or-card-label">{{ orientando.papel_orientacao }}</span>
+                <h3>{{ orientando.aluno_nome }}</h3>
+              </div>
+              <span class="or-badge or-badge--soft">{{ orientando.tipo_tcc }}</span>
+            </div>
+
+            <div class="or-info-grid">
+              <div>
+                <span class="or-field-label">Tema</span>
+                <strong>{{ orientando.titulo_tcc }}</strong>
+              </div>
+              <div *ngIf="orientando.matricula">
+                <span class="or-field-label">Matrícula</span>
+                <strong>{{ orientando.matricula }}</strong>
+              </div>
+              <div>
+                <span class="or-field-label">Status do TCC</span>
+                <strong>{{ orientando.status_tcc }}</strong>
+              </div>
+            </div>
+
+            <div class="or-alert" *ngIf="orientando.alerta_prazo">
+              <strong>Alerta de prazo</strong>
+              <p>{{ orientando.alerta_prazo }}</p>
+            </div>
+
+            <div class="or-timeline">
+              <article
+                class="or-timeline-item"
+                *ngFor="let prazo of orientando.prazos"
+                [class.or-timeline-item--verde]="prazo.cor === 'verde'"
+                [class.or-timeline-item--amarelo]="prazo.cor === 'amarelo'"
+                [class.or-timeline-item--laranja]="prazo.cor === 'laranja'"
+                [class.or-timeline-item--vermelho]="prazo.cor === 'vermelho'">
+                <div>
+                  <span class="or-card-label">{{ prazo.tipo_tcc }}</span>
+                  <h3>{{ prazo.nome_etapa }}</h3>
+                </div>
+                <div class="or-timeline-meta">
+                  <strong>{{ prazo.data_limite | date:'dd/MM/yyyy' }}</strong>
+                  <span>{{ prazo.status }}</span>
+                  <p>{{ prazo.mensagem }}</p>
+                </div>
+              </article>
+            </div>
+          </article>
+        </div>
+
+        <ng-template #semOrientandos>
+          <p class="or-empty">Não há orientandos com TCC registrado no período letivo ativo.</p>
+        </ng-template>
+      </section>
+
+      <ng-template #semSolicitacoesPendentes>
+        <section class="or-card">
+          <div class="or-card-header">
+            <div>
+              <span class="or-card-label">US009</span>
+              <h2 class="or-card-title">Solicitações pendentes de orientação</h2>
+            </div>
+          </div>
+          <p class="or-empty">Não há solicitações pendentes para sua decisão no momento.</p>
+        </section>
+      </ng-template>
+    </ng-container>
+  </main>
 </div>
