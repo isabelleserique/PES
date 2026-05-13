@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import date, datetime
 from typing import Any, Optional
 
-from sqlalchemy import Boolean, Date, DateTime, Enum, ForeignKey, JSON, String, UniqueConstraint, func
+from sqlalchemy import Boolean, Date, DateTime, Enum, ForeignKey, Integer, JSON, String, UniqueConstraint, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from backend.app.db.base import Base
@@ -150,6 +150,51 @@ class TCCRecord(Base):
         back_populates="tcc",
         cascade="all, delete-orphan",
     )
+    submissoes_entregaveis: Mapped[list["SubmissaoEntregavelRecord"]] = relationship(
+        back_populates="tcc",
+        cascade="all, delete-orphan",
+    )
+
+
+class SubmissaoEntregavelRecord(Base):
+    __tablename__ = "submissoes_entregaveis"
+    __table_args__ = (
+        UniqueConstraint("tcc_id", "etapa", "versao", name="uq_submissoes_entregaveis_tcc_etapa_versao"),
+    )
+
+    id: Mapped[str] = mapped_column(String, primary_key=True)
+    tcc_id: Mapped[str] = mapped_column(
+        String,
+        ForeignKey("tccs.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    aluno_id: Mapped[str] = mapped_column(
+        String,
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    tipo_tcc: Mapped[TipoTCC] = mapped_column(TIPO_TCC_ENUM, nullable=False)
+    etapa: Mapped[str] = mapped_column(String, nullable=False)
+    versao: Mapped[int] = mapped_column(Integer, nullable=False)
+    nome_arquivo: Mapped[str] = mapped_column(String, nullable=False)
+    caminho_arquivo: Mapped[str] = mapped_column(String, nullable=False)
+    tipo_conteudo: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    tamanho_bytes: Mapped[int] = mapped_column(Integer, nullable=False)
+    foi_aceito: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    nome_comprovante: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    caminho_comprovante: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    tipo_conteudo_comprovante: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    tamanho_comprovante_bytes: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    fora_do_prazo: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    nota_automatica: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    criado_em: Mapped[datetime] = mapped_column(
+        DateTime(timezone=False),
+        server_default=func.now(),
+        nullable=False,
+    )
+    tcc: Mapped[TCCRecord] = relationship(back_populates="submissoes_entregaveis")
 
 
 class TCCEditLogRecord(Base):

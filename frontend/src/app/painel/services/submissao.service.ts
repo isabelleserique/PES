@@ -1,0 +1,51 @@
+import { HttpClient } from '@angular/common/http';
+import { Injectable } from '@angular/core';
+import { Observable } from 'rxjs';
+
+import { environment } from '../../../environments/environment';
+
+export type EtapaEntregavel =
+  | 'Revisão Bibliográfica'
+  | '1ª Entrega'
+  | '2ª Entrega'
+  | 'Monografia Final'
+  | '1º Entregável intermediário'
+  | '2º Entregável intermediário'
+  | 'Relatório Final'
+  | 'Artigo Científico';
+
+export interface SubmissaoEntregavel {
+  id: string;
+  tipo_tcc: string;
+  etapa: EtapaEntregavel;
+  versao: number;
+  nome_arquivo: string;
+  data_submissao: string;
+  fora_do_prazo: boolean;
+  foi_aceito: boolean;
+  nome_comprovante?: string;
+}
+
+export interface SubmissaoEntregavelResponse {
+  id: string;
+  tipo_tcc: string;
+  etapa: EtapaEntregavel;
+  versao: number;
+  mensagem: string;
+  nota_automatica?: number;
+}
+
+@Injectable({ providedIn: 'root' })
+export class SubmissaoService {
+  private readonly api = environment.apiUrl;
+
+  constructor(private readonly http: HttpClient) {}
+
+  submeterEntregavel(payload: FormData): Observable<SubmissaoEntregavelResponse> {
+    return this.http.post<SubmissaoEntregavelResponse>(`${this.api}/submissoes/entregaveis`, payload);
+  }
+
+  listarSubmissoesEntregaveis(): Observable<SubmissaoEntregavel[]> {
+    return this.http.get<SubmissaoEntregavel[]>(`${this.api}/submissoes/entregaveis`);
+  }
+}

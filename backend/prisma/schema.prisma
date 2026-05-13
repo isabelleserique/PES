@@ -60,6 +60,7 @@ model User {
   tccs_como_orientador  TCC[]                @relation("OrientadorTCC")
   tccs_como_coorientador TCC[]               @relation("CoorientadorTCC")
   tcc_edit_logs         TCCEditLog[]         @relation("ActorTCCEdit")
+  submissoes_entregaveis SubmissaoEntregavel[]
 
   @@map("users")
 }
@@ -113,12 +114,41 @@ model TCC {
   coorientador     User?        @relation("CoorientadorTCC", fields: [coorientador_id], references: [id], onDelete: SetNull)
   periodo          PeriodoLetivo @relation(fields: [periodo_id], references: [id], onDelete: Cascade)
   edit_logs        TCCEditLog[]
+  submissoes_entregaveis SubmissaoEntregavel[]
 
   @@unique([aluno_id, periodo_id])
   @@index([orientador_id])
   @@index([coorientador_id])
   @@index([periodo_id])
   @@map("tccs")
+}
+
+model SubmissaoEntregavel {
+  id                         String   @id
+  tcc_id                     String
+  aluno_id                   String
+  tipo_tcc                   TipoTCC
+  etapa                      String
+  versao                     Int
+  nome_arquivo               String
+  caminho_arquivo            String
+  tipo_conteudo              String?
+  tamanho_bytes              Int
+  foi_aceito                 Boolean  @default(false)
+  nome_comprovante           String?
+  caminho_comprovante        String?
+  tipo_conteudo_comprovante  String?
+  tamanho_comprovante_bytes  Int?
+  fora_do_prazo              Boolean  @default(false)
+  nota_automatica            Int?
+  criado_em                  DateTime @default(now())
+  tcc                        TCC      @relation(fields: [tcc_id], references: [id], onDelete: Cascade)
+  aluno                      User     @relation(fields: [aluno_id], references: [id], onDelete: Cascade)
+
+  @@unique([tcc_id, etapa, versao], name: "uq_submissoes_entregaveis_tcc_etapa_versao")
+  @@index([tcc_id])
+  @@index([aluno_id])
+  @@map("submissoes_entregaveis")
 }
 
 model TCCEditLog {
