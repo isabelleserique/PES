@@ -12,6 +12,7 @@ import { CriarPeriodoComponent } from './pages/criar-periodo/criar-periodo.compo
 import { AceiteOrientacaoComponent } from './pages/aceite-orientacao/aceite-orientacao.component';
 import { DefinirTccComponent } from './pages/definir-tcc/definir-tcc.component';
 import { GerenciarPeriodosComponent } from './pages/gerenciar-periodos/gerenciar-periodos.component';
+import { HistoricoSubmissoesComponent } from './pages/historico-submissoes/historico-submissoes.component';
 import { PrazosPeriodoComponent } from './pages/prazos-periodo/prazos-periodo.component';
 import { PainelCoordenadorComponent } from './pages/painel/painel.component';
 import { PainelRedirectComponent } from './pages/redirect/redirect.component';
@@ -32,6 +33,7 @@ import { PainelRoutingModule } from './painel-routing.module';
     DefinirTccComponent,
     AceiteOrientacaoComponent,
     SubmeterArtigoComponent,
+    HistoricoSubmissoesComponent,
   ],
   imports: [
     SharedModule,

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import re
 import unicodedata
+from dataclasses import dataclass
 from datetime import date
 from pathlib import Path
 from uuid import uuid4
@@ -19,10 +20,19 @@ from backend.app.db.models import (
     UserRecord,
 )
 from backend.app.models.periodo import TipoTCC
-from backend.app.schemas.submissao import SubmissaoEntregavelCreateResponse, SubmissaoEntregavelResponse
+from backend.app.models.user import Perfil
+from backend.app.schemas.submissao import (
+    SubmissaoEntregavelCreateResponse,
+    SubmissaoEntregavelResponse,
+    SubmissaoHistoricoResponse,
+)
 
 NO_ACTIVE_PERIODO_FOUND_DETAIL = "Nenhum periodo letivo ativo encontrado."
 NO_ACTIVE_TCC_DETAIL = "Aluno nao possui TCC no periodo letivo ativo."
+SUBMISSAO_NOT_FOUND_DETAIL = "Submissao nao encontrada."
+SUBMISSAO_FILE_NOT_FOUND_DETAIL = "Arquivo da submissao nao encontrado."
+SUBMISSAO_FILE_FORBIDDEN_DETAIL = "Perfil sem permissao para acessar o arquivo desta submissao."
+COMPROVANTE_FILE_NOT_FOUND_DETAIL = "Comprovante da submissao nao encontrado."
 INVALID_ETAPA_DETAIL = "Etapa de entrega invalida para o tipo de TCC do aluno."
 COMPROVANTE_REQUIRED_DETAIL = "Comprovante de aceite e obrigatorio quando o artigo ja foi aceito."
 INVALID_FILE_DETAIL = "Arquivo deve estar nos formatos PDF ou DOCX."
@@ -47,6 +57,13 @@ ETAPAS_BY_TIPO: dict[TipoTCC, tuple[str, ...]] = {
 }
 
 
+@dataclass(frozen=True)
+class SubmissionStoredFile:
+    path: Path
+    filename: str
+    media_type: str
+
+
 class SubmissaoService:
     def __init__(self, settings: Settings | None = None) -> None:
         self.settings = settings or get_settings()
@@ -67,6 +84,59 @@ class SubmissaoService:
             .order_by(SubmissaoEntregavelRecord.criado_em.desc(), SubmissaoEntregavelRecord.versao.desc())
         ).all()
         return [self._build_response(submissao) for submissao in submissoes]
+
+    def listar_historico_coordenador(
+        self,
+        *,
+        session: Session,
+        current_user: UserRecord,
+    ) -> list[SubmissaoHistoricoResponse]:
+        return self._listar_historico(session=session)
+
+    def listar_historico_orientador(
+        self,
+        *,
+        session: Session,
+        current_user: UserRecord,
+    ) -> list[SubmissaoHistoricoResponse]:
+        return self._listar_historico(session=session, orientador_id=current_user.id)
+
+    def get_arquivo_submissao(
+        self,
+        *,
+        session: Session,
+        current_user: UserRecord,
+        submissao_id: str,
+        comprovante: bool,
+    ) -> SubmissionStoredFile:
+        row = session.execute(
+            select(SubmissaoEntregavelRecord, TCCRecord)
+            .join(TCCRecord, TCCRecord.id == SubmissaoEntregavelRecord.tcc_id)
+            .where(SubmissaoEntregavelRecord.id == submissao_id)
+        ).one_or_none()
+        if row is None:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=SUBMISSAO_NOT_FOUND_DETAIL)
+
+        submissao, tcc = row
+        self._ensure_can_access_submissao_file(current_user=current_user, submissao=submissao, tcc=tcc)
+
+        if comprovante:
+            if not submissao.caminho_comprovante or not submissao.nome_comprovante:
+                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=COMPROVANTE_FILE_NOT_FOUND_DETAIL)
+            path = Path(submissao.caminho_comprovante)
+            media_type = submissao.tipo_conteudo_comprovante or "application/octet-stream"
+            filename = submissao.nome_comprovante
+            missing_detail = COMPROVANTE_FILE_NOT_FOUND_DETAIL
+        else:
+            path = Path(submissao.caminho_arquivo)
+            media_type = submissao.tipo_conteudo or "application/octet-stream"
+            filename = submissao.nome_arquivo
+            missing_detail = SUBMISSAO_FILE_NOT_FOUND_DETAIL
+
+        if not path.is_file():
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=missing_detail)
+
+        return SubmissionStoredFile(path=path, filename=filename, media_type=media_type)
 
     async def submeter_entregavel(
         self,
@@ -268,6 +338,50 @@ class SubmissaoService:
         without_accents = "".join(char for char in normalized if not unicodedata.combining(char))
         return " ".join(without_accents.split())
 
+    def _ensure_can_access_submissao_file(
+        self,
+        *,
+        current_user: UserRecord,
+        submissao: SubmissaoEntregavelRecord,
+        tcc: TCCRecord,
+    ) -> None:
+        if current_user.perfil == Perfil.COORDENADOR:
+            return
+        if current_user.perfil == Perfil.ALUNO and submissao.aluno_id == current_user.id:
+            return
+        if current_user.perfil == Perfil.ORIENTADOR and current_user.id in {tcc.orientador_id, tcc.coorientador_id}:
+            return
+
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=SUBMISSAO_FILE_FORBIDDEN_DETAIL)
+
+    def _listar_historico(
+        self,
+        *,
+        session: Session,
+        orientador_id: str | None = None,
+    ) -> list[SubmissaoHistoricoResponse]:
+        statement = (
+            select(SubmissaoEntregavelRecord, TCCRecord, UserRecord)
+            .join(TCCRecord, TCCRecord.id == SubmissaoEntregavelRecord.tcc_id)
+            .join(UserRecord, UserRecord.id == TCCRecord.aluno_id)
+            .order_by(
+                SubmissaoEntregavelRecord.criado_em.desc(),
+                SubmissaoEntregavelRecord.versao.desc(),
+                SubmissaoEntregavelRecord.etapa.asc(),
+            )
+        )
+        if orientador_id is not None:
+            statement = statement.where(
+                (TCCRecord.orientador_id == orientador_id)
+                | (TCCRecord.coorientador_id == orientador_id)
+            )
+
+        rows = session.execute(statement).all()
+        return [
+            self._build_historico_response(submissao=submissao, tcc=tcc, aluno=aluno)
+            for submissao, tcc, aluno in rows
+        ]
+
     def _build_response(self, submissao: SubmissaoEntregavelRecord) -> SubmissaoEntregavelResponse:
         return SubmissaoEntregavelResponse(
             id=submissao.id,
@@ -279,6 +393,32 @@ class SubmissaoService:
             fora_do_prazo=submissao.fora_do_prazo,
             foi_aceito=submissao.foi_aceito,
             nome_comprovante=submissao.nome_comprovante,
+            nota_automatica=submissao.nota_automatica,
+        )
+
+    def _build_historico_response(
+        self,
+        *,
+        submissao: SubmissaoEntregavelRecord,
+        tcc: TCCRecord,
+        aluno: UserRecord,
+    ) -> SubmissaoHistoricoResponse:
+        return SubmissaoHistoricoResponse(
+            id=submissao.id,
+            aluno_id=aluno.id,
+            aluno_nome=aluno.nome_completo,
+            matricula=aluno.matricula,
+            tcc_id=tcc.id,
+            titulo_tcc=tcc.titulo,
+            tipo_tcc=submissao.tipo_tcc.value,
+            etapa=submissao.etapa,
+            versao=submissao.versao,
+            nome_arquivo=submissao.nome_arquivo,
+            data_submissao=submissao.criado_em,
+            fora_do_prazo=submissao.fora_do_prazo,
+            foi_aceito=submissao.foi_aceito,
+            nome_comprovante=submissao.nome_comprovante,
+            nota_automatica=submissao.nota_automatica,
         )
 
 

@@ -2,10 +2,11 @@ import { Location } from '@angular/common';
 import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { FormControl } from '@angular/forms';
 import { Router } from '@angular/router';
+import { forkJoin, Observable } from 'rxjs';
 import { finalize } from 'rxjs/operators';
 
 import { getApiErrorMessage } from '../../../auth/utils/api-error.util';
-import { PainelService, TccResponse, TipoTccAluno } from '../../services/painel.service';
+import { CronogramaPrazo, PainelService, TccResponse, TipoTccAluno } from '../../services/painel.service';
 import { EtapaEntregavel, SubmissaoEntregavel, SubmissaoService } from '../../services/submissao.service';
 
 const ETAPAS_BY_TIPO: Record<TipoTccAluno, EtapaEntregavel[]> = {
@@ -34,12 +35,13 @@ export class SubmeterArtigoComponent implements OnInit {
   errorMessage = '';
   notaAtribuida: number | null = null;
   meuTcc: TccResponse | null = null;
+  prazos: CronogramaPrazo[] = [];
 
   prazoSubmissao: Date | null = null;
   historico: SubmissaoEntregavel[] = [];
 
   get foiAceito(): boolean {
-    return !!this.foiAceitoCtrl.value;
+    return this.isArtigo && !!this.foiAceitoCtrl.value;
   }
 
   get foraDoPrazo(): boolean {
@@ -97,23 +99,52 @@ export class SubmeterArtigoComponent implements OnInit {
 
   ngOnInit(): void {
     this.carregarDados();
+    this.etapaCtrl.valueChanges.subscribe(() => this.atualizarPrazo());
   }
 
   carregarDados(): void {
     this.isLoading = true;
     this.errorMessage = '';
-    this.painelService.getMeuTcc().subscribe({
-      next: (tcc) => {
+    forkJoin({
+      tcc: this.painelService.getMeuTcc(),
+      cronograma: this.painelService.getCronogramaAtivo(),
+    }).subscribe({
+      next: ({ tcc, cronograma }) => {
         this.meuTcc = tcc;
+        this.prazos = cronograma.aluno?.prazos ?? [];
         const etapas = ETAPAS_BY_TIPO[tcc.tipo_tcc];
         this.etapaCtrl.setValue(etapas[0] ?? null);
+        this.atualizarPrazo();
         this.carregarHistorico();
       },
       error: (error: unknown) => {
-        this.errorMessage = getApiErrorMessage(error, 'Não foi possível carregar o TCC ativo.');
+        this.errorMessage = getApiErrorMessage(error, 'Não foi possível carregar os dados.');
         this.isLoading = false;
       },
     });
+  }
+
+  atualizarPrazo(): void {
+    const etapa = this.etapaCtrl.value;
+    if (!etapa || !this.prazos.length) {
+      this.prazoSubmissao = null;
+      return;
+    }
+
+    const etapaNormalizada = this.normalizarTexto(etapa);
+    const prazo = this.prazos.find((item) => {
+      const prazoNormalizado = this.normalizarTexto(item.nome_etapa);
+      if (etapaNormalizada.includes('artigo') && prazoNormalizado.includes('artigo')) return true;
+      return prazoNormalizado.includes(etapaNormalizada) || etapaNormalizada.includes(prazoNormalizado);
+    });
+
+    if (!prazo) {
+      this.prazoSubmissao = null;
+      return;
+    }
+
+    const [year, month, day] = prazo.data_limite.split('-').map(Number);
+    this.prazoSubmissao = new Date(year, month - 1, day);
   }
 
   carregarHistorico(): void {
@@ -175,9 +206,17 @@ export class SubmeterArtigoComponent implements OnInit {
         this.carregarHistorico();
       },
       error: (error: unknown) => {
-        this.errorMessage = getApiErrorMessage(error, 'Erro ao submeter o artigo. Tente novamente.');
+        this.errorMessage = getApiErrorMessage(error, 'Erro ao submeter. Tente novamente.');
       },
     });
+  }
+
+  visualizarArquivo(submissao: SubmissaoEntregavel): void {
+    this.abrirArquivo(this.submissaoService.visualizarArquivo(submissao.id));
+  }
+
+  visualizarComprovante(submissao: SubmissaoEntregavel): void {
+    this.abrirArquivo(this.submissaoService.visualizarComprovante(submissao.id));
   }
 
   cancelar(): void {
@@ -201,6 +240,28 @@ export class SubmeterArtigoComponent implements OnInit {
       year: 'numeric',
       hour: '2-digit',
       minute: '2-digit',
+    });
+  }
+
+  private normalizarTexto(value: string): string {
+    return value
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .trim();
+  }
+
+  private abrirArquivo(request: Observable<Blob>): void {
+    this.errorMessage = '';
+    request.subscribe({
+      next: (blob) => {
+        const url = URL.createObjectURL(blob);
+        window.open(url, '_blank', 'noopener');
+        window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
+      },
+      error: (error: unknown) => {
+        this.errorMessage = getApiErrorMessage(error, 'Não foi possível abrir o arquivo.');
+      },
     });
   }
 }
