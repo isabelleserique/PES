@@ -53,7 +53,11 @@ ETAPAS_BY_TIPO: dict[TipoTCC, tuple[str, ...]] = {
         "2º Entregável intermediário",
         "Relatório Final",
     ),
-    TipoTCC.ARTIGO: ("Artigo Científico",),
+    TipoTCC.ARTIGO: (
+        "1ª Entrega",
+        "2ª Entrega",
+        "Artigo Final",
+    ),
 }
 
 
@@ -258,8 +262,6 @@ class SubmissaoService:
         etapas = ETAPAS_BY_TIPO.get(tipo_tcc, ())
         if not etapas:
             raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=INVALID_ETAPA_DETAIL)
-        if tipo_tcc == TipoTCC.ARTIGO:
-            return etapas[0]
 
         normalized = self._normalize_text(etapa or "")
         for allowed in etapas:

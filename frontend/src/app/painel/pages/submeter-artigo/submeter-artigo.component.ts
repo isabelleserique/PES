@@ -12,7 +12,7 @@ import { EtapaEntregavel, SubmissaoEntregavel, SubmissaoService } from '../../se
 const ETAPAS_BY_TIPO: Record<TipoTccAluno, EtapaEntregavel[]> = {
   Monografia: ['Revisão Bibliográfica', '1ª Entrega', '2ª Entrega', 'Monografia Final'],
   'Relatorio de Estagio': ['1º Entregável intermediário', '2º Entregável intermediário', 'Relatório Final'],
-  Artigo: ['Artigo Científico'],
+  Artigo: ['1ª Entrega', '2ª Entrega', 'Artigo Final'],
 };
 
 @Component({
@@ -60,7 +60,7 @@ export class SubmeterArtigoComponent implements OnInit {
 
   get podeSubmeter(): boolean {
     if (!this.arquivoFile) return false;
-    if (!this.isArtigo && !this.etapaCtrl.value) return false;
+    if (!this.etapaCtrl.value) return false;
     if (this.foiAceito && !this.comprovanteFile) return false;
     return true;
   }

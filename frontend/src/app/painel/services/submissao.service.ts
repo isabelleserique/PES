@@ -12,7 +12,7 @@ export type EtapaEntregavel =
   | '1º Entregável intermediário'
   | '2º Entregável intermediário'
   | 'Relatório Final'
-  | 'Artigo Científico';
+  | 'Artigo Final';
 
 export interface SubmissaoEntregavel {
   id: string;

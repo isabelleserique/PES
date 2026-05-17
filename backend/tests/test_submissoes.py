@@ -111,7 +111,7 @@ def test_submeter_artigo_persists_files_and_returns_auto_grade(client, db_sessio
         service.submeter_entregavel(
             session=db_session,
             current_user=aluno,
-            etapa=None,
+            etapa="Artigo Final",
             arquivo=_build_upload("artigo.pdf", b"%PDF-1.4"),
             foi_aceito=True,
             comprovante=_build_upload("aceite.pdf", b"%PDF-proof"),
@@ -124,7 +124,7 @@ def test_submeter_artigo_persists_files_and_returns_auto_grade(client, db_sessio
     stored = db_session.query(SubmissaoEntregavelRecord).one()
     assert stored.aluno_id == aluno.id
     assert stored.tipo_tcc == TipoTCC.ARTIGO
-    assert stored.etapa == "Artigo Científico"
+    assert stored.etapa == "Artigo Final"
     assert stored.nome_arquivo == "artigo.pdf"
     assert stored.nome_comprovante == "aceite.pdf"
     assert stored.foi_aceito is True
@@ -213,7 +213,7 @@ def test_submeter_artigo_requires_proof_when_marked_as_accepted(db_session, tmp_
             service.submeter_entregavel(
                 session=db_session,
                 current_user=aluno,
-                etapa=None,
+                etapa="Artigo Final",
                 arquivo=_build_upload("artigo.pdf", b"%PDF-1.4"),
                 foi_aceito=True,
                 comprovante=None,
@@ -222,6 +222,64 @@ def test_submeter_artigo_requires_proof_when_marked_as_accepted(db_session, tmp_
 
     assert exc_info.value.status_code == 422
     assert exc_info.value.detail == COMPROVANTE_REQUIRED_DETAIL
+
+
+def test_submeter_artigo_persists_selected_deliverable_step_without_accepted_flag(db_session, tmp_path) -> None:
+    aluno = _seed_user(
+        db_session,
+        nome_completo="Aluno Artigo Parcial",
+        email="aluno.artigo.parcial@icomp.ufam.edu.br",
+        username="aluno.artigo.parcial",
+        perfil=Perfil.ALUNO,
+        status=StatusCadastro.ATIVO,
+        ativo=True,
+    )
+    orientador = _seed_user(
+        db_session,
+        nome_completo="Prof. Artigo Parcial",
+        email="prof.artigo.parcial@icomp.ufam.edu.br",
+        username="prof.artigo.parcial",
+        perfil=Perfil.ORIENTADOR,
+        status=StatusCadastro.ATIVO,
+        ativo=True,
+    )
+    today = date.today()
+    periodo = _seed_periodo(
+        db_session,
+        nome="2026.1",
+        data_inicio=(today - timedelta(days=30)).isoformat(),
+        data_fim=(today + timedelta(days=30)).isoformat(),
+        ativo=True,
+        prazos=[("1ª Entrega", (today + timedelta(days=3)).isoformat(), TipoTCC.ARTIGO)],
+    )
+    _seed_tcc(
+        db_session,
+        periodo_id=periodo.id,
+        aluno_id=aluno.id,
+        orientador_id=orientador.id,
+        titulo="Artigo em Etapas",
+        tipo_tcc=TipoTCC.ARTIGO,
+    )
+    service = SubmissaoService(settings=get_settings().model_copy(update={"upload_dir": tmp_path}))
+
+    response = asyncio.run(
+        service.submeter_entregavel(
+            session=db_session,
+            current_user=aluno,
+            etapa="1ª Entrega",
+            arquivo=_build_upload("artigo-parcial.pdf", b"%PDF-1.4"),
+            foi_aceito=False,
+            comprovante=None,
+        )
+    )
+
+    stored = db_session.query(SubmissaoEntregavelRecord).one()
+    assert response.etapa == "1ª Entrega"
+    assert response.nota_automatica is None
+    assert stored.tipo_tcc == TipoTCC.ARTIGO
+    assert stored.etapa == "1ª Entrega"
+    assert stored.foi_aceito is False
+    assert stored.fora_do_prazo is False
 
 
 def test_submeter_monografia_persists_selected_deliverable_step(db_session, tmp_path) -> None:
@@ -436,7 +494,7 @@ def test_historico_submissoes_coordenador_and_orientador_include_versions_and_tc
         tcc_id=tcc_artigo.id,
         aluno_id=aluno_artigo.id,
         tipo_tcc=TipoTCC.ARTIGO,
-        etapa="Artigo Científico",
+        etapa="Artigo Final",
         versao=1,
         nome_arquivo="artigo.pdf",
         foi_aceito=True,
