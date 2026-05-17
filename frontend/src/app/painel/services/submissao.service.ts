@@ -24,6 +24,7 @@ export interface SubmissaoEntregavel {
   fora_do_prazo: boolean;
   foi_aceito: boolean;
   nome_comprovante?: string;
+  nota_automatica?: number | null;
 }
 
 export interface SubmissaoEntregavelResponse {
@@ -33,6 +34,24 @@ export interface SubmissaoEntregavelResponse {
   versao: number;
   mensagem: string;
   nota_automatica?: number;
+}
+
+export interface SubmissaoHistorico {
+  id: string;
+  aluno_id: string;
+  aluno_nome: string;
+  matricula: string | null;
+  tcc_id: string;
+  titulo_tcc: string;
+  tipo_tcc: string;
+  etapa: string;
+  versao: number;
+  nome_arquivo: string;
+  data_submissao: string;
+  fora_do_prazo: boolean;
+  foi_aceito: boolean;
+  nome_comprovante: string | null;
+  nota_automatica: number | null;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -47,5 +66,25 @@ export class SubmissaoService {
 
   listarSubmissoesEntregaveis(): Observable<SubmissaoEntregavel[]> {
     return this.http.get<SubmissaoEntregavel[]>(`${this.api}/submissoes/entregaveis`);
+  }
+
+  listarHistoricoSubmissoes(): Observable<SubmissaoHistorico[]> {
+    return this.http.get<SubmissaoHistorico[]>(`${this.api}/submissoes/historico`);
+  }
+
+  listarHistoricoOrientador(): Observable<SubmissaoHistorico[]> {
+    return this.http.get<SubmissaoHistorico[]>(`${this.api}/submissoes/orientador`);
+  }
+
+  visualizarArquivo(submissaoId: string): Observable<Blob> {
+    return this.http.get(`${this.api}/submissoes/entregaveis/${submissaoId}/arquivo`, {
+      responseType: 'blob',
+    });
+  }
+
+  visualizarComprovante(submissaoId: string): Observable<Blob> {
+    return this.http.get(`${this.api}/submissoes/entregaveis/${submissaoId}/comprovante`, {
+      responseType: 'blob',
+    });
   }
 }

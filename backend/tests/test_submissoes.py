@@ -4,6 +4,7 @@ import asyncio
 from datetime import date, timedelta
 from io import BytesIO
 from pathlib import Path
+from uuid import uuid4
 
 import pytest
 from fastapi import HTTPException, UploadFile
@@ -15,7 +16,7 @@ from backend.app.models.periodo import TipoTCC
 from backend.app.models.tcc import StatusTCC
 from backend.app.models.user import Perfil, StatusCadastro
 from backend.app.services.submissao_service import COMPROVANTE_REQUIRED_DETAIL, SubmissaoService
-from backend.tests.test_tcc import _seed_periodo, _seed_tcc, _seed_user
+from backend.tests.test_tcc import _build_auth_headers, _seed_periodo, _seed_tcc, _seed_user
 
 
 def _build_upload(filename: str, content: bytes, content_type: str = "application/pdf") -> UploadFile:
@@ -26,7 +27,46 @@ def _build_upload(filename: str, content: bytes, content_type: str = "applicatio
     )
 
 
-def test_submeter_artigo_persists_files_and_returns_auto_grade(db_session, tmp_path) -> None:
+def _seed_submissao(
+    db_session,
+    *,
+    tcc_id: str,
+    aluno_id: str,
+    tipo_tcc: TipoTCC,
+    etapa: str,
+    versao: int,
+    nome_arquivo: str,
+    fora_do_prazo: bool = False,
+    foi_aceito: bool = False,
+    nome_comprovante: str | None = None,
+    nota_automatica: int | None = None,
+) -> SubmissaoEntregavelRecord:
+    submissao = SubmissaoEntregavelRecord(
+        id=str(uuid4()),
+        tcc_id=tcc_id,
+        aluno_id=aluno_id,
+        tipo_tcc=tipo_tcc,
+        etapa=etapa,
+        versao=versao,
+        nome_arquivo=nome_arquivo,
+        caminho_arquivo=f"/tmp/{nome_arquivo}",
+        tipo_conteudo="application/pdf",
+        tamanho_bytes=1024,
+        foi_aceito=foi_aceito,
+        nome_comprovante=nome_comprovante,
+        caminho_comprovante=f"/tmp/{nome_comprovante}" if nome_comprovante else None,
+        tipo_conteudo_comprovante="application/pdf" if nome_comprovante else None,
+        tamanho_comprovante_bytes=512 if nome_comprovante else None,
+        fora_do_prazo=fora_do_prazo,
+        nota_automatica=nota_automatica,
+    )
+    db_session.add(submissao)
+    db_session.commit()
+    db_session.refresh(submissao)
+    return submissao
+
+
+def test_submeter_artigo_persists_files_and_returns_auto_grade(client, db_session, tmp_path) -> None:
     aluno = _seed_user(
         db_session,
         nome_completo="Aluno Artigo",
@@ -96,6 +136,38 @@ def test_submeter_artigo_persists_files_and_returns_auto_grade(db_session, tmp_p
     history = service.listar_entregaveis(session=db_session, current_user=aluno)
     assert len(history) == 1
     assert history[0].id == stored.id
+
+    arquivo_response = client.request(
+        "GET",
+        f"/submissoes/entregaveis/{stored.id}/arquivo",
+        headers=_build_auth_headers(user_id=orientador.id, perfil=orientador.perfil),
+    )
+    assert arquivo_response.status_code == 200
+    assert arquivo_response.body == b"%PDF-1.4"
+
+    comprovante_response = client.request(
+        "GET",
+        f"/submissoes/entregaveis/{stored.id}/comprovante",
+        headers=_build_auth_headers(user_id=aluno.id, perfil=aluno.perfil),
+    )
+    assert comprovante_response.status_code == 200
+    assert comprovante_response.body == b"%PDF-proof"
+
+    outro_orientador = _seed_user(
+        db_session,
+        nome_completo="Prof. Sem Acesso",
+        email="prof.sem.acesso.submissao@icomp.ufam.edu.br",
+        username="prof.sem.acesso.submissao",
+        perfil=Perfil.ORIENTADOR,
+        status=StatusCadastro.ATIVO,
+        ativo=True,
+    )
+    forbidden_response = client.request(
+        "GET",
+        f"/submissoes/entregaveis/{stored.id}/arquivo",
+        headers=_build_auth_headers(user_id=outro_orientador.id, perfil=outro_orientador.perfil),
+    )
+    assert forbidden_response.status_code == 403
 
 
 def test_submeter_artigo_requires_proof_when_marked_as_accepted(db_session, tmp_path) -> None:
@@ -264,3 +336,138 @@ def test_submeter_relatorio_estagio_persists_selected_deliverable_step(db_sessio
     assert stored.tipo_tcc == TipoTCC.RELATORIO_ESTAGIO
     assert stored.etapa == "Relatório Final"
     assert stored.fora_do_prazo is True
+
+
+def test_historico_submissoes_coordenador_and_orientador_include_versions_and_tcc_data(client, db_session) -> None:
+    coordenador = _seed_user(
+        db_session,
+        nome_completo="Coord Histórico",
+        email="coord.historico@icomp.ufam.edu.br",
+        username="coord.historico",
+        perfil=Perfil.COORDENADOR,
+        status=StatusCadastro.ATIVO,
+        ativo=True,
+    )
+    aluno_mono = _seed_user(
+        db_session,
+        nome_completo="Aluno Monografia Histórico",
+        email="aluno.mono.historico@icomp.ufam.edu.br",
+        username="aluno.mono.historico",
+        perfil=Perfil.ALUNO,
+        status=StatusCadastro.ATIVO,
+        ativo=True,
+        matricula="2026123401",
+    )
+    aluno_artigo = _seed_user(
+        db_session,
+        nome_completo="Aluno Artigo Histórico",
+        email="aluno.artigo.historico@icomp.ufam.edu.br",
+        username="aluno.artigo.historico",
+        perfil=Perfil.ALUNO,
+        status=StatusCadastro.ATIVO,
+        ativo=True,
+        matricula="2026123402",
+    )
+    orientador_mono = _seed_user(
+        db_session,
+        nome_completo="Prof. Mono Histórico",
+        email="prof.mono.historico@icomp.ufam.edu.br",
+        username="prof.mono.historico",
+        perfil=Perfil.ORIENTADOR,
+        status=StatusCadastro.ATIVO,
+        ativo=True,
+    )
+    orientador_artigo = _seed_user(
+        db_session,
+        nome_completo="Prof. Artigo Histórico",
+        email="prof.artigo.historico@icomp.ufam.edu.br",
+        username="prof.artigo.historico",
+        perfil=Perfil.ORIENTADOR,
+        status=StatusCadastro.ATIVO,
+        ativo=True,
+    )
+    today = date.today()
+    periodo = _seed_periodo(
+        db_session,
+        nome="2026.2",
+        data_inicio=(today - timedelta(days=10)).isoformat(),
+        data_fim=(today + timedelta(days=120)).isoformat(),
+        ativo=True,
+    )
+    tcc_mono = _seed_tcc(
+        db_session,
+        periodo_id=periodo.id,
+        aluno_id=aluno_mono.id,
+        orientador_id=orientador_mono.id,
+        titulo="Monografia com Versões",
+        tipo_tcc=TipoTCC.MONOGRAFIA,
+        status=StatusTCC.EM_ANDAMENTO,
+    )
+    tcc_artigo = _seed_tcc(
+        db_session,
+        periodo_id=periodo.id,
+        aluno_id=aluno_artigo.id,
+        orientador_id=orientador_artigo.id,
+        titulo="Artigo Aceito",
+        tipo_tcc=TipoTCC.ARTIGO,
+        status=StatusTCC.EM_ANDAMENTO,
+    )
+    _seed_submissao(
+        db_session,
+        tcc_id=tcc_mono.id,
+        aluno_id=aluno_mono.id,
+        tipo_tcc=TipoTCC.MONOGRAFIA,
+        etapa="1ª Entrega",
+        versao=1,
+        nome_arquivo="mono-v1.pdf",
+    )
+    _seed_submissao(
+        db_session,
+        tcc_id=tcc_mono.id,
+        aluno_id=aluno_mono.id,
+        tipo_tcc=TipoTCC.MONOGRAFIA,
+        etapa="1ª Entrega",
+        versao=2,
+        nome_arquivo="mono-v2.pdf",
+        fora_do_prazo=True,
+    )
+    _seed_submissao(
+        db_session,
+        tcc_id=tcc_artigo.id,
+        aluno_id=aluno_artigo.id,
+        tipo_tcc=TipoTCC.ARTIGO,
+        etapa="Artigo Científico",
+        versao=1,
+        nome_arquivo="artigo.pdf",
+        foi_aceito=True,
+        nome_comprovante="aceite.pdf",
+        nota_automatica=10,
+    )
+
+    service = SubmissaoService()
+    historico_coordenador = service.listar_historico_coordenador(
+        session=db_session,
+        current_user=coordenador,
+    )
+    assert len(historico_coordenador) == 3
+    assert {item.titulo_tcc for item in historico_coordenador} == {"Monografia com Versões", "Artigo Aceito"}
+    assert {item.versao for item in historico_coordenador if item.tcc_id == tcc_mono.id} == {1, 2}
+    assert any(item.fora_do_prazo for item in historico_coordenador if item.tcc_id == tcc_mono.id)
+    assert any(item.nota_automatica == 10 for item in historico_coordenador if item.tcc_id == tcc_artigo.id)
+
+    historico_orientador = service.listar_historico_orientador(
+        session=db_session,
+        current_user=orientador_mono,
+    )
+    assert len(historico_orientador) == 2
+    assert {item.tcc_id for item in historico_orientador} == {tcc_mono.id}
+
+    response = client.request(
+        "GET",
+        "/submissoes/historico",
+        headers=_build_auth_headers(user_id=coordenador.id, perfil=coordenador.perfil),
+    )
+    assert response.status_code == 200
+    body = response.json()
+    assert len(body) == 3
+    assert {"titulo_tcc", "aluno_nome", "matricula", "nota_automatica"}.issubset(body[0])

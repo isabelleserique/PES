@@ -12,10 +12,17 @@ export class ProfileGuard implements CanActivate {
 
   canActivate(route: ActivatedRouteSnapshot): boolean | UrlTree {
     const requiredPerfil = route.data['perfil'] as UserPerfil | undefined;
+    const requiredPerfis = route.data['perfis'] as UserPerfil[] | undefined;
     const currentPerfil = this.authService.getStoredPerfil();
 
     if (!currentPerfil) {
       return this.router.createUrlTree(['/auth/login']);
+    }
+
+    if (requiredPerfis?.length) {
+      return requiredPerfis.includes(currentPerfil)
+        ? true
+        : this.router.createUrlTree(this.authService.getPostLoginRoute());
     }
 
     if (!requiredPerfil || currentPerfil === requiredPerfil) {

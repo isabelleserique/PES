@@ -8,6 +8,7 @@ import { PainelAlunoComponent } from './pages/aluno/aluno.component';
 import { CriarPeriodoComponent } from './pages/criar-periodo/criar-periodo.component';
 import { DefinirTccComponent } from './pages/definir-tcc/definir-tcc.component';
 import { GerenciarPeriodosComponent } from './pages/gerenciar-periodos/gerenciar-periodos.component';
+import { HistoricoSubmissoesComponent } from './pages/historico-submissoes/historico-submissoes.component';
 import { PrazosPeriodoComponent } from './pages/prazos-periodo/prazos-periodo.component';
 import { PainelCoordenadorComponent } from './pages/painel/painel.component';
 import { PainelRedirectComponent } from './pages/redirect/redirect.component';
@@ -61,6 +62,12 @@ const routes: Routes = [
     component: SubmeterArtigoComponent,
     canActivate: [AuthGuard, ProfileGuard],
     data: { perfil: 'ALUNO' },
+  },
+  {
+    path: 'historico-submissoes',
+    component: HistoricoSubmissoesComponent,
+    canActivate: [AuthGuard, ProfileGuard],
+    data: { perfis: ['COORDENADOR', 'ORIENTADOR'] },
   },
   {
     path: 'aceite-orientacao',
