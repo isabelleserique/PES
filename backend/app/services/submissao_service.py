@@ -281,6 +281,89 @@ class SubmissaoService:
             nome_comprovante=submissao.nome_comprovante,
         )
 
+    def listar_submissoes_orientador(
+        self,
+        *,
+        session: Session,
+        current_user: UserRecord,
+    ):
+        rows = session.execute(
+            select(SubmissaoEntregavelRecord, UserRecord)
+            .join(TCCRecord, TCCRecord.id == SubmissaoEntregavelRecord.tcc_id)
+            .join(UserRecord, UserRecord.id == TCCRecord.aluno_id)
+            .where(
+                (TCCRecord.orientador_id == current_user.id)
+                | (TCCRecord.coorientador_id == current_user.id)
+            )
+            .order_by(
+                SubmissaoEntregavelRecord.criado_em.desc(),
+                SubmissaoEntregavelRecord.versao.desc(),
+            )
+        ).all()
 
+        return [
+            {
+                **self._build_response(submissao).model_dump(),
+                "aluno_id": aluno.id,
+                "aluno_nome": aluno.nome_completo,
+                "matricula": aluno.matricula,
+            }
+            for submissao, aluno in rows
+        ]
+
+    def listar_submissoes_coordenador(
+        self,
+        *,
+        session: Session,
+        current_user: UserRecord,
+    ):
+        rows = session.execute(
+            select(SubmissaoEntregavelRecord, UserRecord)
+            .join(TCCRecord, TCCRecord.id == SubmissaoEntregavelRecord.tcc_id)
+            .join(UserRecord, UserRecord.id == TCCRecord.aluno_id)
+            .order_by(
+                SubmissaoEntregavelRecord.etapa.asc(),
+                SubmissaoEntregavelRecord.tcc_id.asc(),
+                SubmissaoEntregavelRecord.criado_em.asc(),
+                SubmissaoEntregavelRecord.versao.asc(),
+            )
+        ).all()
+
+        agrupado: dict[str, dict[str, dict]] = {}
+
+        for submissao, aluno in rows:
+            etapa = submissao.etapa
+            tcc_id = submissao.tcc_id
+
+            item = {
+                **self._build_response(submissao).model_dump(),
+                "aluno_id": aluno.id,
+                "aluno_nome": aluno.nome_completo,
+                "matricula": aluno.matricula,
+            }
+
+            if etapa not in agrupado:
+                agrupado[etapa] = {}
+
+            if tcc_id not in agrupado[etapa]:
+                agrupado[etapa][tcc_id] = {
+                    "tcc_id": tcc_id,
+                    "aluno_id": aluno.id,
+                    "aluno_nome": aluno.nome_completo,
+                    "matricula": aluno.matricula,
+                    "versoes": [],
+                }
+
+            agrupado[etapa][tcc_id]["versoes"].append(item)
+
+        return [
+            {
+                "etapa": etapa,
+                "historico": list(tccs.values()),
+            }
+            for etapa, tccs in agrupado.items()
+        ]
+        
+        
 async def get_submissao_service() -> SubmissaoService:
     return SubmissaoService()

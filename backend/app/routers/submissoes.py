@@ -44,3 +44,31 @@ async def submeter_entregavel(
         foi_aceito=foi_aceito,
         comprovante=comprovante,
     )
+
+@router.get(
+    "/orientador",
+    status_code=status.HTTP_200_OK,
+)
+async def listar_submissoes_orientador(
+    session: Session = Depends(get_db_session),
+    submissao_service: SubmissaoService = Depends(get_submissao_service),
+    current_orientador: UserRecord = Depends(require_perfis(Perfil.ORIENTADOR)),
+):
+    return submissao_service.listar_submissoes_orientador(
+        session=session,
+        current_user=current_orientador,
+    )
+
+@router.get(
+    "/coordenador",
+    status_code=status.HTTP_200_OK,
+)
+async def listar_submissoes_coordenador(
+    session: Session = Depends(get_db_session),
+    submissao_service: SubmissaoService = Depends(get_submissao_service),
+    current_user: UserRecord = Depends(require_perfis(Perfil.COORDENADOR)),
+):
+    return submissao_service.listar_submissoes_coordenador(
+        session=session,
+        current_user=current_user,
+    )
