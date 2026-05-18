@@ -22,9 +22,8 @@
       <button mat-stroked-button type="button" (click)="cancelar()">Voltar</button>
     </div>
 
-  <section class="painel-card" *ngIf="isLoadingPeriodo">
-    <p class="painel-loading">Carregando período letivo...</p>
-  </section>
+    <p class="status-message status-message--error" *ngIf="errorMessage">{{ errorMessage }}</p>
+    <p class="status-message status-message--success" *ngIf="successMessage">{{ successMessage }}</p>
 
     <section class="cp-card" *ngIf="isLoadingPeriodo">
       <p class="cp-empty">Carregando período letivo...</p>
@@ -161,7 +160,7 @@
       <!-- Ações da página -->
       <div class="cp-page-actions">
         <button mat-stroked-button type="button" (click)="cancelar()">Cancelar</button>
-        <button mat-raised-button type="submit" class="cp-btn-salvar" [disabled]="isSubmitting">
+        <button mat-raised-button type="submit" class="cp-btn-salvar" [disabled]="isSubmitting || isLoadingPeriodo">
           {{ submitLabel }}
         </button>
       </div>
