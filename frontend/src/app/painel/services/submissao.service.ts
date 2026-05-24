@@ -53,6 +53,43 @@ export interface SubmissaoHistorico {
   nota_automatica: number | null;
 }
 
+export interface SubmissaoAtrasada {
+  id: string;
+  aluno_id: string;
+  aluno_nome: string;
+  matricula: string | null;
+  titulo_tcc: string;
+  tipo_tcc: string;
+  etapa: string;
+  versao: number;
+  nome_arquivo: string;
+  data_limite: string;
+  data_submissao: string;
+  dias_atraso: number;
+}
+
+export interface LogAtividade {
+  id: string;
+  usuario_nome: string;
+  usuario_email: string;
+  usuario_perfil: string;
+  acao: string;
+  descricao: string;
+  criado_em: string;
+}
+
+export interface ApresentacaoArtigoPayload {
+  data_apresentacao: string;
+}
+
+export interface ApresentacaoArtigo {
+  id: string;
+  tcc_id: string;
+  data_apresentacao: string;
+  artigo_ja_aceito: boolean;
+  criado_em: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class SubmissaoService {
   private readonly api = environment.apiUrl;
@@ -69,5 +106,21 @@ export class SubmissaoService {
 
   listarHistoricoSubmissoes(): Observable<SubmissaoHistorico[]> {
     return this.http.get<SubmissaoHistorico[]>(`${this.api}/submissoes/historico`);
+  }
+
+  listarSubmissoesAtrasadas(): Observable<SubmissaoAtrasada[]> {
+    return this.http.get<SubmissaoAtrasada[]>(`${this.api}/submissoes/atrasadas`);
+  }
+
+  listarLogsAtividade(): Observable<LogAtividade[]> {
+    return this.http.get<LogAtividade[]>(`${this.api}/logs`);
+  }
+
+  registrarApresentacaoArtigo(payload: ApresentacaoArtigoPayload): Observable<ApresentacaoArtigo> {
+    return this.http.post<ApresentacaoArtigo>(`${this.api}/submissoes/apresentacao-artigo`, payload);
+  }
+
+  listarMinhasApresentacoes(): Observable<ApresentacaoArtigo[]> {
+    return this.http.get<ApresentacaoArtigo[]>(`${this.api}/submissoes/apresentacao-artigo`);
   }
 }

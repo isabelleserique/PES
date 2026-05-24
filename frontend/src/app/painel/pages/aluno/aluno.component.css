@@ -218,10 +218,56 @@
   letter-spacing: 0.04em;
 }
 
+.al-sessoes-list {
+  display: grid;
+  gap: 16px;
+}
+
+.al-sessao-card {
+  background: #f0f7ff;
+  border: 1px solid rgba(21, 101, 192, 0.16);
+  border-radius: 14px;
+  padding: 20px;
+}
+
+.al-sessao-header {
+  align-items: flex-start;
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+
+.al-sessao-header h3 {
+  color: #0d2137;
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.al-sessao-registro {
+  color: #718096;
+  font-size: 0.82rem;
+  white-space: nowrap;
+}
+
+.al-sessao-body {
+  display: grid;
+  gap: 14px;
+}
+
+.al-sessao-body p {
+  color: #4a5568;
+  line-height: 1.6;
+  margin: 0;
+  white-space: pre-wrap;
+}
+
 @media (max-width: 768px) {
   .al-hero,
   .al-card-header,
-  .al-timeline-item {
+  .al-timeline-item,
+  .al-sessao-header {
     align-items: stretch;
     grid-template-columns: 1fr;
     flex-direction: column;
@@ -230,5 +276,9 @@
   .al-timeline-meta {
     min-width: 0;
     text-align: left;
+  }
+
+  .al-sessao-registro {
+    white-space: normal;
   }
 }

@@ -9,6 +9,9 @@ import { getApiErrorMessage } from '../../../auth/utils/api-error.util';
 import { CronogramaPrazo, PainelService, TccResponse, TipoTccAluno } from '../../services/painel.service';
 import { EtapaEntregavel, SubmissaoEntregavel, SubmissaoService } from '../../services/submissao.service';
 
+const MAX_FILE_SIZE_MB = 50;
+const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
+
 const ETAPAS_BY_TIPO: Record<TipoTccAluno, EtapaEntregavel[]> = {
   Monografia: ['Revisão Bibliográfica', '1ª Entrega', '2ª Entrega', 'Monografia Final'],
   'Relatorio de Estagio': ['1º Entregável intermediário', '2º Entregável intermediário', 'Relatório Final'],
@@ -33,7 +36,9 @@ export class SubmeterArtigoComponent implements OnInit {
   isSubmitted = false;
   isLoading = true;
   errorMessage = '';
+  fileSizeError = '';
   notaAtribuida: number | null = null;
+  readonly maxFileSizeMb = MAX_FILE_SIZE_MB;
   meuTcc: TccResponse | null = null;
   prazos: CronogramaPrazo[] = [];
 
@@ -161,14 +166,30 @@ export class SubmeterArtigoComponent implements OnInit {
   onArtigoFileChange(event: Event): void {
     const input = event.target as HTMLInputElement;
     if (input.files && input.files.length > 0) {
-      this.arquivoFile = input.files[0];
+      const file = input.files[0];
+      if (file.size > MAX_FILE_SIZE_BYTES) {
+        this.fileSizeError = `O arquivo excede o limite de ${MAX_FILE_SIZE_MB} MB. Tamanho: ${this.formatarTamanho(file.size)}.`;
+        this.arquivoFile = null;
+        input.value = '';
+        return;
+      }
+      this.fileSizeError = '';
+      this.arquivoFile = file;
     }
   }
 
   onComprovanteFileChange(event: Event): void {
     const input = event.target as HTMLInputElement;
     if (input.files && input.files.length > 0) {
-      this.comprovanteFile = input.files[0];
+      const file = input.files[0];
+      if (file.size > MAX_FILE_SIZE_BYTES) {
+        this.fileSizeError = `O comprovante excede o limite de ${MAX_FILE_SIZE_MB} MB. Tamanho: ${this.formatarTamanho(file.size)}.`;
+        this.comprovanteFile = null;
+        input.value = '';
+        return;
+      }
+      this.fileSizeError = '';
+      this.comprovanteFile = file;
     }
   }
 

@@ -21,9 +21,45 @@
       </div>
       <div class="or-hero-actions">
         <a mat-raised-button class="or-btn-primary" routerLink="/painel/aceite-orientacao">Aceites pendentes</a>
+        <a mat-stroked-button routerLink="/painel/registrar-sessao">Registrar sessão</a>
         <a mat-stroked-button routerLink="/painel/prazos-periodo">Ver prazos</a>
       </div>
     </header>
+
+    <section class="or-card or-summary-card" *ngIf="!isLoading && totalOrientandos > 0">
+      <div class="or-card-header">
+        <div>
+          <span class="or-card-label">US019 — Visão geral</span>
+          <h2 class="or-card-title">Status dos orientandos</h2>
+        </div>
+      </div>
+      <div class="or-summary-grid">
+        <div class="or-summary-item">
+          <span class="or-summary-number">{{ totalOrientandos }}</span>
+          <span class="or-summary-label">Total de orientandos</span>
+        </div>
+        <div class="or-summary-item or-summary-item--danger" *ngIf="orientandosComAtraso.length > 0">
+          <span class="or-summary-number">{{ orientandosComAtraso.length }}</span>
+          <span class="or-summary-label">Com prazo vencido</span>
+        </div>
+        <div class="or-summary-item or-summary-item--warning" *ngIf="orientandosComAlerta.length > 0">
+          <span class="or-summary-number">{{ orientandosComAlerta.length }}</span>
+          <span class="or-summary-label">Com prazo próximo</span>
+        </div>
+        <div class="or-summary-item or-summary-item--ok" *ngIf="orientandosComAtraso.length === 0 && orientandosComAlerta.length === 0">
+          <span class="or-summary-number">{{ totalOrientandos }}</span>
+          <span class="or-summary-label">Todos em dia</span>
+        </div>
+      </div>
+      <div class="or-alert" *ngIf="orientandosComAtraso.length > 0">
+        <strong>Atenção — prazos vencidos</strong>
+        <p>
+          {{ orientandosComAtraso.length === 1 ? 'O orientando' : 'Os orientandos' }}
+          <strong>{{ orientandosComAtraso[0].aluno_nome }}<span *ngIf="orientandosComAtraso.length > 1"> e outros {{ orientandosComAtraso.length - 1 }}</span></strong>
+          {{ orientandosComAtraso.length === 1 ? 'possui' : 'possuem' }} entregas com prazo vencido.
+        </p>
+      </div>
+    </section>
 
     <p class="status-message status-message--error" *ngIf="errorMessage">{{ errorMessage }}</p>
     <p class="status-message status-message--success" *ngIf="feedbackMessage">{{ feedbackMessage }}</p>

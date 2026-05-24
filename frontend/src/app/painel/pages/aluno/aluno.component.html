@@ -22,6 +22,7 @@
       <div class="al-hero-actions">
         <a mat-raised-button class="al-btn-primary" routerLink="/painel/definir-tcc">Definir TCC</a>
         <a mat-stroked-button routerLink="/painel/submeter-entregaveis" *ngIf="meuTcc">Submeter entregáveis</a>
+        <a mat-stroked-button routerLink="/painel/registrar-apresentacao" *ngIf="meuTcc?.tipo_tcc === 'Artigo'">Registrar apresentação</a>
         <a mat-stroked-button routerLink="/painel/prazos-periodo">Ver prazos</a>
       </div>
     </header>
@@ -188,6 +189,42 @@
         <ng-template #semPrazosAluno>
           <p class="al-empty">Não há prazos configurados para o seu contexto no período letivo ativo.</p>
         </ng-template>
+      </section>
+
+      <section class="al-card">
+        <div class="al-card-header">
+          <div>
+            <span class="al-card-label">US017</span>
+            <h2 class="al-card-title">Sessões de orientação</h2>
+          </div>
+          <span class="al-badge al-badge--soft">{{ sessoes.length }} sessão(ões)</span>
+        </div>
+
+        <p class="al-empty" *ngIf="sessoes.length === 0">
+          Nenhuma sessão de orientação registrada pelo seu orientador ainda.
+        </p>
+
+        <div class="al-sessoes-list" *ngIf="sessoes.length > 0">
+          <article class="al-sessao-card" *ngFor="let sessao of sessoes">
+            <div class="al-sessao-header">
+              <div>
+                <span class="al-card-label">Sessão realizada em</span>
+                <h3>{{ sessao.data_sessao | date:'dd/MM/yyyy' }}</h3>
+              </div>
+              <span class="al-sessao-registro">Registrado em {{ sessao.criado_em | date:'dd/MM/yyyy HH:mm' }}</span>
+            </div>
+            <div class="al-sessao-body">
+              <div>
+                <span class="al-field-label">Resumo da reunião</span>
+                <p>{{ sessao.resumo }}</p>
+              </div>
+              <div>
+                <span class="al-field-label">Próximos passos</span>
+                <p>{{ sessao.proximos_passos }}</p>
+              </div>
+            </div>
+          </article>
+        </div>
       </section>
     </ng-container>
   </main>

@@ -28,14 +28,15 @@ export class AuthInterceptor implements HttpInterceptor {
 
     return next.handle(authorizedRequest).pipe(
       catchError((error: unknown) => {
-        if (
-          isApiRequest &&
-          error instanceof HttpErrorResponse &&
-          error.status === 401 &&
-          this.authService.isAuthenticated()
-        ) {
-          this.authService.clearSession();
-          void this.router.navigate(['/auth/login']);
+        if (isApiRequest && error instanceof HttpErrorResponse) {
+          if (error.status === 401 && this.authService.isAuthenticated()) {
+            this.authService.clearSession();
+            void this.router.navigate(['/auth/login']);
+          }
+
+          if (error.status === 503) {
+            void this.router.navigate(['/manutencao']);
+          }
         }
 
         return throwError(() => error);

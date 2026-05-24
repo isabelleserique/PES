@@ -1,0 +1,177 @@
+.rs-page {
+  display: grid;
+  gap: 22px;
+}
+
+.rs-navbar-spacer {
+  flex: 1;
+}
+
+.rs-back-btn {
+  border-color: rgba(255, 255, 255, 0.32) !important;
+  color: #fff !important;
+  margin-right: 8px;
+}
+
+.rs-logout-btn {
+  border-color: rgba(255, 255, 255, 0.32) !important;
+  color: #fff !important;
+}
+
+.rs-hero {
+  display: flex;
+  gap: 24px;
+  justify-content: space-between;
+}
+
+.rs-eyebrow,
+.rs-card-label,
+.rs-field-label {
+  color: #b45309;
+  display: block;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+}
+
+.rs-title {
+  color: #0d2137;
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.rs-subtitle,
+.rs-empty {
+  color: #4a5568;
+  line-height: 1.6;
+}
+
+.rs-card {
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid rgba(13, 33, 55, 0.08);
+  border-radius: 16px;
+  box-shadow: 0 12px 36px rgba(13, 33, 55, 0.08);
+  padding: 28px;
+}
+
+.rs-card--accent {
+  border-top: 5px solid #b45309;
+}
+
+.rs-card-header {
+  align-items: center;
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+  margin-bottom: 22px;
+}
+
+.rs-card-title {
+  color: #0d2137;
+  font-size: 1.35rem;
+  font-weight: 700;
+}
+
+.rs-badge {
+  background: #0d2137;
+  border-radius: 999px;
+  color: #fff;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  padding: 8px 14px;
+  white-space: nowrap;
+}
+
+.rs-badge--soft {
+  background: rgba(180, 83, 9, 0.12);
+  color: #92400e;
+}
+
+.rs-form {
+  display: grid;
+  gap: 16px;
+}
+
+.rs-form-row {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: 1fr 1fr;
+}
+
+.rs-field-full {
+  width: 100%;
+}
+
+.rs-form-actions {
+  display: flex;
+  justify-content: flex-start;
+}
+
+.rs-btn-primary {
+  background: #0d2137 !important;
+  color: #fff !important;
+}
+
+.rs-sessoes-list {
+  display: grid;
+  gap: 16px;
+}
+
+.rs-sessao-card {
+  background: #fffaf5;
+  border: 1px solid rgba(180, 83, 9, 0.14);
+  border-radius: 14px;
+  padding: 20px;
+}
+
+.rs-sessao-header {
+  align-items: flex-start;
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+
+.rs-sessao-header h3 {
+  color: #0d2137;
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.rs-sessao-registro {
+  color: #718096;
+  font-size: 0.82rem;
+  white-space: nowrap;
+}
+
+.rs-sessao-body {
+  display: grid;
+  gap: 14px;
+}
+
+.rs-sessao-body p {
+  color: #4a5568;
+  line-height: 1.6;
+  margin: 0;
+  white-space: pre-wrap;
+}
+
+@media (max-width: 768px) {
+  .rs-hero,
+  .rs-card-header,
+  .rs-form-row,
+  .rs-sessao-header {
+    align-items: stretch;
+    flex-direction: column;
+    grid-template-columns: 1fr;
+  }
+
+  .rs-sessao-registro {
+    white-space: normal;
+  }
+}

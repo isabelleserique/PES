@@ -54,6 +54,22 @@ export class PainelOrientadorComponent implements OnInit {
     return this.pendingRequests.length > 0;
   }
 
+  get orientandosComAtraso(): CronogramaOrientando[] {
+    return (this.cronograma?.orientandos ?? []).filter(
+      (o) => o.prazo_excedido || o.prazos.some((p) => p.cor === 'vermelho'),
+    );
+  }
+
+  get orientandosComAlerta(): CronogramaOrientando[] {
+    return (this.cronograma?.orientandos ?? []).filter(
+      (o) => o.alerta_prazo !== null || o.prazos.some((p) => p.cor === 'laranja' || p.cor === 'amarelo'),
+    );
+  }
+
+  get totalOrientandos(): number {
+    return this.cronograma?.orientandos?.length ?? 0;
+  }
+
   logout(): void {
     this.authService.clearSession();
     void this.router.navigate(['/auth/login']);

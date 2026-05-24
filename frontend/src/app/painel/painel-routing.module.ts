@@ -14,6 +14,10 @@ import { PainelRedirectComponent } from './pages/redirect/redirect.component';
 import { PainelOrientadorComponent } from './pages/orientador/orientador.component';
 import { SubmeterArtigoComponent } from './pages/submeter-artigo/submeter-artigo.component';
 import { HistoricoSubmissoesComponent } from './pages/historico-submissoes/historico-submissoes.component';
+import { RegistrarSessaoComponent } from './pages/registrar-sessao/registrar-sessao.component';
+import { RegistrarApresentacaoComponent } from './pages/registrar-apresentacao/registrar-apresentacao.component';
+import { LogsSistemaComponent } from './pages/logs-sistema/logs-sistema.component';
+import { SubmissoesAtrasadasComponent } from './pages/submissoes-atrasadas/submissoes-atrasadas.component';
 
 const routes: Routes = [
   {
@@ -74,6 +78,30 @@ const routes: Routes = [
     component: AceiteOrientacaoComponent,
     canActivate: [AuthGuard, ProfileGuard],
     data: { perfil: 'ORIENTADOR' },
+  },
+  {
+    path: 'registrar-sessao',
+    component: RegistrarSessaoComponent,
+    canActivate: [AuthGuard, ProfileGuard],
+    data: { perfil: 'ORIENTADOR' },
+  },
+  {
+    path: 'registrar-apresentacao',
+    component: RegistrarApresentacaoComponent,
+    canActivate: [AuthGuard, ProfileGuard],
+    data: { perfil: 'ALUNO' },
+  },
+  {
+    path: 'logs-sistema',
+    component: LogsSistemaComponent,
+    canActivate: [AuthGuard, ProfileGuard],
+    data: { perfil: 'COORDENADOR' },
+  },
+  {
+    path: 'submissoes-atrasadas',
+    component: SubmissoesAtrasadasComponent,
+    canActivate: [AuthGuard, ProfileGuard],
+    data: { perfil: 'COORDENADOR' },
   },
   {
     path: 'submeter-artigo',

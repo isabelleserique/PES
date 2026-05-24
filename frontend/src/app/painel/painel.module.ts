@@ -18,6 +18,10 @@ import { PainelRedirectComponent } from './pages/redirect/redirect.component';
 import { PainelOrientadorComponent } from './pages/orientador/orientador.component';
 import { SubmeterArtigoComponent } from './pages/submeter-artigo/submeter-artigo.component';
 import { HistoricoSubmissoesComponent } from './pages/historico-submissoes/historico-submissoes.component';
+import { RegistrarSessaoComponent } from './pages/registrar-sessao/registrar-sessao.component';
+import { RegistrarApresentacaoComponent } from './pages/registrar-apresentacao/registrar-apresentacao.component';
+import { LogsSistemaComponent } from './pages/logs-sistema/logs-sistema.component';
+import { SubmissoesAtrasadasComponent } from './pages/submissoes-atrasadas/submissoes-atrasadas.component';
 import { PainelRoutingModule } from './painel-routing.module';
 
 @NgModule({
@@ -34,6 +38,10 @@ import { PainelRoutingModule } from './painel-routing.module';
     AceiteOrientacaoComponent,
     SubmeterArtigoComponent,
     HistoricoSubmissoesComponent,
+    RegistrarSessaoComponent,
+    RegistrarApresentacaoComponent,
+    LogsSistemaComponent,
+    SubmissoesAtrasadasComponent,
   ],
   imports: [
     SharedModule,
