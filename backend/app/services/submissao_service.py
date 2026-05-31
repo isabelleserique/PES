@@ -87,7 +87,27 @@ class SubmissaoService:
             .where(SubmissaoEntregavelRecord.tcc_id == tcc.id)
             .order_by(SubmissaoEntregavelRecord.criado_em.desc(), SubmissaoEntregavelRecord.versao.desc())
         ).all()
-        return [self._build_response(submissao) for submissao in submissoes]
+
+        ultimas_versoes = {}
+
+        for submissao in submissoes:
+            chave = (submissao.tcc_id, submissao.etapa)
+
+            if (
+                chave not in ultimas_versoes
+                or submissao.versao > ultimas_versoes[chave]
+            ):
+                ultimas_versoes[chave] = submissao.versao
+        return [
+            self._build_response(
+                submissao,
+                ultima_versao=(
+                    submissao.versao
+                    == ultimas_versoes[(submissao.tcc_id, submissao.etapa)]
+                ),
+            )
+            for submissao in submissoes
+        ]
 
     def listar_historico_coordenador(
         self,
@@ -379,12 +399,32 @@ class SubmissaoService:
             )
 
         rows = session.execute(statement).all()
+
+        ultimas_versoes = {}
+
+        for submissao, _, _ in rows:
+            chave = (submissao.tcc_id, submissao.etapa)
+
+        if (
+            chave not in ultimas_versoes
+            or submissao.versao > ultimas_versoes[chave]
+        ):
+            ultimas_versoes[chave] = submissao.versao
+
         return [
-            self._build_historico_response(submissao=submissao, tcc=tcc, aluno=aluno)
+            self._build_historico_response(
+                submissao=submissao,
+                tcc=tcc,
+                aluno=aluno,
+                ultima_versao=(
+                    submissao.versao
+                    == ultimas_versoes[(submissao.tcc_id, submissao.etapa)]
+                ),
+            )
             for submissao, tcc, aluno in rows
         ]
 
-    def _build_response(self, submissao: SubmissaoEntregavelRecord) -> SubmissaoEntregavelResponse:
+    def _build_response(self, submissao: SubmissaoEntregavelRecord, ultima_versao: bool) -> SubmissaoEntregavelResponse:
         return SubmissaoEntregavelResponse(
             id=submissao.id,
             tipo_tcc=submissao.tipo_tcc.value,
@@ -394,6 +434,7 @@ class SubmissaoService:
             data_submissao=submissao.criado_em,
             fora_do_prazo=submissao.fora_do_prazo,
             foi_aceito=submissao.foi_aceito,
+            ultima_versao=ultima_versao,
             nome_comprovante=submissao.nome_comprovante,
             nota_automatica=submissao.nota_automatica,
         )
@@ -404,6 +445,7 @@ class SubmissaoService:
         submissao: SubmissaoEntregavelRecord,
         tcc: TCCRecord,
         aluno: UserRecord,
+        ultima_versao: bool,
     ) -> SubmissaoHistoricoResponse:
         return SubmissaoHistoricoResponse(
             id=submissao.id,
@@ -419,6 +461,7 @@ class SubmissaoService:
             data_submissao=submissao.criado_em,
             fora_do_prazo=submissao.fora_do_prazo,
             foi_aceito=submissao.foi_aceito,
+            ultima_versao=ultima_versao,
             nome_comprovante=submissao.nome_comprovante,
             nota_automatica=submissao.nota_automatica,
         )

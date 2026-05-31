@@ -15,6 +15,7 @@ class SubmissaoEntregavelResponse(BaseModel):
     data_submissao: datetime
     fora_do_prazo: bool
     foi_aceito: bool
+    ultima_versao: bool
     nome_comprovante: Optional[str] = None
     nota_automatica: Optional[int] = None
 
@@ -42,5 +43,6 @@ class SubmissaoHistoricoResponse(BaseModel):
     data_submissao: datetime
     fora_do_prazo: bool
     foi_aceito: bool
+    ultima_versao: bool
     nome_comprovante: Optional[str] = None
     nota_automatica: Optional[int] = None
