@@ -10,6 +10,7 @@ from backend.app.schemas.submissao import (
     SubmissaoEntregavelCreateResponse,
     SubmissaoEntregavelResponse,
     SubmissaoHistoricoResponse,
+    SubmissaoAtrasadaResponse,
 )
 from backend.app.services.submissao_service import SubmissaoService, get_submissao_service
 
@@ -141,4 +142,15 @@ async def listar_submissoes_orientador(
     return submissao_service.listar_historico_orientador(
         session=session,
         current_user=current_orientador,
+    )
+
+@router.get("/atrasadas")
+async def listar_submissoes_atrasadas(
+    session: Session = Depends(get_db_session),
+    submissao_service: SubmissaoService = Depends(get_submissao_service),
+    current_coordenador: UserRecord = Depends(require_perfis(Perfil.COORDENADOR)),
+) -> list[SubmissaoAtrasadaResponse]:
+
+    return submissao_service.listar_submissoes_atrasadas(
+        session=session,
     )

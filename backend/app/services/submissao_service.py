@@ -25,6 +25,7 @@ from backend.app.schemas.submissao import (
     SubmissaoEntregavelCreateResponse,
     SubmissaoEntregavelResponse,
     SubmissaoHistoricoResponse,
+    SubmissaoAtrasadaResponse,
 )
 
 NO_ACTIVE_PERIODO_FOUND_DETAIL = "Nenhum periodo letivo ativo encontrado."
@@ -466,6 +467,64 @@ class SubmissaoService:
             nota_automatica=submissao.nota_automatica,
         )
 
+    def listar_submissoes_atrasadas(
+        self,
+        *,
+        session: Session,
+    ) -> list[SubmissaoAtrasadaResponse]:
+
+        submissoes = session.scalars(
+            select(SubmissaoEntregavelRecord)
+            .options(selectinload(SubmissaoEntregavelRecord.tcc))
+            .order_by(SubmissaoEntregavelRecord.criado_em.desc())
+        ).all()
+
+        resultados: list[SubmissaoAtrasadaResponse] = []
+
+        for submissao in submissoes:
+            tcc = submissao.tcc
+
+            prazo = self._find_deadline(
+                periodo=tcc.periodo,
+                tipo_tcc=tcc.tipo_tcc,
+                etapa=submissao.etapa,
+            )
+
+            if prazo is None:
+                continue
+
+            data_submissao = submissao.criado_em.date()
+            data_limite = prazo.data_limite
+
+            if data_submissao <= data_limite:
+                continue
+
+            aluno = session.scalar(
+                select(UserRecord).where(UserRecord.id == tcc.aluno_id)
+            )
+
+            resultados.append(
+                SubmissaoAtrasadaResponse(
+                    id=submissao.id,
+
+                    aluno_id=aluno.id,
+                    aluno_nome=aluno.nome_completo,
+                    matricula=aluno.matricula,
+
+                    tcc_id=tcc.id,
+                    titulo_tcc=tcc.titulo,
+
+                    etapa=submissao.etapa,
+                    tipo_tcc=submissao.tipo_tcc.value,
+
+                    data_submissao=data_submissao,
+                    data_limite=data_limite,
+
+                    dias_atraso=(data_submissao - data_limite).days,
+                )
+            )
+
+        return resultados
 
 async def get_submissao_service() -> SubmissaoService:
     return SubmissaoService()

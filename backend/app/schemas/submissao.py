@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime
+from datetime import date
 from typing import Optional
 
 from pydantic import BaseModel
@@ -46,3 +47,21 @@ class SubmissaoHistoricoResponse(BaseModel):
     ultima_versao: bool
     nome_comprovante: Optional[str] = None
     nota_automatica: Optional[int] = None
+
+class SubmissaoAtrasadaResponse(BaseModel):
+    id: str
+
+    aluno_id: str
+    aluno_nome: str
+    matricula: Optional[str]
+
+    tcc_id: str
+    titulo_tcc: str
+
+    etapa: str
+    tipo_tcc: str
+
+    data_submissao: date
+    data_limite: date
+
+    dias_atraso: int
