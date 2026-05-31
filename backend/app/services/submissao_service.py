@@ -406,11 +406,11 @@ class SubmissaoService:
         for submissao, _, _ in rows:
             chave = (submissao.tcc_id, submissao.etapa)
 
-        if (
-            chave not in ultimas_versoes
-            or submissao.versao > ultimas_versoes[chave]
-        ):
-            ultimas_versoes[chave] = submissao.versao
+            if (
+                chave not in ultimas_versoes
+                or submissao.versao > ultimas_versoes[chave]
+            ):
+                ultimas_versoes[chave] = submissao.versao
 
         return [
             self._build_historico_response(
