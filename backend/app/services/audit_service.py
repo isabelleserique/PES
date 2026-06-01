@@ -4,6 +4,10 @@ from typing import Optional
 
 from backend.app.models.user import Perfil, StatusCadastro
 
+from sqlalchemy.orm import Session
+from backend.app.db.models import AuditLogRecord
+from uuid import uuid4
+
 logger = logging.getLogger("backend.audit")
 
 
@@ -30,19 +34,35 @@ class AuditService:
     def log_registration_decision(
         self,
         *,
+        session: Session,
         actor_user_id: str,
         target_user_id: str,
         decision: str,
         resulting_status: StatusCadastro,
     ) -> None:
-        timestamp = datetime.now(UTC).isoformat()
+        timestamp = datetime.now(UTC)
+        log = AuditLogRecord(
+            id=str(uuid4()),
+            user_id=actor_user_id,
+            acao="DECISAO_CADASTRO",
+            entidade="USER",
+            dados={
+                "target_user_id": target_user_id,
+                "decision": decision,
+                "resulting_status": resulting_status.value,
+            },
+            ip=None,
+        )
+
+        session.add(log)
+        session.commit()
+
         logger.info(
-            "AUDIT action=DECISAO_CADASTRO decision=%s actor_user_id=%s target_user_id=%s status=%s timestamp=%s",
-            decision,
+            "AUDIT_DB action=DECISAO_CADASTRO actor_user_id=%s target_user_id=%s status=%s timestamp=%s",
             actor_user_id,
             target_user_id,
             resulting_status.value,
-            timestamp,
+            timestamp.isoformat(),
         )
 
     def log_login_failed(
@@ -162,6 +182,35 @@ class AuditService:
             resulting_status,
             outside_deadline,
             timestamp,
+        )
+
+    def log_event(
+        self,
+        *,
+        session: Session,
+        user_id: str | None,
+        action: str,
+        entity: str | None = None,
+        data: dict | None = None,
+        ip: str | None = None,
+    ) -> None:
+        log = AuditLogRecord(
+            id=str(uuid4()),
+            user_id=user_id,
+            acao=action,
+            entidade=entity,
+            dados=data,
+            ip=ip,
+        )
+
+        session.add(log)
+        session.commit()
+
+        logger.info(
+            "AUDIT_DB action=%s user_id=%s entity=%s",
+            action,
+            user_id,
+            entity,
         )
 
 async def get_audit_service() -> AuditService:

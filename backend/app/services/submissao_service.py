@@ -27,6 +27,7 @@ from backend.app.schemas.submissao import (
     SubmissaoHistoricoResponse,
     SubmissaoAtrasadaResponse,
 )
+from backend.app.services.audit_service import AuditService
 
 NO_ACTIVE_PERIODO_FOUND_DETAIL = "Nenhum periodo letivo ativo encontrado."
 NO_ACTIVE_TCC_DETAIL = "Aluno nao possui TCC no periodo letivo ativo."
@@ -238,6 +239,20 @@ class SubmissaoService:
         session.add(submissao)
         session.commit()
         session.refresh(submissao)
+        AuditService().log_event(
+            session=session,
+            user_id=current_user.id,
+            action="UPLOAD_DOCUMENTO",
+            entity="SUBMISSAO",
+            data={
+                "submissao_id": submissao.id,
+                "tcc_id": tcc.id,
+                "etapa": submissao.etapa,
+                "versao": submissao.versao,
+                "arquivo": submissao.nome_arquivo,
+                "fora_do_prazo": submissao.fora_do_prazo,
+            },
+        )
 
         return SubmissaoEntregavelCreateResponse(
             id=submissao.id,

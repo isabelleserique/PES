@@ -61,6 +61,7 @@ model User {
   tccs_como_coorientador TCC[]               @relation("CoorientadorTCC")
   tcc_edit_logs         TCCEditLog[]         @relation("ActorTCCEdit")
   submissoes_entregaveis SubmissaoEntregavel[]
+  audit_logs AuditLog[]
 
   @@map("users")
 }
@@ -178,4 +179,21 @@ model PasswordResetToken {
 
   @@index([user_id])
   @@map("password_reset_tokens")
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  user_id   String?
+  acao      String
+  entidade  String?
+  dados     Json?
+  ip        String?
+  criado_em DateTime @default(now())
+
+  user      User?    @relation(fields: [user_id], references: [id], onDelete: SetNull)
+
+  @@index([user_id])
+  @@index([acao])
+  @@index([criado_em])
+  @@map("audit_logs")
 }

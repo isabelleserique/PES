@@ -217,6 +217,18 @@ class TCCService:
             resulting_status=tcc.status.value,
             outside_deadline=acao_fora_do_prazo,
         )
+        audit_service.log_event(
+            session=session,
+            user_id=current_user.id,
+            action="ACEITE_ORIENTACAO" if payload.acao == "ACEITAR" else "RECUSA_ORIENTACAO",
+            entity="TCC",
+            data={
+                "tcc_id": tcc.id,
+                "aluno_id": aluno.id,
+                "status": tcc.status.value,
+                "fora_do_prazo": acao_fora_do_prazo,
+            },
+        )
         return OrientationDecisionResponse(
             tcc_id=tcc.id,
             aluno_id=aluno.id,
@@ -353,6 +365,20 @@ class TCCService:
         )
         session.commit()
         session.refresh(tcc)
+        if previous_orientador and previous_orientador.id != orientador.id:
+            audit_service.log_event(
+                session=session,
+                user_id=current_user.id,
+                action="TROCA_ORIENTADOR",
+                entity="TCC",
+                data={
+                    "tcc_id": tcc.id,
+                    "orientador_anterior_id": previous_orientador.id,
+                    "orientador_anterior_nome": previous_orientador.nome_completo,
+                    "novo_orientador_id": orientador.id,
+                    "novo_orientador_nome": orientador.nome_completo,
+                },
+            )
 
         email_service.send_tcc_submission_notification(
             to_email=orientador.email,

@@ -20,6 +20,7 @@ from backend.app.schemas.user import (
 )
 from backend.app.services.audit_service import AuditService
 from backend.app.services.email_service import EmailService
+from backend.app.services.audit_service import AuditService
 
 CONFLICT_DETAIL = "Nao foi possivel concluir o cadastro com os dados informados."
 REGISTRATION_REVIEW_CONFLICT_DETAIL = "Solicitacao de cadastro nao esta pendente."
@@ -151,6 +152,7 @@ class UserService:
 
         session.refresh(user)
         audit_service.log_registration_decision(
+            session=session,
             actor_user_id=acted_by.id,
             target_user_id=user.id,
             decision=payload.acao,

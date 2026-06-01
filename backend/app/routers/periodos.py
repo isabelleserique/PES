@@ -96,10 +96,12 @@ async def update_periodo(
     session: Session = Depends(get_db_session),
     periodo_service: PeriodoService = Depends(get_periodo_service),
     current_coordenador: UserRecord = Depends(get_current_active_coordenador),
+    current_user: UserRecord = Depends(get_current_authenticated_user),
 ) -> PeriodoResponse:
     _ = current_coordenador
     return periodo_service.update_periodo(
         session=session,
         periodo_id=periodo_id,
         payload=payload,
+        current_user=current_user,
     )

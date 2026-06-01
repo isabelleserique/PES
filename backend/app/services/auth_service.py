@@ -119,7 +119,13 @@ class AuthService:
             expires_delta=timedelta(hours=self.settings.session_timeout_hours),
             algorithm=self.settings.jwt_algorithm,
         )
-
+        audit_service.log_event(
+            session=session,
+            user_id=user.id,
+            action="LOGIN_SUCCESS",
+            entity="AUTH",
+            data={"perfil": user.perfil.value},
+        )
         audit_service.log_login_success(user_id=user.id, perfil=user.perfil)
         return LoginResponse(
             access_token=access_token,

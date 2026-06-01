@@ -26,6 +26,7 @@ from backend.app.schemas.periodo import (
     PrazoResponse,
     UpdatePeriodoRequest,
 )
+from backend.app.services.audit_service import AuditService
 
 ACTIVE_PERIOD_CONFLICT_DETAIL = "Ja existe um periodo letivo ativo."
 INACTIVE_PERIOD_EDIT_DETAIL = "Apenas periodos ativos podem ser editados."
@@ -121,6 +122,7 @@ class PeriodoService:
         session: Session,
         periodo_id: str,
         payload: UpdatePeriodoRequest,
+        current_user: UserRecord,
     ) -> PeriodoResponse:
         periodo = self._get_periodo_record(session=session, periodo_id=periodo_id)
         if periodo.ativo is not True:
@@ -148,6 +150,24 @@ class PeriodoService:
         if payload.prazos is not None:
             periodo.prazos.clear()
             periodo.prazos.extend(self._build_prazos(merged_payload.prazos))
+
+            AuditService().log_event(
+                session=session,
+                user_id=current_user.id,
+                action="UPDATE_PRAZOS",
+                entity="PERIODO",
+                data={
+                    "periodo_id": periodo.id,
+                    "prazos": [
+                        {
+                            "nome_etapa": prazo.nome_etapa,
+                            "data_limite": str(prazo.data_limite),
+                            "tipo_tcc": prazo.tipo_tcc.value,
+                        }
+                        for prazo in periodo.prazos
+                    ],
+                },
+            )
 
         self._persist_periodo(
             session=session,

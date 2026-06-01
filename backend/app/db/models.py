@@ -59,7 +59,7 @@ class PeriodoLetivoRecord(Base):
     )
     atualizado_em: Mapped[datetime] = mapped_column(
         DateTime(timezone=False),
-        server_default=func.now(),
+        default=func.now(),       
         onupdate=func.now(),
         nullable=False,
     )
@@ -141,7 +141,7 @@ class TCCRecord(Base):
     )
     atualizado_em: Mapped[datetime] = mapped_column(
         DateTime(timezone=False),
-        server_default=func.now(),
+        default=func.now(),      
         onupdate=func.now(),
         nullable=False,
     )
@@ -245,3 +245,32 @@ class PasswordResetTokenRecord(Base):
         server_default=func.now(),
         nullable=False,
     )
+
+class AuditLogRecord(Base):
+    __tablename__ = "audit_logs"
+
+    id: Mapped[str] = mapped_column(String, primary_key=True)
+
+    user_id: Mapped[str] = mapped_column(
+        String,
+        ForeignKey("users.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+
+    acao: Mapped[str] = mapped_column(String, nullable=False, index=True)
+
+    entidade: Mapped[Optional[str]] = mapped_column(String, nullable=True, index=True)
+
+    dados: Mapped[Optional[dict[str, Any]]] = mapped_column(JSON, nullable=True)
+
+    ip: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+
+    criado_em: Mapped[datetime] = mapped_column(
+        DateTime(timezone=False),
+        server_default=func.now(),
+        nullable=False,
+        index=True,
+    )
+
+    user: Mapped[UserRecord] = relationship("UserRecord")

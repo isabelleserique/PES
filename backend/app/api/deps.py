@@ -122,3 +122,13 @@ async def get_optional_current_active_coordenador(
         )
 
     return current_user
+
+def require_admin(
+    user: UserRecord = Depends(get_current_authenticated_user),
+) -> UserRecord:
+    if user.perfil != Perfil.COORDENADOR:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Apenas administradores podem acessar este recurso.",
+        )
+    return user
