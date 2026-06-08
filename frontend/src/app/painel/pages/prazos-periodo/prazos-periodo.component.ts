@@ -90,7 +90,8 @@ export class PrazosPeriodoComponent implements OnInit {
 
   getStatusClass(prazo: PrazoDisplay): string {
     if (prazo.cor === 'vermelho') return 'status-atrasado';
-    if (prazo.cor === 'amarelo' || prazo.cor === 'laranja') return 'status-urgente';
+    if (prazo.cor === 'laranja') return 'status-urgente';
+    if (prazo.cor === 'amarelo') return 'status-proximo';
     return 'status-ok';
   }
 

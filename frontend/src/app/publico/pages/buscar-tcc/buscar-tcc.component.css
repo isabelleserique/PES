@@ -1,0 +1,185 @@
+.bt-page {
+  display: grid;
+  gap: 24px;
+}
+
+.bt-navbar-spacer {
+  flex: 1;
+}
+
+.bt-nav-btn {
+  border-color: rgba(255, 255, 255, 0.32) !important;
+  color: #fff !important;
+}
+
+.bt-page-header {
+  padding-bottom: 4px;
+}
+
+.bt-eyebrow {
+  color: #1565c0;
+  display: block;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+}
+
+.bt-page-title {
+  color: #0d2137;
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.bt-page-subtitle {
+  color: #4a5568;
+  line-height: 1.6;
+}
+
+.bt-card {
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid rgba(13, 33, 55, 0.08);
+  border-radius: 16px;
+  box-shadow: 0 12px 36px rgba(13, 33, 55, 0.08);
+  padding: 28px;
+}
+
+.bt-search-card {
+  border-top: 5px solid #1565c0;
+}
+
+.bt-form-grid {
+  display: grid;
+  gap: 0 20px;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+}
+
+.bt-form-grid mat-form-field {
+  width: 100%;
+}
+
+.bt-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 4px;
+}
+
+.bt-btn-primary {
+  background: #0d2137 !important;
+  color: #fff !important;
+  height: 44px;
+  letter-spacing: 0.06em;
+  min-width: 140px;
+}
+
+.bt-results-header {
+  margin-bottom: 16px;
+}
+
+.bt-results-title {
+  color: #0d2137;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.bt-results-grid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+}
+
+.bt-result-card {
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid rgba(13, 33, 55, 0.08);
+  border-radius: 14px;
+  box-shadow: 0 6px 20px rgba(13, 33, 55, 0.06);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 20px;
+  transition: border-color 0.18s, box-shadow 0.18s;
+}
+
+.bt-result-card:hover {
+  border-color: #1565c0;
+  box-shadow: 0 12px 32px rgba(13, 33, 55, 0.12);
+}
+
+.bt-result-header {
+  align-items: center;
+  display: flex;
+  gap: 10px;
+  justify-content: space-between;
+}
+
+.bt-tipo-badge {
+  background: rgba(21, 101, 192, 0.1);
+  border-radius: 999px;
+  color: #1565c0;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 4px 12px;
+  white-space: nowrap;
+}
+
+.bt-defesa-date {
+  color: #718096;
+  font-size: 0.8rem;
+}
+
+.bt-result-titulo {
+  color: #0d2137;
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.bt-result-aluno {
+  color: #4a5568;
+  font-size: 0.9rem;
+}
+
+.bt-result-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.bt-result-meta span {
+  background: #f4f7fb;
+  border-radius: 6px;
+  color: #4a5568;
+  font-size: 0.78rem;
+  padding: 3px 10px;
+}
+
+.bt-result-footer {
+  border-top: 1px solid #f4f7fb;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-top: 10px;
+}
+
+.bt-orientador,
+.bt-banca {
+  color: #718096;
+  font-size: 0.82rem;
+}
+
+.bt-empty {
+  color: #718096;
+  font-size: 0.9rem;
+  padding: 20px 0;
+  text-align: center;
+}
+
+@media (max-width: 768px) {
+  .bt-form-grid,
+  .bt-results-grid {
+    grid-template-columns: 1fr;
+  }
+}

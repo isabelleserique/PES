@@ -1,0 +1,233 @@
+.vg-page {
+  display: grid;
+  gap: 22px;
+}
+
+.vg-navbar-spacer {
+  flex: 1;
+}
+
+.vg-nav-btn {
+  border-color: rgba(255, 255, 255, 0.32) !important;
+  color: #fff !important;
+}
+
+.vg-page-header {
+  align-items: flex-end;
+  display: flex;
+  gap: 24px;
+  justify-content: space-between;
+}
+
+.vg-eyebrow {
+  color: #1565c0;
+  display: block;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+}
+
+.vg-page-title {
+  color: #0d2137;
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.vg-page-subtitle {
+  color: #4a5568;
+  line-height: 1.6;
+}
+
+.vg-period-badge {
+  align-items: center;
+  background: #fff;
+  border: 1.5px solid #27ae60;
+  border-radius: 999px;
+  display: flex;
+  font-size: 0.88rem;
+  gap: 6px;
+  padding: 6px 18px;
+  white-space: nowrap;
+}
+
+.vg-period-label {
+  color: #4a5568;
+  font-weight: 500;
+}
+
+.vg-period-value {
+  color: #27ae60;
+  font-weight: 700;
+}
+
+.vg-stats-row {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+}
+
+.vg-stat-card {
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid rgba(13, 33, 55, 0.08);
+  border-radius: 16px;
+  box-shadow: 0 12px 36px rgba(13, 33, 55, 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 24px 28px;
+}
+
+.vg-stat-card--warn   { border-top: 4px solid #f9a825; }
+.vg-stat-card--danger { border-top: 4px solid #c62828; }
+
+.vg-stat-label {
+  color: #718096;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.vg-stat-value {
+  color: #0d2137;
+  font-size: 2.8rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.vg-stat-value--warn   { color: #e65100; }
+.vg-stat-value--danger { color: #c62828; }
+
+.vg-grid {
+  display: grid;
+  gap: 20px;
+  grid-template-columns: 1fr 1fr;
+}
+
+.vg-card {
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid rgba(13, 33, 55, 0.08);
+  border-radius: 16px;
+  box-shadow: 0 12px 36px rgba(13, 33, 55, 0.08);
+  padding: 28px;
+}
+
+.vg-card-header {
+  margin-bottom: 20px;
+}
+
+.vg-card-label {
+  color: #1565c0;
+  display: block;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  margin-bottom: 6px;
+  text-transform: uppercase;
+}
+
+.vg-card-title {
+  color: #0d2137;
+  font-size: 1.35rem;
+  font-weight: 700;
+}
+
+.vg-empty {
+  color: #718096;
+  font-size: 0.9rem;
+  padding: 20px 0;
+  text-align: center;
+}
+
+.vg-tipo-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.vg-tipo-item {
+  align-items: center;
+  border-bottom: 1px solid #f4f7fb;
+  display: flex;
+  justify-content: space-between;
+  padding: 12px 0;
+}
+
+.vg-tipo-item:last-child {
+  border-bottom: none;
+}
+
+.vg-tipo-name {
+  color: #0d2137;
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+
+.vg-tipo-item--muted .vg-tipo-name {
+  color: #718096;
+}
+
+.vg-tipo-count {
+  background: #0d2137;
+  border-radius: 999px;
+  color: #fff;
+  font-size: 0.82rem;
+  font-weight: 700;
+  min-width: 32px;
+  padding: 4px 12px;
+  text-align: center;
+}
+
+.vg-tipo-count--muted {
+  background: rgba(13, 33, 55, 0.1);
+  color: #718096;
+}
+
+.vg-deposito-grid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: 1fr 1fr;
+}
+
+.vg-deposito-item {
+  align-items: center;
+  border-radius: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 24px 16px;
+}
+
+.vg-deposito-item--ok      { background: #e8f5e9; }
+.vg-deposito-item--pending { background: #fff8e1; }
+
+.vg-deposito-num {
+  font-size: 2.4rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.vg-deposito-item--ok      .vg-deposito-num { color: #2e7d32; }
+.vg-deposito-item--pending .vg-deposito-num { color: #e65100; }
+
+.vg-deposito-desc {
+  color: #4a5568;
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+@media (max-width: 768px) {
+  .vg-page-header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .vg-grid {
+    grid-template-columns: 1fr;
+  }
+}

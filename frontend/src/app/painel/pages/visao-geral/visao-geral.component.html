@@ -1,0 +1,96 @@
+<div class="app-shell">
+  <nav class="app-navbar">
+    <div class="navbar-brand">
+      <div class="logo-badge">IC</div>
+      <span class="logo-name">IComp</span>
+    </div>
+    <div class="navbar-sep"></div>
+    <span class="navbar-app-name">TCComp</span>
+    <span class="vg-navbar-spacer"></span>
+    <a mat-stroked-button class="vg-nav-btn" routerLink="/painel/coordenador">Home</a>
+    <button mat-stroked-button type="button" class="vg-nav-btn" (click)="voltar()">Voltar</button>
+  </nav>
+
+  <main class="app-page-content vg-page">
+    <header class="vg-page-header">
+      <div>
+        <span class="vg-eyebrow">US020</span>
+        <h1 class="vg-page-title">Visão geral do período letivo</h1>
+        <p class="vg-page-subtitle">
+          Acompanhe a situação dos alunos, prazos e depósito na biblioteca para o período ativo.
+        </p>
+      </div>
+      <div class="vg-period-badge" *ngIf="dados">
+        <span class="vg-period-label">Período ativo:</span>
+        <span class="vg-period-value">{{ dados.periodo.nome }}</span>
+      </div>
+    </header>
+
+    <p class="status-message status-message--error" *ngIf="errorMessage">{{ errorMessage }}</p>
+
+    <section class="vg-card" *ngIf="isLoading">
+      <p class="vg-empty">Carregando visão geral do período...</p>
+    </section>
+
+    <ng-container *ngIf="!isLoading && !errorMessage && dados as d">
+      <div class="vg-stats-row">
+        <div class="vg-stat-card">
+          <span class="vg-stat-label">Total de alunos</span>
+          <span class="vg-stat-value">{{ d.alunos.total }}</span>
+        </div>
+        <div class="vg-stat-card vg-stat-card--warn">
+          <span class="vg-stat-label">Sem orientador aceito</span>
+          <span class="vg-stat-value vg-stat-value--warn">{{ d.alunos.sem_orientador }}</span>
+        </div>
+        <div class="vg-stat-card vg-stat-card--danger">
+          <span class="vg-stat-label">Prazos vencidos sem entrega</span>
+          <span class="vg-stat-value vg-stat-value--danger">{{ d.alunos.com_prazo_vencido_sem_entrega }}</span>
+        </div>
+      </div>
+
+      <div class="vg-grid">
+        <section class="vg-card">
+          <div class="vg-card-header">
+            <span class="vg-card-label">Distribuição</span>
+            <h2 class="vg-card-title">Situação por tipo de TCC</h2>
+          </div>
+          <div class="vg-tipo-list">
+            <div class="vg-tipo-item">
+              <span class="vg-tipo-name">Monografia</span>
+              <span class="vg-tipo-count">{{ d.alunos.por_tipo.monografia }}</span>
+            </div>
+            <div class="vg-tipo-item">
+              <span class="vg-tipo-name">Artigo</span>
+              <span class="vg-tipo-count">{{ d.alunos.por_tipo.artigo }}</span>
+            </div>
+            <div class="vg-tipo-item">
+              <span class="vg-tipo-name">Relatório de Estágio</span>
+              <span class="vg-tipo-count">{{ d.alunos.por_tipo.relatorio_estagio }}</span>
+            </div>
+            <div class="vg-tipo-item vg-tipo-item--muted">
+              <span class="vg-tipo-name">Sem TCC registrado</span>
+              <span class="vg-tipo-count vg-tipo-count--muted">{{ d.alunos.por_tipo.sem_tcc }}</span>
+            </div>
+          </div>
+        </section>
+
+        <section class="vg-card">
+          <div class="vg-card-header">
+            <span class="vg-card-label">Biblioteca</span>
+            <h2 class="vg-card-title">Status do depósito</h2>
+          </div>
+          <div class="vg-deposito-grid">
+            <div class="vg-deposito-item vg-deposito-item--ok">
+              <span class="vg-deposito-num">{{ d.alunos.deposito_biblioteca.depositados }}</span>
+              <span class="vg-deposito-desc">Depositados</span>
+            </div>
+            <div class="vg-deposito-item vg-deposito-item--pending">
+              <span class="vg-deposito-num">{{ d.alunos.deposito_biblioteca.pendentes }}</span>
+              <span class="vg-deposito-desc">Pendentes</span>
+            </div>
+          </div>
+        </section>
+      </div>
+    </ng-container>
+  </main>
+</div>

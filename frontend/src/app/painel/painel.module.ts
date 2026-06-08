@@ -22,6 +22,7 @@ import { RegistrarSessaoComponent } from './pages/registrar-sessao/registrar-ses
 import { RegistrarApresentacaoComponent } from './pages/registrar-apresentacao/registrar-apresentacao.component';
 import { LogsSistemaComponent } from './pages/logs-sistema/logs-sistema.component';
 import { SubmissoesAtrasadasComponent } from './pages/submissoes-atrasadas/submissoes-atrasadas.component';
+import { VisaoGeralComponent } from './pages/visao-geral/visao-geral.component';
 import { PainelRoutingModule } from './painel-routing.module';
 
 @NgModule({
@@ -42,6 +43,7 @@ import { PainelRoutingModule } from './painel-routing.module';
     RegistrarApresentacaoComponent,
     LogsSistemaComponent,
     SubmissoesAtrasadasComponent,
+    VisaoGeralComponent,
   ],
   imports: [
     SharedModule,

@@ -1,0 +1,118 @@
+<div class="app-shell">
+  <nav class="app-navbar">
+    <div class="navbar-brand">
+      <div class="logo-badge">IC</div>
+      <span class="logo-name">IComp</span>
+    </div>
+    <div class="navbar-sep"></div>
+    <span class="navbar-app-name">TCComp</span>
+    <span class="dt-navbar-spacer"></span>
+    <a mat-stroked-button class="dt-nav-btn" routerLink="/tcc">Voltar à busca</a>
+    <button mat-stroked-button type="button" class="dt-nav-btn" (click)="voltar()">Voltar</button>
+  </nav>
+
+  <main class="app-page-content dt-page">
+    <p class="status-message status-message--error" *ngIf="errorMessage">{{ errorMessage }}</p>
+
+    <section class="dt-card" *ngIf="isLoading">
+      <p class="dt-empty">Carregando detalhes do trabalho...</p>
+    </section>
+
+    <ng-container *ngIf="!isLoading && !errorMessage && tcc as t">
+      <header class="dt-page-header">
+        <div>
+          <span class="dt-eyebrow">US035 · Consultor Externo</span>
+          <h1 class="dt-page-title">{{ t.titulo }}</h1>
+          <p class="dt-page-subtitle">{{ t.aluno_nome }} · {{ t.curso }}</p>
+        </div>
+        <span class="dt-tipo-badge">{{ t.tipo_tcc }}</span>
+      </header>
+
+      <div class="dt-grid">
+        <section class="dt-card dt-info-card">
+          <div class="dt-card-header">
+            <span class="dt-card-label">Informações</span>
+            <h2 class="dt-card-title">Detalhes do trabalho</h2>
+          </div>
+
+          <div class="dt-info-grid">
+            <div>
+              <span class="dt-field-label">Área temática</span>
+              <strong>{{ t.area_tematica || '—' }}</strong>
+            </div>
+            <div>
+              <span class="dt-field-label">Orientador</span>
+              <strong>{{ t.orientador_nome }}</strong>
+            </div>
+            <div *ngIf="t.data_defesa">
+              <span class="dt-field-label">Data de defesa</span>
+              <strong>{{ t.data_defesa | date:'dd/MM/yyyy' }}</strong>
+            </div>
+          </div>
+
+          <div class="dt-banca-section" *ngIf="t.banca.length > 0">
+            <span class="dt-field-label">Composição da banca</span>
+            <ul class="dt-banca-list">
+              <li *ngFor="let membro of t.banca">{{ membro }}</li>
+            </ul>
+          </div>
+
+          <div class="dt-resumo-section" *ngIf="t.resumo">
+            <span class="dt-field-label">Resumo</span>
+            <p class="dt-resumo-text">{{ t.resumo }}</p>
+          </div>
+        </section>
+
+        <section class="dt-card dt-docs-card">
+          <div class="dt-card-header">
+            <span class="dt-card-label">US035</span>
+            <h2 class="dt-card-title">Documentos</h2>
+          </div>
+
+          <div class="dt-docs-list" *ngIf="t.documentos.length > 0; else emptyDocs">
+            <article class="dt-doc-item" *ngFor="let doc of t.documentos">
+              <div class="dt-doc-info">
+                <span class="dt-doc-tipo">{{ doc.tipo }}</span>
+                <span class="dt-doc-nome">{{ doc.nome_arquivo }}</span>
+              </div>
+              <div class="dt-doc-actions">
+                <button
+                  *ngIf="doc.url_preview"
+                  mat-stroked-button
+                  type="button"
+                  class="dt-btn-preview"
+                  (click)="abrirPreview(doc.url_preview)">
+                  Visualizar
+                </button>
+                <a
+                  mat-raised-button
+                  class="dt-btn-download"
+                  [href]="doc.url_download"
+                  target="_blank"
+                  rel="noopener noreferrer">
+                  Download
+                </a>
+              </div>
+            </article>
+          </div>
+
+          <ng-template #emptyDocs>
+            <p class="dt-empty">Nenhum documento disponível para este trabalho.</p>
+          </ng-template>
+        </section>
+      </div>
+    </ng-container>
+  </main>
+
+  <div class="dt-preview-overlay" *ngIf="safePreviewUrl" (click)="fecharPreview()">
+    <div class="dt-preview-modal" (click)="$event.stopPropagation()">
+      <div class="dt-preview-header">
+        <span>Visualização do documento</span>
+        <button mat-stroked-button type="button" class="dt-preview-close" (click)="fecharPreview()">
+          Fechar
+        </button>
+      </div>
+      <iframe class="dt-preview-frame" [src]="safePreviewUrl" title="Preview do documento"></iframe>
+    </div>
+  </div>
+</div>

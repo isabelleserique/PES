@@ -16,6 +16,11 @@ const routes: Routes = [
     loadChildren: () =>
       import('./painel/painel.module').then((module) => module.PainelModule),
   },
+  {
+    path: 'tcc',
+    loadChildren: () =>
+      import('./publico/publico.module').then((module) => module.PublicoModule),
+  },
   { path: '**', redirectTo: 'auth/login' },
 ];
 

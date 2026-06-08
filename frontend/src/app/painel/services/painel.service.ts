@@ -173,6 +173,27 @@ export interface SessaoOrientacaoPayload {
   proximos_passos: string;
 }
 
+export interface VisaoGeralAlunos {
+  total: number;
+  sem_orientador: number;
+  com_prazo_vencido_sem_entrega: number;
+  por_tipo: {
+    monografia: number;
+    artigo: number;
+    relatorio_estagio: number;
+    sem_tcc: number;
+  };
+  deposito_biblioteca: {
+    depositados: number;
+    pendentes: number;
+  };
+}
+
+export interface VisaoGeralPeriodo {
+  periodo: PeriodoResumo;
+  alunos: VisaoGeralAlunos;
+}
+
 @Injectable({ providedIn: 'root' })
 export class PainelService {
   private readonly api = environment.apiUrl;
@@ -239,5 +260,9 @@ export class PainelService {
 
   listarMinhasSessoes(): Observable<SessaoOrientacao[]> {
     return this.http.get<SessaoOrientacao[]>(`${this.api}/tcc/me/sessoes`);
+  }
+
+  getVisaoGeralPeriodo(): Observable<VisaoGeralPeriodo> {
+    return this.http.get<VisaoGeralPeriodo>(`${this.api}/periodos/ativo/visao-geral`);
   }
 }

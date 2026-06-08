@@ -1,0 +1,91 @@
+<div class="app-shell">
+  <nav class="app-navbar">
+    <div class="navbar-brand">
+      <div class="logo-badge">IC</div>
+      <span class="logo-name">IComp</span>
+    </div>
+    <div class="navbar-sep"></div>
+    <span class="navbar-app-name">TCComp</span>
+    <span class="bt-navbar-spacer"></span>
+    <a mat-stroked-button class="bt-nav-btn" routerLink="/auth/login">Área restrita</a>
+  </nav>
+
+  <main class="app-page-content bt-page">
+    <header class="bt-page-header">
+      <span class="bt-eyebrow">US034 · Consultor Externo</span>
+      <h1 class="bt-page-title">Buscar trabalhos de TCC</h1>
+      <p class="bt-page-subtitle">
+        Pesquise por área temática, curso, nome do aluno ou título do trabalho.
+      </p>
+    </header>
+
+    <section class="bt-card bt-search-card">
+      <form [formGroup]="form" (ngSubmit)="buscar()">
+        <div class="bt-form-grid">
+          <mat-form-field appearance="outline">
+            <mat-label>Título do trabalho</mat-label>
+            <input matInput formControlName="titulo" placeholder="Ex: Redes neurais aplicadas...">
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Nome do aluno</mat-label>
+            <input matInput formControlName="aluno" placeholder="Ex: João da Silva">
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Área temática</mat-label>
+            <input matInput formControlName="area_tematica" placeholder="Ex: Inteligência Artificial">
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Curso</mat-label>
+            <input matInput formControlName="curso" placeholder="Ex: Ciência da Computação">
+          </mat-form-field>
+        </div>
+
+        <div class="bt-form-actions">
+          <button mat-raised-button type="submit" class="bt-btn-primary" [disabled]="isLoading">
+            {{ isLoading ? 'Buscando...' : 'Buscar' }}
+          </button>
+        </div>
+      </form>
+    </section>
+
+    <p class="status-message status-message--error" *ngIf="errorMessage">{{ errorMessage }}</p>
+
+    <ng-container *ngIf="buscaRealizada">
+      <div class="bt-results-header">
+        <h2 class="bt-results-title">{{ resultados.length }} resultado(s) encontrado(s)</h2>
+      </div>
+
+      <div class="bt-results-grid" *ngIf="resultados.length > 0; else emptyResults">
+        <article class="bt-result-card" *ngFor="let tcc of resultados" (click)="verDetalhe(tcc.id)">
+          <div class="bt-result-header">
+            <span class="bt-tipo-badge">{{ tcc.tipo_tcc }}</span>
+            <span class="bt-defesa-date" *ngIf="tcc.data_defesa">
+              {{ tcc.data_defesa | date:'dd/MM/yyyy' }}
+            </span>
+          </div>
+          <h3 class="bt-result-titulo">{{ tcc.titulo }}</h3>
+          <p class="bt-result-aluno">{{ tcc.aluno_nome }}</p>
+          <div class="bt-result-meta">
+            <span *ngIf="tcc.area_tematica">{{ tcc.area_tematica }}</span>
+            <span *ngIf="tcc.curso">{{ tcc.curso }}</span>
+          </div>
+          <div class="bt-result-footer">
+            <span class="bt-orientador">Orientador: {{ tcc.orientador_nome }}</span>
+            <span class="bt-banca" *ngIf="tcc.banca.length > 0">
+              Banca: {{ tcc.banca.join(', ') }}
+            </span>
+          </div>
+        </article>
+      </div>
+
+      <ng-template #emptyResults>
+        <section class="bt-card">
+          <p class="bt-empty">Nenhum trabalho encontrado para os filtros informados.</p>
+        </section>
+      </ng-template>
+    </ng-container>
+  </main>
+</div>

@@ -18,6 +18,7 @@ import { RegistrarSessaoComponent } from './pages/registrar-sessao/registrar-ses
 import { RegistrarApresentacaoComponent } from './pages/registrar-apresentacao/registrar-apresentacao.component';
 import { LogsSistemaComponent } from './pages/logs-sistema/logs-sistema.component';
 import { SubmissoesAtrasadasComponent } from './pages/submissoes-atrasadas/submissoes-atrasadas.component';
+import { VisaoGeralComponent } from './pages/visao-geral/visao-geral.component';
 
 const routes: Routes = [
   {
@@ -100,6 +101,12 @@ const routes: Routes = [
   {
     path: 'submissoes-atrasadas',
     component: SubmissoesAtrasadasComponent,
+    canActivate: [AuthGuard, ProfileGuard],
+    data: { perfil: 'COORDENADOR' },
+  },
+  {
+    path: 'visao-geral',
+    component: VisaoGeralComponent,
     canActivate: [AuthGuard, ProfileGuard],
     data: { perfil: 'COORDENADOR' },
   },
