@@ -26,6 +26,7 @@ from backend.app.schemas.periodo import (
     PrazoResponse,
     UpdatePeriodoRequest,
 )
+from backend.app.models.prazo_status import StatusPrazo, CorPrazo
 
 ACTIVE_PERIOD_CONFLICT_DETAIL = "Ja existe um periodo letivo ativo."
 INACTIVE_PERIOD_EDIT_DETAIL = "Apenas periodos ativos podem ser editados."
@@ -445,12 +446,12 @@ class PeriodoService:
 
     def _status_info(self, dias_restantes: int) -> tuple[str, str]:
         if dias_restantes > 7:
-            return "A_VENCER", "verde"
+            return StatusPrazo.A_VENCER, CorPrazo.VERDE
         if 1 <= dias_restantes <= 7:
-            return "PROXIMO", "amarelo"
+            return StatusPrazo.PROXIMO, CorPrazo.AMARELO
         if dias_restantes == 0:
-            return "HOJE", "laranja"
-        return "VENCIDO", "vermelho"
+            return StatusPrazo.HOJE, CorPrazo.LARANJA
+        return StatusPrazo.VENCIDO, CorPrazo.VERMELHO
 
     def _formatar_mensagem(self, dias_restantes: int) -> str:
         if dias_restantes > 0:
