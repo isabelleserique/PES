@@ -136,12 +136,14 @@ class TCCRecord(Base):
     observacao_orientador: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     criado_em: Mapped[datetime] = mapped_column(
         DateTime(timezone=False),
+        default=func.now(),
         server_default=func.now(),
         nullable=False,
     )
     atualizado_em: Mapped[datetime] = mapped_column(
         DateTime(timezone=False),
         server_default=func.now(),
+        default=func.now(),
         onupdate=func.now(),
         nullable=False,
     )
