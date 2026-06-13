@@ -6,6 +6,14 @@ from backend.app.api.router import api_router
 from backend.app.core.config import get_settings
 from backend.app.middleware.authentication import jwt_authentication_middleware
 
+from fastapi.exceptions import RequestValidationError
+from starlette.exceptions import HTTPException as StarletteHTTPException
+
+from backend.app.core.exceptions import (
+    http_exception_handler,
+    validation_exception_handler,
+)
+
 settings = get_settings()
 
 app = FastAPI(
@@ -13,6 +21,10 @@ app = FastAPI(
     version="0.1.0",
     debug=settings.app_debug,
 )
+
+app.add_exception_handler(StarletteHTTPException, http_exception_handler)
+app.add_exception_handler(RequestValidationError, validation_exception_handler)
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[settings.frontend_url.rstrip("/")],

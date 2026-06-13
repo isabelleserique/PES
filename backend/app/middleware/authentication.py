@@ -17,7 +17,10 @@ async def jwt_authentication_middleware(request: Request, call_next):
         if scheme.lower() != "bearer" or not token:
             return JSONResponse(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                content={"detail": "Token invalido."},
+                content={
+                    "detail": "Token inválido ou ausente.",
+                    "message": "Autenticação falhou. Verifique seu login e tente novamente."
+                },
             )
 
         try:
@@ -29,12 +32,18 @@ async def jwt_authentication_middleware(request: Request, call_next):
         except ExpiredTokenError:
             return JSONResponse(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                content={"detail": "Token expirado."},
+                content={
+                    "detail": "Token expirado.",
+                    "message": "Sua sessão expirou. Faça login novamente para continuar."
+                },
             )
         except InvalidTokenError:
             return JSONResponse(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                content={"detail": "Token invalido."},
+                content={
+                    "detail": "Token expirado.",
+                    "message": "Sua sessão expirou. Faça login novamente para continuar."
+                },
             )
 
     return await call_next(request)

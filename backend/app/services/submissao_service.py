@@ -35,8 +35,8 @@ SUBMISSAO_FILE_FORBIDDEN_DETAIL = "Perfil sem permissao para acessar o arquivo d
 COMPROVANTE_FILE_NOT_FOUND_DETAIL = "Comprovante da submissao nao encontrado."
 INVALID_ETAPA_DETAIL = "Etapa de entrega invalida para o tipo de TCC do aluno."
 COMPROVANTE_REQUIRED_DETAIL = "Comprovante de aceite e obrigatorio quando o artigo ja foi aceito."
-INVALID_FILE_DETAIL = "Arquivo deve estar nos formatos PDF ou DOCX."
-INVALID_COMPROVANTE_FILE_DETAIL = "Comprovante deve estar nos formatos PDF, DOCX, JPG ou PNG."
+INVALID_FILE_DETAIL = "Formato de arquivo inválido. Envie apenas PDF ou DOCX."
+INVALID_COMPROVANTE_FILE_DETAIL = "Formato de comprovante inválido. Envie PDF, DOCX, JPG ou PNG."
 MAX_FILE_SIZE_BYTES = 50 * 1024 * 1024
 DELIVERABLE_EXTENSIONS = {".pdf", ".docx"}
 PROOF_EXTENSIONS = {".pdf", ".docx", ".jpg", ".jpeg", ".png"}
@@ -292,11 +292,11 @@ class SubmissaoService:
 
         content = await upload.read()
         if len(content) == 0:
-            raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Arquivo enviado esta vazio.")
+            raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="O arquivo enviado está vazio. Selecione um arquivo válido e tente novamente.")
         if len(content) > MAX_FILE_SIZE_BYTES:
             raise HTTPException(
                 status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
-                detail="Arquivo excede o limite de 50 MB.",
+                detail="O arquivo excede o limite de 50 MB. Reduza o tamanho e tente novamente.",
             )
         return content
 

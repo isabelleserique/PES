@@ -23,15 +23,15 @@ from backend.app.schemas.auth import (
 from backend.app.services.audit_service import AuditService
 from backend.app.services.email_service import EmailService
 
-INVALID_CREDENTIALS_DETAIL = "Credenciais invalidas."
-PENDING_REGISTRATION_DETAIL = "Seu cadastro ainda esta em analise. Aguarde aprovacao."
-INACTIVE_REGISTRATION_DETAIL = "Seu acesso nao esta disponivel."
+INVALID_CREDENTIALS_DETAIL = "Credenciais inválidas. Verifique seu e-mail e senha."
+PENDING_REGISTRATION_DETAIL = "Seu cadastro ainda está em análise. Aguarde a aprovação."
+INACTIVE_REGISTRATION_DETAIL = "Seu acesso não está disponível no momento."
 ACCOUNT_BLOCKED_DETAIL = "Conta temporariamente bloqueada. Tente novamente em 15 minutos."
-RESET_PASSWORD_GENERIC_MESSAGE = "Se o e-mail estiver cadastrado, voce recebera as instrucoes."
+RESET_PASSWORD_GENERIC_MESSAGE = "Se o e-mail estiver cadastrado, você receberá as instruções para redefinição de senha."
 RESET_PASSWORD_SUCCESS_MESSAGE = "Senha redefinida com sucesso."
-INVALID_RESET_TOKEN_DETAIL = "Token de reset invalido."
-EXPIRED_RESET_TOKEN_DETAIL = "Token de reset expirado."
-USED_RESET_TOKEN_DETAIL = "Token de reset ja foi utilizado."
+INVALID_RESET_TOKEN_DETAIL = "Token de redefinição inválido."
+EXPIRED_RESET_TOKEN_DETAIL = "Token de redefinição expirado."
+USED_RESET_TOKEN_DETAIL = "Este token já foi utilizado."
 MAX_FAILED_LOGIN_ATTEMPTS = 5
 ACCOUNT_LOCK_MINUTES = 15
 
