@@ -1,7 +1,11 @@
 import logging
 from datetime import UTC, datetime
 from typing import Optional
+from uuid import uuid4
 
+from sqlalchemy.orm import Session
+
+from backend.app.db.models import AuditLogRecord
 from backend.app.models.user import Perfil, StatusCadastro
 
 logger = logging.getLogger("backend.audit")
@@ -162,6 +166,36 @@ class AuditService:
             resulting_status,
             outside_deadline,
             timestamp,
+        )
+
+    def log_event(
+        self,
+        *,
+        session: Session,
+        user_id: str | None,
+        action: str,
+        description: str,
+        entity: str | None = None,
+        data: dict | None = None,
+        ip: str | None = None,
+    ) -> None:
+        log = AuditLogRecord(
+            id=str(uuid4()),
+            user_id=user_id,
+            acao=action,
+            entidade=entity,
+            descricao=description,
+            dados=data,
+            ip=ip,
+        )
+        session.add(log)
+        session.commit()
+        logger.info(
+            "AUDIT_DB action=%s user_id=%s entity=%s description=%s",
+            action,
+            user_id,
+            entity,
+            description,
         )
 
 async def get_audit_service() -> AuditService:

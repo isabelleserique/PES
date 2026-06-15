@@ -1,0 +1,103 @@
+<div class="app-shell">
+  <nav class="app-navbar">
+    <div class="navbar-brand">
+      <div class="logo-badge">IC</div>
+      <span class="logo-name">IComp</span>
+    </div>
+    <div class="navbar-sep"></div>
+    <span class="navbar-app-name">TCComp</span>
+    <span class="sa-spacer"></span>
+    <a mat-stroked-button class="sa-nav-btn" routerLink="/painel/coordenador">Home</a>
+    <button mat-stroked-button type="button" class="sa-nav-btn" (click)="voltar()">Voltar</button>
+  </nav>
+
+  <main class="app-page-content sa-page">
+    <header class="sa-hero">
+      <div>
+        <span class="sa-eyebrow">US049 — Coordenador</span>
+        <h1 class="sa-title">Submissões fora do prazo</h1>
+        <p class="sa-subtitle">
+          Histórico de todas as entregas realizadas após a data limite.
+          Mostra a diferença entre o prazo e a data efetiva de entrega.
+        </p>
+      </div>
+    </header>
+
+    <p class="status-message status-message--error" *ngIf="errorMessage">{{ errorMessage }}</p>
+
+    <div class="sa-filters" *ngIf="!isLoading && submissoes.length > 0">
+      <mat-form-field appearance="outline" class="sa-filter-field">
+        <mat-label>Tipo de TCC</mat-label>
+        <mat-select [(ngModel)]="filtroTipo">
+          <mat-option value="">Todos</mat-option>
+          <mat-option *ngFor="let tipo of tiposDisponiveis" [value]="tipo">{{ tipo }}</mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <div class="sa-stats">
+        <span class="sa-stat">
+          <strong>{{ submissoesFiltradas.length }}</strong> entrega(s) atrasada(s)
+        </span>
+        <span class="sa-stat sa-stat--atraso">
+          <strong>{{ totalDiasAtraso }}</strong> dias de atraso total
+        </span>
+      </div>
+    </div>
+
+    <div class="sa-loading" *ngIf="isLoading">
+      <mat-icon>hourglass_empty</mat-icon>
+      <span>Carregando submissões atrasadas...</span>
+    </div>
+
+    <div class="sa-empty" *ngIf="!isLoading && submissoes.length === 0">
+      <mat-icon>check_circle</mat-icon>
+      <p>Nenhuma submissão fora do prazo registrada.</p>
+    </div>
+
+    <div class="sa-card" *ngIf="!isLoading && submissoes.length > 0">
+      <div class="sa-table-wrap">
+        <div class="sa-table-header">
+          <span>Aluno</span>
+          <span>TCC / Etapa</span>
+          <span>Versão</span>
+          <span>Data limite</span>
+          <span>Data envio</span>
+          <span>Atraso</span>
+          <span>Arquivo</span>
+        </div>
+
+        <div class="sa-empty-filter" *ngIf="submissoesFiltradas.length === 0">
+          <mat-icon>search_off</mat-icon>
+          <p>Nenhum resultado para o filtro selecionado.</p>
+        </div>
+
+        <div class="sa-table-row" *ngFor="let submissao of submissoesFiltradas">
+          <div class="sa-aluno">
+            <span class="sa-aluno-nome">{{ submissao.aluno_nome }}</span>
+            <span class="sa-aluno-mat" *ngIf="submissao.matricula">{{ submissao.matricula }}</span>
+          </div>
+
+          <div class="sa-tcc">
+            <span class="sa-tcc-titulo" [title]="submissao.titulo_tcc">{{ submissao.titulo_tcc }}</span>
+            <span class="sa-tcc-tipo">{{ submissao.tipo_tcc }} — {{ submissao.etapa }}</span>
+          </div>
+
+          <span class="sa-versao">v{{ submissao.versao }}</span>
+          <span class="sa-data-limite">{{ formatarDataCurta(submissao.data_limite) }}</span>
+          <span class="sa-data-envio">{{ formatarData(submissao.data_submissao) }}</span>
+          <span class="sa-atraso-badge">+{{ submissao.dias_atraso }} dia(s)</span>
+
+          <button
+            mat-stroked-button
+            type="button"
+            class="sa-arquivo-btn"
+            [disabled]="arquivoEmVisualizacaoId === submissao.id"
+            (click)="visualizarArquivo(submissao)">
+            <mat-icon>description</mat-icon>
+            {{ arquivoEmVisualizacaoId === submissao.id ? 'Abrindo...' : submissao.nome_arquivo }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>

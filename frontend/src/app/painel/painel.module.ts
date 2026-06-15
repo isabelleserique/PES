@@ -13,10 +13,14 @@ import { AceiteOrientacaoComponent } from './pages/aceite-orientacao/aceite-orie
 import { DefinirTccComponent } from './pages/definir-tcc/definir-tcc.component';
 import { GerenciarPeriodosComponent } from './pages/gerenciar-periodos/gerenciar-periodos.component';
 import { HistoricoSubmissoesComponent } from './pages/historico-submissoes/historico-submissoes.component';
+import { LogsSistemaComponent } from './pages/logs-sistema/logs-sistema.component';
 import { PrazosPeriodoComponent } from './pages/prazos-periodo/prazos-periodo.component';
 import { PainelCoordenadorComponent } from './pages/painel/painel.component';
+import { RegistrarApresentacaoComponent } from './pages/registrar-apresentacao/registrar-apresentacao.component';
+import { RegistrarSessaoComponent } from './pages/registrar-sessao/registrar-sessao.component';
 import { PainelRedirectComponent } from './pages/redirect/redirect.component';
 import { PainelOrientadorComponent } from './pages/orientador/orientador.component';
+import { SubmissoesAtrasadasComponent } from './pages/submissoes-atrasadas/submissoes-atrasadas.component';
 import { SubmeterArtigoComponent } from './pages/submeter-artigo/submeter-artigo.component';
 import { PainelRoutingModule } from './painel-routing.module';
 
@@ -34,6 +38,10 @@ import { PainelRoutingModule } from './painel-routing.module';
     AceiteOrientacaoComponent,
     SubmeterArtigoComponent,
     HistoricoSubmissoesComponent,
+    RegistrarSessaoComponent,
+    RegistrarApresentacaoComponent,
+    SubmissoesAtrasadasComponent,
+    LogsSistemaComponent,
   ],
   imports: [
     SharedModule,

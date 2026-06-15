@@ -156,6 +156,26 @@ export interface OrientationDecisionResponse {
   alerta_acao_prazo: string | null;
 }
 
+export interface SessaoOrientacaoPayload {
+  aluno_id: string;
+  data_sessao: string;
+  resumo: string;
+  proximos_passos: string;
+}
+
+export interface SessaoOrientacao {
+  id: string;
+  tcc_id: string;
+  aluno_id: string;
+  aluno_nome: string;
+  orientador_id: string;
+  orientador_nome: string;
+  data_sessao: string;
+  resumo: string;
+  proximos_passos: string;
+  criado_em: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class PainelService {
   private readonly api = environment.apiUrl;
@@ -208,5 +228,19 @@ export class PainelService {
     payload: OrientationDecisionPayload,
   ): Observable<OrientationDecisionResponse> {
     return this.http.patch<OrientationDecisionResponse>(`${this.api}/tcc/orientacoes/${tccId}/decisao`, payload);
+  }
+
+  registrarSessaoOrientacao(payload: SessaoOrientacaoPayload): Observable<SessaoOrientacao> {
+    return this.http.post<SessaoOrientacao>(`${this.api}/orientacoes/sessoes`, payload);
+  }
+
+  listarSessoesOrientador(alunoId: string): Observable<SessaoOrientacao[]> {
+    return this.http.get<SessaoOrientacao[]>(`${this.api}/orientacoes/sessoes`, {
+      params: { aluno_id: alunoId },
+    });
+  }
+
+  listarMinhasSessoes(): Observable<SessaoOrientacao[]> {
+    return this.http.get<SessaoOrientacao[]>(`${this.api}/tcc/me/sessoes`);
   }
 }

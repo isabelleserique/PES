@@ -1,0 +1,118 @@
+<div class="app-shell">
+  <nav class="app-navbar">
+    <div class="navbar-brand">
+      <div class="logo-badge">IC</div>
+      <span class="logo-name">IComp</span>
+    </div>
+    <div class="navbar-sep"></div>
+    <span class="navbar-app-name">TCComp</span>
+    <span class="ra-navbar-spacer"></span>
+    <a mat-stroked-button class="ra-nav-btn" routerLink="/painel/aluno">Voltar ao painel</a>
+    <button mat-stroked-button type="button" class="ra-nav-btn" (click)="logout()">Sair</button>
+  </nav>
+
+  <main class="app-page-content ra-page">
+    <header class="ra-hero">
+      <div>
+        <span class="ra-eyebrow">US025 — Área do aluno</span>
+        <h1 class="ra-title">Registrar apresentação de artigo</h1>
+        <p class="ra-subtitle">
+          Registre a data em que seu artigo foi apresentado. Quando o artigo já possui aceite comprovado,
+          esta etapa não impacta sua nota.
+        </p>
+      </div>
+    </header>
+
+    <p class="status-message status-message--error" *ngIf="errorMessage">{{ errorMessage }}</p>
+    <p class="status-message status-message--success" *ngIf="feedbackMessage">{{ feedbackMessage }}</p>
+
+    <section class="ra-card" *ngIf="isLoading">
+      <p class="ra-empty">Carregando dados...</p>
+    </section>
+
+    <ng-container *ngIf="!isLoading">
+      <div class="ra-alert ra-alert--warning" *ngIf="!isArtigo">
+        <mat-icon>info</mat-icon>
+        <p>
+          Esta funcionalidade é exclusiva para alunos com TCC do tipo <strong>Artigo Científico</strong>.
+          Seu TCC atual é do tipo <strong>{{ meuTcc?.tipo_tcc ?? 'não definido' }}</strong>.
+        </p>
+      </div>
+
+      <ng-container *ngIf="isArtigo">
+        <div class="ra-alert ra-alert--info" *ngIf="artigoJaAceito">
+          <mat-icon>verified</mat-icon>
+          <p>
+            Seu artigo já possui <strong>aceite comprovado</strong>. O registro desta apresentação
+            <strong>não impactará sua nota</strong>, conforme as regras do sistema.
+          </p>
+        </div>
+
+        <section class="ra-card ra-card--accent">
+          <div class="ra-card-header">
+            <div>
+              <span class="ra-card-label">Nova apresentação</span>
+              <h2 class="ra-card-title">Registrar data de apresentação</h2>
+            </div>
+            <span class="ra-badge">{{ meuTcc?.tipo_tcc }}</span>
+          </div>
+
+          <div class="ra-tcc-info" *ngIf="meuTcc">
+            <span class="ra-field-label">Título do artigo</span>
+            <strong>{{ meuTcc.titulo }}</strong>
+          </div>
+
+          <form [formGroup]="apresentacaoForm" class="ra-form" (ngSubmit)="registrarApresentacao()">
+            <mat-form-field appearance="outline" class="ra-field-full">
+              <mat-label>Data da apresentação</mat-label>
+              <input matInput [matDatepicker]="picker" formControlName="data_apresentacao">
+              <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
+              <mat-datepicker #picker></mat-datepicker>
+              <mat-error *ngIf="apresentacaoForm.controls.data_apresentacao.touched && apresentacaoForm.controls.data_apresentacao.hasError('required')">
+                Informe a data da apresentação.
+              </mat-error>
+            </mat-form-field>
+
+            <div class="ra-form-actions">
+              <button mat-raised-button type="submit" class="ra-btn-primary" [disabled]="isSaving">
+                {{ isSaving ? 'REGISTRANDO...' : 'REGISTRAR APRESENTAÇÃO' }}
+              </button>
+            </div>
+          </form>
+        </section>
+
+        <section class="ra-card">
+          <div class="ra-card-header">
+            <div>
+              <span class="ra-card-label">Histórico</span>
+              <h2 class="ra-card-title">Apresentações registradas</h2>
+            </div>
+            <span class="ra-badge ra-badge--soft">{{ apresentacoes.length }} registro(s)</span>
+          </div>
+
+          <p class="ra-empty" *ngIf="apresentacoes.length === 0">
+            Nenhuma apresentação registrada ainda.
+          </p>
+
+          <div class="ra-list" *ngIf="apresentacoes.length > 0">
+            <article class="ra-item" *ngFor="let apresentacao of apresentacoes">
+              <div class="ra-item-main">
+                <span class="ra-field-label">Data da apresentação</span>
+                <h3>{{ apresentacao.data_apresentacao | date:'dd/MM/yyyy' }}</h3>
+              </div>
+              <div class="ra-item-meta">
+                <span class="ra-badge ra-badge--aceito" *ngIf="apresentacao.artigo_ja_aceito">
+                  <mat-icon>verified</mat-icon> Aceite comprovado — nota não impactada
+                </span>
+                <span class="ra-badge ra-badge--pendente" *ngIf="!apresentacao.artigo_ja_aceito">
+                  <mat-icon>hourglass_empty</mat-icon> Aguardando aceite
+                </span>
+                <span class="ra-registro">Registrado em {{ apresentacao.criado_em | date:'dd/MM/yyyy HH:mm' }}</span>
+              </div>
+            </article>
+          </div>
+        </section>
+      </ng-container>
+    </ng-container>
+  </main>
+</div>

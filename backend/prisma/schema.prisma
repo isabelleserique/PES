@@ -61,6 +61,10 @@ model User {
   tccs_como_coorientador TCC[]               @relation("CoorientadorTCC")
   tcc_edit_logs         TCCEditLog[]         @relation("ActorTCCEdit")
   submissoes_entregaveis SubmissaoEntregavel[]
+  orientacao_sessoes_aluno OrientacaoSessao[] @relation("AlunoOrientacaoSessao")
+  orientacao_sessoes_orientador OrientacaoSessao[] @relation("OrientadorOrientacaoSessao")
+  apresentacoes_artigo ApresentacaoArtigo[] @relation("AlunoApresentacaoArtigo")
+  audit_logs            AuditLog[]
 
   @@map("users")
 }
@@ -115,6 +119,8 @@ model TCC {
   periodo          PeriodoLetivo @relation(fields: [periodo_id], references: [id], onDelete: Cascade)
   edit_logs        TCCEditLog[]
   submissoes_entregaveis SubmissaoEntregavel[]
+  orientacao_sessoes OrientacaoSessao[]
+  apresentacoes_artigo ApresentacaoArtigo[]
 
   @@unique([aluno_id, periodo_id])
   @@index([orientador_id])
@@ -178,4 +184,56 @@ model PasswordResetToken {
 
   @@index([user_id])
   @@map("password_reset_tokens")
+}
+
+model OrientacaoSessao {
+  id              String   @id
+  tcc_id          String
+  aluno_id        String
+  orientador_id   String
+  data_sessao     DateTime @db.Date
+  resumo          String
+  proximos_passos String
+  criado_em       DateTime @default(now())
+  tcc             TCC      @relation(fields: [tcc_id], references: [id], onDelete: Cascade)
+  aluno           User     @relation("AlunoOrientacaoSessao", fields: [aluno_id], references: [id], onDelete: Cascade)
+  orientador      User     @relation("OrientadorOrientacaoSessao", fields: [orientador_id], references: [id], onDelete: Cascade)
+
+  @@index([tcc_id])
+  @@index([aluno_id])
+  @@index([orientador_id])
+  @@map("orientacao_sessoes")
+}
+
+model ApresentacaoArtigo {
+  id                String   @id
+  tcc_id            String
+  aluno_id          String
+  data_apresentacao DateTime @db.Date
+  artigo_ja_aceito  Boolean  @default(false)
+  criado_em         DateTime @default(now())
+  tcc               TCC      @relation(fields: [tcc_id], references: [id], onDelete: Cascade)
+  aluno             User     @relation("AlunoApresentacaoArtigo", fields: [aluno_id], references: [id], onDelete: Cascade)
+
+  @@index([tcc_id])
+  @@index([aluno_id])
+  @@map("apresentacoes_artigo")
+}
+
+model AuditLog {
+  id         String   @id
+  user_id    String?
+  acao       String
+  entidade   String?
+  descricao  String
+  dados      Json?
+  ip         String?
+  criado_em  DateTime @default(now())
+  user       User?    @relation(fields: [user_id], references: [id], onDelete: SetNull)
+
+  @@index([user_id])
+  @@index([acao])
+  @@index([entidade])
+  @@index([criado_em])
+  @@map("audit_logs")
 }

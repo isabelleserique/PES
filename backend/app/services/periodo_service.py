@@ -26,6 +26,7 @@ from backend.app.schemas.periodo import (
     PrazoResponse,
     UpdatePeriodoRequest,
 )
+from backend.app.services.audit_service import AuditService
 
 ACTIVE_PERIOD_CONFLICT_DETAIL = "Ja existe um periodo letivo ativo."
 INACTIVE_PERIOD_EDIT_DETAIL = "Apenas periodos ativos podem ser editados."
@@ -43,6 +44,7 @@ class PeriodoService:
         *,
         session: Session,
         payload: CreatePeriodoRequest,
+        current_user: UserRecord | None = None,
     ) -> PeriodoResponse:
         self._ensure_no_date_overlap(
             session=session,
@@ -68,6 +70,15 @@ class PeriodoService:
             data_inicio=payload.data_inicio,
             data_fim=payload.data_fim,
         )
+        if current_user is not None:
+            AuditService().log_event(
+                session=session,
+                user_id=current_user.id,
+                action="CREATE_PERIODO",
+                entity="PERIODO",
+                description=f"Criou periodo letivo {periodo.nome}.",
+                data={"periodo_id": periodo.id, "ativo": periodo.ativo},
+            )
         return self.get_periodo_by_id(session=session, periodo_id=periodo.id)
 
     def list_periodos(self, *, session: Session) -> list[PeriodoResponse]:
@@ -121,6 +132,7 @@ class PeriodoService:
         session: Session,
         periodo_id: str,
         payload: UpdatePeriodoRequest,
+        current_user: UserRecord | None = None,
     ) -> PeriodoResponse:
         periodo = self._get_periodo_record(session=session, periodo_id=periodo_id)
         if periodo.ativo is not True:
@@ -156,6 +168,25 @@ class PeriodoService:
             data_inicio=merged_payload.data_inicio,
             data_fim=merged_payload.data_fim,
         )
+        if current_user is not None:
+            AuditService().log_event(
+                session=session,
+                user_id=current_user.id,
+                action="UPDATE_PRAZOS",
+                entity="PERIODO",
+                description=f"Atualizou periodo letivo {periodo.nome}.",
+                data={
+                    "periodo_id": periodo.id,
+                    "prazos": [
+                        {
+                            "nome_etapa": prazo.nome_etapa,
+                            "data_limite": prazo.data_limite.isoformat(),
+                            "tipo_tcc": prazo.tipo_tcc.value,
+                        }
+                        for prazo in periodo.prazos
+                    ],
+                },
+            )
         return self.get_periodo_by_id(session=session, periodo_id=periodo.id)
 
     def _get_periodo_record(self, *, session: Session, periodo_id: str) -> PeriodoLetivoRecord:

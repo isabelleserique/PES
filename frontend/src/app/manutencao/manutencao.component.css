@@ -1,0 +1,74 @@
+.mn-shell {
+  align-items: center;
+  background: #f4f7fb;
+  display: flex;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 24px;
+}
+
+.mn-card {
+  background: #fff;
+  border-radius: 20px;
+  box-shadow: 0 16px 48px rgba(13, 33, 55, 0.1);
+  max-width: 480px;
+  padding: 48px 40px;
+  text-align: center;
+  width: 100%;
+}
+
+.mn-logo {
+  font-size: 1.6rem;
+  font-weight: 700;
+  height: 64px;
+  line-height: 64px;
+  margin: 0 auto 24px;
+  width: 64px;
+}
+
+.mn-title {
+  color: #0d2137;
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+
+.mn-subtitle {
+  color: #4a5568;
+  line-height: 1.6;
+  margin-bottom: 24px;
+}
+
+.mn-info {
+  background: #fff8e1;
+  border: 1px solid rgba(245, 158, 11, 0.28);
+  border-radius: 12px;
+  color: #92400e;
+  line-height: 1.6;
+  margin-bottom: 28px;
+  padding: 16px 20px;
+  text-align: left;
+}
+
+.mn-info p {
+  margin: 0;
+}
+
+.mn-info p + p {
+  margin-top: 8px;
+}
+
+.mn-btn {
+  background: #0d2137;
+  border-radius: 8px;
+  color: #fff;
+  display: inline-block;
+  font-weight: 700;
+  padding: 12px 28px;
+  text-decoration: none;
+  transition: opacity 0.15s;
+}
+
+.mn-btn:hover {
+  opacity: 0.85;
+}

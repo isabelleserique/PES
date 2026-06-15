@@ -121,6 +121,14 @@ class AuthService:
         )
 
         audit_service.log_login_success(user_id=user.id, perfil=user.perfil)
+        audit_service.log_event(
+            session=session,
+            user_id=user.id,
+            action="LOGIN_SUCCESS",
+            entity="AUTH",
+            description="Login realizado com sucesso.",
+            data={"perfil": user.perfil.value},
+        )
         return LoginResponse(
             access_token=access_token,
             token_type="bearer",

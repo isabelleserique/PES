@@ -22,6 +22,9 @@
       <div class="al-hero-actions">
         <a mat-raised-button class="al-btn-primary" routerLink="/painel/definir-tcc">Definir TCC</a>
         <a mat-stroked-button routerLink="/painel/submeter-entregaveis" *ngIf="meuTcc">Submeter entregáveis</a>
+        <a mat-stroked-button routerLink="/painel/registrar-apresentacao" *ngIf="meuTcc?.tipo_tcc === 'Artigo'">
+          Registrar apresentação
+        </a>
         <a mat-stroked-button routerLink="/painel/prazos-periodo">Ver prazos</a>
       </div>
     </header>
@@ -145,6 +148,42 @@
             </p>
           </div>
         </form>
+      </section>
+
+      <section class="al-card" *ngIf="meuTcc">
+        <div class="al-card-header">
+          <div>
+            <span class="al-card-label">US017</span>
+            <h2 class="al-card-title">Sessões de orientação</h2>
+          </div>
+          <span class="al-badge al-badge--soft">{{ sessoesOrientacao.length }} registro(s)</span>
+        </div>
+
+        <p class="al-empty" *ngIf="sessoesOrientacao.length === 0">
+          Nenhuma sessão de orientação foi registrada pelo orientador até o momento.
+        </p>
+
+        <div class="al-sessions-list" *ngIf="sessoesOrientacao.length > 0">
+          <article class="al-session-card" *ngFor="let sessao of sessoesOrientacao">
+            <div class="al-session-header">
+              <div>
+                <span class="al-card-label">Sessão em</span>
+                <h3>{{ sessao.data_sessao | date:'dd/MM/yyyy' }}</h3>
+              </div>
+              <span class="al-session-author">{{ sessao.orientador_nome }}</span>
+            </div>
+            <div class="al-session-body">
+              <div>
+                <span class="al-field-label">Resumo</span>
+                <p>{{ sessao.resumo }}</p>
+              </div>
+              <div>
+                <span class="al-field-label">Próximos passos</span>
+                <p>{{ sessao.proximos_passos }}</p>
+              </div>
+            </div>
+          </article>
+        </div>
       </section>
 
       <section class="al-card" *ngIf="cronogramaAluno as cronogramaAlunoData">

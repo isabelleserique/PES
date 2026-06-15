@@ -6,9 +6,10 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { AuthInterceptor } from './core/interceptors/auth.interceptor';
+import { ManutencaoComponent } from './manutencao/manutencao.component';
 
 @NgModule({
-  declarations: [AppComponent],
+  declarations: [AppComponent, ManutencaoComponent],
   imports: [BrowserModule, BrowserAnimationsModule, HttpClientModule, AppRoutingModule],
   providers: [
     {

@@ -1,0 +1,167 @@
+.lg-spacer {
+  flex: 1;
+}
+
+.lg-nav-btn {
+  border-color: rgba(255, 255, 255, 0.32) !important;
+  color: #fff !important;
+  margin-right: 8px;
+}
+
+.lg-page {
+  display: grid;
+  gap: 22px;
+}
+
+.lg-hero {
+  margin-bottom: 4px;
+}
+
+.lg-eyebrow {
+  color: #1565c0;
+  display: block;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+}
+
+.lg-title {
+  color: #0d2137;
+  font-size: 1.8rem;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+.lg-subtitle {
+  color: #4a5568;
+  line-height: 1.6;
+}
+
+.lg-filters {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.lg-filter-field {
+  width: 240px;
+}
+
+.lg-total {
+  color: #718096;
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-left: auto;
+}
+
+.lg-card {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.lg-table-wrap {
+  overflow-x: auto;
+}
+
+.lg-table-header,
+.lg-table-row {
+  align-items: center;
+  border-bottom: 1px solid #f0f4f8;
+  display: grid;
+  font-size: 0.85rem;
+  gap: 12px;
+  grid-template-columns: 200px 120px 180px 1fr 180px;
+  padding: 12px 20px;
+}
+
+.lg-table-header {
+  background: #f0f4f8;
+  color: #718096;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.lg-table-row:last-child {
+  border-bottom: none;
+}
+
+.lg-table-row:hover {
+  background: #f8fafc;
+}
+
+.lg-usuario-nome {
+  color: #0d2137;
+  display: block;
+  font-weight: 600;
+}
+
+.lg-usuario-email {
+  color: #718096;
+  display: block;
+  font-size: 0.78rem;
+}
+
+.lg-perfil {
+  background: rgba(13, 33, 55, 0.08);
+  border-radius: 20px;
+  color: #0d2137;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 3px 10px;
+  text-align: center;
+}
+
+.lg-acao {
+  color: #1565c0;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.lg-descricao,
+.lg-data {
+  color: #4a5568;
+}
+
+.lg-data {
+  font-size: 0.8rem;
+}
+
+.lg-loading,
+.lg-empty,
+.lg-empty-filter {
+  align-items: center;
+  color: #a0aec0;
+  display: flex;
+  flex-direction: column;
+  font-size: 0.9rem;
+  gap: 10px;
+  justify-content: center;
+  padding: 48px;
+  text-align: center;
+}
+
+.lg-loading mat-icon,
+.lg-empty mat-icon,
+.lg-empty-filter mat-icon {
+  font-size: 36px;
+  height: 36px;
+  width: 36px;
+}
+
+@media (max-width: 900px) {
+  .lg-table-header,
+  .lg-table-row {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .lg-total {
+    margin-left: 0;
+  }
+}

@@ -1,0 +1,83 @@
+<div class="app-shell">
+  <nav class="app-navbar">
+    <div class="navbar-brand">
+      <div class="logo-badge">IC</div>
+      <span class="logo-name">IComp</span>
+    </div>
+    <div class="navbar-sep"></div>
+    <span class="navbar-app-name">TCComp</span>
+    <span class="lg-spacer"></span>
+    <a mat-stroked-button class="lg-nav-btn" routerLink="/painel/coordenador">Home</a>
+    <button mat-stroked-button type="button" class="lg-nav-btn" (click)="voltar()">Voltar</button>
+  </nav>
+
+  <main class="app-page-content lg-page">
+    <header class="lg-hero">
+      <div>
+        <span class="lg-eyebrow">US048 — Coordenador</span>
+        <h1 class="lg-title">Logs de atividade do sistema</h1>
+        <p class="lg-subtitle">
+          Registros de uploads, aceites de orientação, aprovações de acesso e alterações de prazo.
+          Cada registro contém usuário, ação, data e hora.
+        </p>
+      </div>
+    </header>
+
+    <p class="status-message status-message--error" *ngIf="errorMessage">{{ errorMessage }}</p>
+
+    <div class="lg-filters" *ngIf="!isLoading && logs.length > 0">
+      <mat-form-field appearance="outline" class="lg-filter-field">
+        <mat-label>Filtrar por usuário</mat-label>
+        <input matInput [(ngModel)]="filtroUsuario" placeholder="Nome do usuário">
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="lg-filter-field">
+        <mat-label>Filtrar por ação</mat-label>
+        <mat-select [(ngModel)]="filtroAcao">
+          <mat-option value="">Todas as ações</mat-option>
+          <mat-option *ngFor="let acao of acoesDisponiveis" [value]="acao">{{ acao }}</mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <span class="lg-total">{{ logsFiltrados.length }} registro(s)</span>
+    </div>
+
+    <div class="lg-loading" *ngIf="isLoading">
+      <mat-icon>hourglass_empty</mat-icon>
+      <span>Carregando logs...</span>
+    </div>
+
+    <div class="lg-empty" *ngIf="!isLoading && logs.length === 0">
+      <mat-icon>receipt_long</mat-icon>
+      <p>Nenhum log de atividade registrado ainda.</p>
+    </div>
+
+    <div class="lg-card" *ngIf="!isLoading && logs.length > 0">
+      <div class="lg-table-wrap">
+        <div class="lg-table-header">
+          <span>Usuário</span>
+          <span>Perfil</span>
+          <span>Ação</span>
+          <span>Descrição</span>
+          <span>Data / Hora</span>
+        </div>
+
+        <div class="lg-empty-filter" *ngIf="logsFiltrados.length === 0">
+          <mat-icon>search_off</mat-icon>
+          <p>Nenhum resultado para os filtros selecionados.</p>
+        </div>
+
+        <div class="lg-table-row" *ngFor="let log of logsFiltrados">
+          <div class="lg-usuario">
+            <span class="lg-usuario-nome">{{ log.usuario_nome }}</span>
+            <span class="lg-usuario-email">{{ log.usuario_email }}</span>
+          </div>
+          <span class="lg-perfil">{{ log.usuario_perfil }}</span>
+          <span class="lg-acao">{{ log.acao }}</span>
+          <span class="lg-descricao">{{ log.descricao }}</span>
+          <span class="lg-data">{{ formatarData(log.criado_em) }}</span>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>

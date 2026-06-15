@@ -19,6 +19,7 @@ export interface SubmissaoEntregavel {
   tipo_tcc: string;
   etapa: EtapaEntregavel;
   versao: number;
+  ultima_versao: boolean;
   nome_arquivo: string;
   data_submissao: string;
   fora_do_prazo: boolean;
@@ -46,12 +47,52 @@ export interface SubmissaoHistorico {
   tipo_tcc: string;
   etapa: string;
   versao: number;
+  ultima_versao: boolean;
   nome_arquivo: string;
   data_submissao: string;
   fora_do_prazo: boolean;
   foi_aceito: boolean;
   nome_comprovante: string | null;
   nota_automatica: number | null;
+}
+
+export interface SubmissaoAtrasada {
+  id: string;
+  aluno_id: string;
+  aluno_nome: string;
+  matricula: string | null;
+  tcc_id: string;
+  titulo_tcc: string;
+  tipo_tcc: string;
+  etapa: string;
+  versao: number;
+  nome_arquivo: string;
+  data_limite: string;
+  data_submissao: string;
+  dias_atraso: number;
+}
+
+export interface LogAtividade {
+  id: string;
+  usuario_nome: string;
+  usuario_email: string;
+  usuario_perfil: string;
+  acao: string;
+  entidade: string | null;
+  descricao: string;
+  criado_em: string;
+}
+
+export interface ApresentacaoArtigoPayload {
+  data_apresentacao: string;
+}
+
+export interface ApresentacaoArtigo {
+  id: string;
+  tcc_id: string;
+  data_apresentacao: string;
+  artigo_ja_aceito: boolean;
+  criado_em: string;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -74,6 +115,22 @@ export class SubmissaoService {
 
   listarHistoricoOrientador(): Observable<SubmissaoHistorico[]> {
     return this.http.get<SubmissaoHistorico[]>(`${this.api}/submissoes/orientador`);
+  }
+
+  listarSubmissoesAtrasadas(): Observable<SubmissaoAtrasada[]> {
+    return this.http.get<SubmissaoAtrasada[]>(`${this.api}/submissoes/atrasadas`);
+  }
+
+  listarLogsAtividade(): Observable<LogAtividade[]> {
+    return this.http.get<LogAtividade[]>(`${this.api}/logs`);
+  }
+
+  registrarApresentacaoArtigo(payload: ApresentacaoArtigoPayload): Observable<ApresentacaoArtigo> {
+    return this.http.post<ApresentacaoArtigo>(`${this.api}/submissoes/apresentacao-artigo`, payload);
+  }
+
+  listarMinhasApresentacoes(): Observable<ApresentacaoArtigo[]> {
+    return this.http.get<ApresentacaoArtigo[]>(`${this.api}/submissoes/apresentacao-artigo`);
   }
 
   visualizarArquivo(submissaoId: string): Observable<Blob> {

@@ -1,8 +1,11 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 
+import { ManutencaoComponent } from './manutencao/manutencao.component';
+
 const routes: Routes = [
   { path: '', pathMatch: 'full', redirectTo: 'auth/login' },
+  { path: 'manutencao', component: ManutencaoComponent },
   {
     path: 'auth',
     loadChildren: () =>
