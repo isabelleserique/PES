@@ -31,6 +31,14 @@ export class AuthInterceptor implements HttpInterceptor {
         if (
           isApiRequest &&
           error instanceof HttpErrorResponse &&
+          error.status === 503
+        ) {
+          void this.router.navigate(['/manutencao']);
+        }
+
+        if (
+          isApiRequest &&
+          error instanceof HttpErrorResponse &&
           error.status === 401 &&
           this.authService.isAuthenticated()
         ) {

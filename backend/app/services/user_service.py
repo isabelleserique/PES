@@ -156,6 +156,18 @@ class UserService:
             decision=payload.acao,
             resulting_status=user.status,
         )
+        audit_service.log_event(
+            session=session,
+            user_id=acted_by.id,
+            action="DECISAO_CADASTRO",
+            entity="USER",
+            description=f"{payload.acao} cadastro de {user.nome_completo}.",
+            data={
+                "target_user_id": user.id,
+                "decision": payload.acao,
+                "resulting_status": user.status.value,
+            },
+        )
         if payload.acao == "APROVAR":
             email_service.send_registration_approved_email(
                 to_email=user.email,

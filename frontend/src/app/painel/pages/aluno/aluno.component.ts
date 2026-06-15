@@ -12,6 +12,7 @@ import {
   CronogramaPeriodoResponse,
   OrientadorDisponivel,
   PainelService,
+  SessaoOrientacao,
   TccPayload,
   TccResponse,
   TipoTccAluno,
@@ -31,6 +32,7 @@ export class PainelAlunoComponent implements OnInit {
   cronograma: CronogramaPeriodoResponse | null = null;
   meuTcc: TccResponse | null = null;
   orientadores: OrientadorDisponivel[] = [];
+  sessoesOrientacao: SessaoOrientacao[] = [];
   readonly tiposTcc: ReadonlyArray<{ value: TipoTccAluno; label: string }> = [
     { value: 'Artigo', label: 'Artigo Cientifico' },
     { value: 'Monografia', label: 'Monografia' },
@@ -126,14 +128,16 @@ export class PainelAlunoComponent implements OnInit {
       tcc: this.painelService.getMeuTcc().pipe(
         catchError((error: unknown) => (this.isNotFound(error) ? of(null) : throwError(() => error))),
       ),
+      sessoes: this.painelService.listarMinhasSessoes().pipe(catchError(() => of([]))),
     })
       .pipe(finalize(() => (this.isLoading = false)))
       .subscribe({
-        next: ({ user, cronograma, orientadores, tcc }) => {
+        next: ({ user, cronograma, orientadores, tcc, sessoes }) => {
           this.currentUser = user;
           this.cronograma = cronograma;
           this.orientadores = orientadores;
           this.meuTcc = tcc;
+          this.sessoesOrientacao = sessoes;
           this.syncFormWithTcc(tcc);
         },
         error: (error: unknown) => {

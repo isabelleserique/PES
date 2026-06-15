@@ -217,6 +217,19 @@ class TCCService:
             resulting_status=tcc.status.value,
             outside_deadline=acao_fora_do_prazo,
         )
+        audit_service.log_event(
+            session=session,
+            user_id=current_user.id,
+            action="ORIENTATION_DECISION",
+            entity="TCC",
+            description=f"{payload.acao} orientacao de {aluno.nome_completo}.",
+            data={
+                "tcc_id": tcc.id,
+                "aluno_id": aluno.id,
+                "status": tcc.status.value,
+                "fora_do_prazo": acao_fora_do_prazo,
+            },
+        )
         return OrientationDecisionResponse(
             tcc_id=tcc.id,
             aluno_id=aluno.id,
@@ -291,6 +304,18 @@ class TCCService:
             tcc_id=tcc.id,
             orientador_id=orientador.id,
             prazo_excedido=tcc.prazo_excedido,
+        )
+        audit_service.log_event(
+            session=session,
+            user_id=current_user.id,
+            action="TCC_SUBMISSION",
+            entity="TCC",
+            description="Registrou dados do TCC.",
+            data={
+                "tcc_id": tcc.id,
+                "orientador_id": orientador.id,
+                "prazo_excedido": tcc.prazo_excedido,
+            },
         )
         return self._build_tcc_response(
             tcc=tcc,
@@ -367,6 +392,18 @@ class TCCService:
             tcc_id=tcc.id,
             orientador_id=orientador.id,
             prazo_excedido=tcc.prazo_excedido,
+        )
+        audit_service.log_event(
+            session=session,
+            user_id=current_user.id,
+            action="TCC_UPDATE",
+            entity="TCC",
+            description="Atualizou dados do TCC.",
+            data={
+                "tcc_id": tcc.id,
+                "orientador_id": orientador.id,
+                "prazo_excedido": tcc.prazo_excedido,
+            },
         )
         return self._build_tcc_response(
             tcc=tcc,

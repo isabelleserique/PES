@@ -529,3 +529,163 @@ def test_historico_submissoes_coordenador_and_orientador_include_versions_and_tc
     body = response.json()
     assert len(body) == 3
     assert {"titulo_tcc", "aluno_nome", "matricula", "nota_automatica"}.issubset(body[0])
+
+
+def test_registrar_apresentacao_artigo_marks_existing_acceptance_and_logs(client, db_session) -> None:
+    coordenador = _seed_user(
+        db_session,
+        nome_completo="Coord Logs Artigo",
+        email="coord.logs.artigo@icomp.ufam.edu.br",
+        username="coord.logs.artigo",
+        perfil=Perfil.COORDENADOR,
+        status=StatusCadastro.ATIVO,
+        ativo=True,
+    )
+    aluno = _seed_user(
+        db_session,
+        nome_completo="Aluno Apresentacao",
+        email="aluno.apresentacao@icomp.ufam.edu.br",
+        username="aluno.apresentacao",
+        perfil=Perfil.ALUNO,
+        status=StatusCadastro.ATIVO,
+        ativo=True,
+    )
+    orientador = _seed_user(
+        db_session,
+        nome_completo="Prof. Apresentacao",
+        email="prof.apresentacao@icomp.ufam.edu.br",
+        username="prof.apresentacao",
+        perfil=Perfil.ORIENTADOR,
+        status=StatusCadastro.ATIVO,
+        ativo=True,
+    )
+    today = date.today()
+    periodo = _seed_periodo(
+        db_session,
+        nome="2027.1",
+        data_inicio=(today - timedelta(days=10)).isoformat(),
+        data_fim=(today + timedelta(days=120)).isoformat(),
+        ativo=True,
+    )
+    tcc = _seed_tcc(
+        db_session,
+        periodo_id=periodo.id,
+        aluno_id=aluno.id,
+        orientador_id=orientador.id,
+        titulo="Artigo com apresentacao",
+        tipo_tcc=TipoTCC.ARTIGO,
+        status=StatusTCC.EM_ANDAMENTO,
+    )
+    _seed_submissao(
+        db_session,
+        tcc_id=tcc.id,
+        aluno_id=aluno.id,
+        tipo_tcc=TipoTCC.ARTIGO,
+        etapa="Artigo Final",
+        versao=1,
+        nome_arquivo="artigo-final.pdf",
+        foi_aceito=True,
+        nome_comprovante="aceite.pdf",
+        nota_automatica=10,
+    )
+
+    response = client.post(
+        "/submissoes/apresentacao-artigo",
+        json={"data_apresentacao": today.isoformat()},
+        headers=_build_auth_headers(user_id=aluno.id, perfil=aluno.perfil),
+    )
+
+    assert response.status_code == 201
+    body = response.json()
+    assert body["tcc_id"] == tcc.id
+    assert body["artigo_ja_aceito"] is True
+
+    list_response = client.request(
+        "GET",
+        "/submissoes/apresentacao-artigo",
+        headers=_build_auth_headers(user_id=aluno.id, perfil=aluno.perfil),
+    )
+    assert list_response.status_code == 200
+    assert len(list_response.json()) == 1
+
+    logs_response = client.request(
+        "GET",
+        "/logs",
+        headers=_build_auth_headers(user_id=coordenador.id, perfil=coordenador.perfil),
+    )
+    assert logs_response.status_code == 200
+    assert any(log["acao"] == "REGISTRO_APRESENTACAO_ARTIGO" for log in logs_response.json())
+
+
+def test_list_submissoes_atrasadas_returns_deadline_delta(client, db_session) -> None:
+    coordenador = _seed_user(
+        db_session,
+        nome_completo="Coord Atrasos",
+        email="coord.atrasos@icomp.ufam.edu.br",
+        username="coord.atrasos",
+        perfil=Perfil.COORDENADOR,
+        status=StatusCadastro.ATIVO,
+        ativo=True,
+    )
+    aluno = _seed_user(
+        db_session,
+        nome_completo="Aluno Atrasado",
+        email="aluno.atrasado@icomp.ufam.edu.br",
+        username="aluno.atrasado",
+        perfil=Perfil.ALUNO,
+        status=StatusCadastro.ATIVO,
+        ativo=True,
+        matricula="2027000001",
+    )
+    orientador = _seed_user(
+        db_session,
+        nome_completo="Prof. Atrasos",
+        email="prof.atrasos@icomp.ufam.edu.br",
+        username="prof.atrasos",
+        perfil=Perfil.ORIENTADOR,
+        status=StatusCadastro.ATIVO,
+        ativo=True,
+    )
+    today = date.today()
+    periodo = _seed_periodo(
+        db_session,
+        nome="2027.2",
+        data_inicio=(today - timedelta(days=30)).isoformat(),
+        data_fim=(today + timedelta(days=90)).isoformat(),
+        ativo=True,
+        prazos=[("1ª Entrega", (today - timedelta(days=4)).isoformat(), TipoTCC.MONOGRAFIA)],
+    )
+    tcc = _seed_tcc(
+        db_session,
+        periodo_id=periodo.id,
+        aluno_id=aluno.id,
+        orientador_id=orientador.id,
+        titulo="Monografia atrasada",
+        tipo_tcc=TipoTCC.MONOGRAFIA,
+        status=StatusTCC.EM_ANDAMENTO,
+    )
+    submissao = _seed_submissao(
+        db_session,
+        tcc_id=tcc.id,
+        aluno_id=aluno.id,
+        tipo_tcc=TipoTCC.MONOGRAFIA,
+        etapa="1ª Entrega",
+        versao=1,
+        nome_arquivo="mono-atrasada.pdf",
+        fora_do_prazo=True,
+    )
+
+    response = client.request(
+        "GET",
+        "/submissoes/atrasadas",
+        headers=_build_auth_headers(user_id=coordenador.id, perfil=coordenador.perfil),
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert len(body) == 1
+    assert body[0]["id"] == submissao.id
+    assert body[0]["aluno_nome"] == aluno.nome_completo
+    assert body[0]["matricula"] == aluno.matricula
+    assert body[0]["data_limite"] == (today - timedelta(days=4)).isoformat()
+    assert body[0]["dias_atraso"] >= 4

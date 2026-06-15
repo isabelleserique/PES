@@ -218,10 +218,55 @@
   letter-spacing: 0.04em;
 }
 
+.al-sessions-list {
+  display: grid;
+  gap: 14px;
+}
+
+.al-session-card {
+  background: #f0f7ff;
+  border: 1px solid rgba(21, 101, 192, 0.14);
+  border-radius: 14px;
+  padding: 18px;
+}
+
+.al-session-header {
+  align-items: flex-start;
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.al-session-header h3 {
+  color: #0d2137;
+  font-size: 1.08rem;
+  margin: 0;
+}
+
+.al-session-author {
+  color: #718096;
+  font-size: 0.84rem;
+  font-weight: 700;
+}
+
+.al-session-body {
+  display: grid;
+  gap: 14px;
+}
+
+.al-session-body p {
+  color: #4a5568;
+  line-height: 1.6;
+  margin: 0;
+  white-space: pre-wrap;
+}
+
 @media (max-width: 768px) {
   .al-hero,
   .al-card-header,
-  .al-timeline-item {
+  .al-timeline-item,
+  .al-session-header {
     align-items: stretch;
     grid-template-columns: 1fr;
     flex-direction: column;

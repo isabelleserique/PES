@@ -25,8 +25,11 @@ async def create_periodo(
     periodo_service: PeriodoService = Depends(get_periodo_service),
     current_coordenador: UserRecord = Depends(get_current_active_coordenador),
 ) -> PeriodoResponse:
-    _ = current_coordenador
-    return periodo_service.create_periodo(session=session, payload=payload)
+    return periodo_service.create_periodo(
+        session=session,
+        payload=payload,
+        current_user=current_coordenador,
+    )
 
 
 @router.get(
@@ -102,4 +105,5 @@ async def update_periodo(
         session=session,
         periodo_id=periodo_id,
         payload=payload,
+        current_user=current_coordenador,
     )

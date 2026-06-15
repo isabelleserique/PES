@@ -42,6 +42,7 @@ class UserRecord(Base):
         server_default=func.now(),
         nullable=False,
     )
+    audit_logs: Mapped[list["AuditLogRecord"]] = relationship(back_populates="user")
 
 
 class PeriodoLetivoRecord(Base):
@@ -154,6 +155,14 @@ class TCCRecord(Base):
         back_populates="tcc",
         cascade="all, delete-orphan",
     )
+    orientacao_sessoes: Mapped[list["OrientacaoSessaoRecord"]] = relationship(
+        back_populates="tcc",
+        cascade="all, delete-orphan",
+    )
+    apresentacoes_artigo: Mapped[list["ApresentacaoArtigoRecord"]] = relationship(
+        back_populates="tcc",
+        cascade="all, delete-orphan",
+    )
 
 
 class SubmissaoEntregavelRecord(Base):
@@ -195,6 +204,65 @@ class SubmissaoEntregavelRecord(Base):
         nullable=False,
     )
     tcc: Mapped[TCCRecord] = relationship(back_populates="submissoes_entregaveis")
+
+
+class OrientacaoSessaoRecord(Base):
+    __tablename__ = "orientacao_sessoes"
+
+    id: Mapped[str] = mapped_column(String, primary_key=True)
+    tcc_id: Mapped[str] = mapped_column(
+        String,
+        ForeignKey("tccs.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    aluno_id: Mapped[str] = mapped_column(
+        String,
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    orientador_id: Mapped[str] = mapped_column(
+        String,
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    data_sessao: Mapped[date] = mapped_column(Date, nullable=False)
+    resumo: Mapped[str] = mapped_column(String, nullable=False)
+    proximos_passos: Mapped[str] = mapped_column(String, nullable=False)
+    criado_em: Mapped[datetime] = mapped_column(
+        DateTime(timezone=False),
+        server_default=func.now(),
+        nullable=False,
+    )
+    tcc: Mapped[TCCRecord] = relationship(back_populates="orientacao_sessoes")
+
+
+class ApresentacaoArtigoRecord(Base):
+    __tablename__ = "apresentacoes_artigo"
+
+    id: Mapped[str] = mapped_column(String, primary_key=True)
+    tcc_id: Mapped[str] = mapped_column(
+        String,
+        ForeignKey("tccs.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    aluno_id: Mapped[str] = mapped_column(
+        String,
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    data_apresentacao: Mapped[date] = mapped_column(Date, nullable=False)
+    artigo_ja_aceito: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    criado_em: Mapped[datetime] = mapped_column(
+        DateTime(timezone=False),
+        server_default=func.now(),
+        nullable=False,
+    )
+    tcc: Mapped[TCCRecord] = relationship(back_populates="apresentacoes_artigo")
 
 
 class TCCEditLogRecord(Base):
@@ -245,3 +313,27 @@ class PasswordResetTokenRecord(Base):
         server_default=func.now(),
         nullable=False,
     )
+
+
+class AuditLogRecord(Base):
+    __tablename__ = "audit_logs"
+
+    id: Mapped[str] = mapped_column(String, primary_key=True)
+    user_id: Mapped[Optional[str]] = mapped_column(
+        String,
+        ForeignKey("users.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+    acao: Mapped[str] = mapped_column(String, nullable=False, index=True)
+    entidade: Mapped[Optional[str]] = mapped_column(String, nullable=True, index=True)
+    descricao: Mapped[str] = mapped_column(String, nullable=False)
+    dados: Mapped[Optional[dict[str, Any]]] = mapped_column(JSON, nullable=True)
+    ip: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    criado_em: Mapped[datetime] = mapped_column(
+        DateTime(timezone=False),
+        server_default=func.now(),
+        nullable=False,
+        index=True,
+    )
+    user: Mapped[Optional[UserRecord]] = relationship(back_populates="audit_logs")

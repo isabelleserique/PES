@@ -7,10 +7,14 @@ from backend.app.db.models import UserRecord
 from backend.app.db.session import get_db_session
 from backend.app.models.user import Perfil
 from backend.app.schemas.submissao import (
+    ApresentacaoArtigoPayload,
+    ApresentacaoArtigoResponse,
+    SubmissaoAtrasadaResponse,
     SubmissaoEntregavelCreateResponse,
     SubmissaoEntregavelResponse,
     SubmissaoHistoricoResponse,
 )
+from backend.app.services.audit_service import AuditService, get_audit_service
 from backend.app.services.submissao_service import SubmissaoService, get_submissao_service
 
 router = APIRouter(prefix="/submissoes", tags=["submissoes"])
@@ -48,6 +52,40 @@ async def submeter_entregavel(
         arquivo=arquivo,
         foi_aceito=foi_aceito,
         comprovante=comprovante,
+    )
+
+
+@router.get(
+    "/apresentacao-artigo",
+    status_code=status.HTTP_200_OK,
+)
+async def listar_apresentacoes_artigo(
+    session: Session = Depends(get_db_session),
+    submissao_service: SubmissaoService = Depends(get_submissao_service),
+    current_aluno: UserRecord = Depends(require_perfis(Perfil.ALUNO)),
+) -> list[ApresentacaoArtigoResponse]:
+    return submissao_service.listar_apresentacoes_artigo(
+        session=session,
+        current_user=current_aluno,
+    )
+
+
+@router.post(
+    "/apresentacao-artigo",
+    status_code=status.HTTP_201_CREATED,
+)
+async def registrar_apresentacao_artigo(
+    payload: ApresentacaoArtigoPayload,
+    session: Session = Depends(get_db_session),
+    submissao_service: SubmissaoService = Depends(get_submissao_service),
+    audit_service: AuditService = Depends(get_audit_service),
+    current_aluno: UserRecord = Depends(require_perfis(Perfil.ALUNO)),
+) -> ApresentacaoArtigoResponse:
+    return submissao_service.registrar_apresentacao_artigo(
+        session=session,
+        current_user=current_aluno,
+        payload=payload,
+        audit_service=audit_service,
     )
 
 
@@ -112,6 +150,19 @@ async def listar_historico_submissoes(
         session=session,
         current_user=current_coordenador,
     )
+
+
+@router.get(
+    "/atrasadas",
+    status_code=status.HTTP_200_OK,
+)
+async def listar_submissoes_atrasadas(
+    session: Session = Depends(get_db_session),
+    submissao_service: SubmissaoService = Depends(get_submissao_service),
+    current_coordenador: UserRecord = Depends(require_perfis(Perfil.COORDENADOR)),
+) -> list[SubmissaoAtrasadaResponse]:
+    _ = current_coordenador
+    return submissao_service.listar_submissoes_atrasadas(session=session)
 
 
 @router.get(

@@ -13,6 +13,7 @@ from sqlalchemy.orm import Session, selectinload
 
 from backend.app.core.config import Settings, get_settings
 from backend.app.db.models import (
+    ApresentacaoArtigoRecord,
     PeriodoLetivoRecord,
     PrazoEtapaRecord,
     SubmissaoEntregavelRecord,
@@ -22,13 +23,18 @@ from backend.app.db.models import (
 from backend.app.models.periodo import TipoTCC
 from backend.app.models.user import Perfil
 from backend.app.schemas.submissao import (
+    ApresentacaoArtigoPayload,
+    ApresentacaoArtigoResponse,
+    SubmissaoAtrasadaResponse,
     SubmissaoEntregavelCreateResponse,
     SubmissaoEntregavelResponse,
     SubmissaoHistoricoResponse,
 )
+from backend.app.services.audit_service import AuditService
 
 NO_ACTIVE_PERIODO_FOUND_DETAIL = "Nenhum periodo letivo ativo encontrado."
 NO_ACTIVE_TCC_DETAIL = "Aluno nao possui TCC no periodo letivo ativo."
+ONLY_ARTIGO_PRESENTATION_DETAIL = "Registro de apresentacao disponivel apenas para TCC do tipo Artigo."
 SUBMISSAO_NOT_FOUND_DETAIL = "Submissao nao encontrada."
 SUBMISSAO_FILE_NOT_FOUND_DETAIL = "Arquivo da submissao nao encontrado."
 SUBMISSAO_FILE_FORBIDDEN_DETAIL = "Perfil sem permissao para acessar o arquivo desta submissao."
@@ -87,7 +93,14 @@ class SubmissaoService:
             .where(SubmissaoEntregavelRecord.tcc_id == tcc.id)
             .order_by(SubmissaoEntregavelRecord.criado_em.desc(), SubmissaoEntregavelRecord.versao.desc())
         ).all()
-        return [self._build_response(submissao) for submissao in submissoes]
+        ultimas_versoes = self._build_latest_version_map(submissoes)
+        return [
+            self._build_response(
+                submissao,
+                ultima_versao=submissao.versao == ultimas_versoes[(submissao.tcc_id, submissao.etapa)],
+            )
+            for submissao in submissoes
+        ]
 
     def listar_historico_coordenador(
         self,
@@ -141,6 +154,69 @@ class SubmissaoService:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=missing_detail)
 
         return SubmissionStoredFile(path=path, filename=filename, media_type=media_type)
+
+    def listar_apresentacoes_artigo(
+        self,
+        *,
+        session: Session,
+        current_user: UserRecord,
+    ) -> list[ApresentacaoArtigoResponse]:
+        tcc = self._get_active_tcc(session=session, current_user=current_user, raise_if_missing=False)
+        if tcc is None or tcc.tipo_tcc != TipoTCC.ARTIGO:
+            return []
+
+        apresentacoes = session.scalars(
+            select(ApresentacaoArtigoRecord)
+            .where(ApresentacaoArtigoRecord.tcc_id == tcc.id)
+            .order_by(ApresentacaoArtigoRecord.data_apresentacao.desc(), ApresentacaoArtigoRecord.criado_em.desc())
+        ).all()
+        return [self._build_apresentacao_response(apresentacao) for apresentacao in apresentacoes]
+
+    def registrar_apresentacao_artigo(
+        self,
+        *,
+        session: Session,
+        current_user: UserRecord,
+        payload: ApresentacaoArtigoPayload,
+        audit_service: AuditService,
+    ) -> ApresentacaoArtigoResponse:
+        tcc = self._get_active_tcc(session=session, current_user=current_user, raise_if_missing=True)
+        if tcc is None:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=NO_ACTIVE_TCC_DETAIL)
+        if tcc.tipo_tcc != TipoTCC.ARTIGO:
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=ONLY_ARTIGO_PRESENTATION_DETAIL)
+
+        artigo_ja_aceito = session.scalar(
+            select(SubmissaoEntregavelRecord.id).where(
+                SubmissaoEntregavelRecord.tcc_id == tcc.id,
+                SubmissaoEntregavelRecord.foi_aceito.is_(True),
+            )
+        ) is not None
+        apresentacao = ApresentacaoArtigoRecord(
+            id=str(uuid4()),
+            tcc_id=tcc.id,
+            aluno_id=current_user.id,
+            data_apresentacao=payload.data_apresentacao,
+            artigo_ja_aceito=artigo_ja_aceito,
+        )
+        session.add(apresentacao)
+        session.commit()
+        session.refresh(apresentacao)
+
+        audit_service.log_event(
+            session=session,
+            user_id=current_user.id,
+            action="REGISTRO_APRESENTACAO_ARTIGO",
+            entity="SUBMISSAO",
+            description="Registrou apresentacao de artigo.",
+            data={
+                "apresentacao_id": apresentacao.id,
+                "tcc_id": tcc.id,
+                "artigo_ja_aceito": artigo_ja_aceito,
+            },
+        )
+
+        return self._build_apresentacao_response(apresentacao)
 
     async def submeter_entregavel(
         self,
@@ -217,6 +293,21 @@ class SubmissaoService:
         session.add(submissao)
         session.commit()
         session.refresh(submissao)
+        AuditService().log_event(
+            session=session,
+            user_id=current_user.id,
+            action="UPLOAD_DOCUMENTO",
+            entity="SUBMISSAO",
+            description=f"Submeteu {submissao.etapa} do TCC.",
+            data={
+                "submissao_id": submissao.id,
+                "tcc_id": tcc.id,
+                "etapa": submissao.etapa,
+                "versao": submissao.versao,
+                "arquivo": submissao.nome_arquivo,
+                "fora_do_prazo": submissao.fora_do_prazo,
+            },
+        )
 
         return SubmissaoEntregavelCreateResponse(
             id=submissao.id,
@@ -340,6 +431,51 @@ class SubmissaoService:
         without_accents = "".join(char for char in normalized if not unicodedata.combining(char))
         return " ".join(without_accents.split())
 
+    def listar_submissoes_atrasadas(
+        self,
+        *,
+        session: Session,
+    ) -> list[SubmissaoAtrasadaResponse]:
+        rows = session.execute(
+            select(SubmissaoEntregavelRecord, TCCRecord, UserRecord)
+            .join(TCCRecord, TCCRecord.id == SubmissaoEntregavelRecord.tcc_id)
+            .join(UserRecord, UserRecord.id == TCCRecord.aluno_id)
+            .options(selectinload(SubmissaoEntregavelRecord.tcc).selectinload(TCCRecord.periodo).selectinload(PeriodoLetivoRecord.prazos))
+            .where(SubmissaoEntregavelRecord.fora_do_prazo.is_(True))
+            .order_by(SubmissaoEntregavelRecord.criado_em.desc())
+        ).all()
+
+        resultados: list[SubmissaoAtrasadaResponse] = []
+        for submissao, tcc, aluno in rows:
+            prazo = self._find_deadline(periodo=tcc.periodo, tipo_tcc=tcc.tipo_tcc, etapa=submissao.etapa)
+            if prazo is None:
+                continue
+
+            data_submissao = submissao.criado_em.date()
+            dias_atraso = max((data_submissao - prazo.data_limite).days, 0)
+            if dias_atraso <= 0:
+                continue
+
+            resultados.append(
+                SubmissaoAtrasadaResponse(
+                    id=submissao.id,
+                    aluno_id=aluno.id,
+                    aluno_nome=aluno.nome_completo,
+                    matricula=aluno.matricula,
+                    tcc_id=tcc.id,
+                    titulo_tcc=tcc.titulo,
+                    tipo_tcc=submissao.tipo_tcc.value,
+                    etapa=submissao.etapa,
+                    versao=submissao.versao,
+                    nome_arquivo=submissao.nome_arquivo,
+                    data_limite=prazo.data_limite,
+                    data_submissao=submissao.criado_em,
+                    dias_atraso=dias_atraso,
+                )
+            )
+
+        return resultados
+
     def _ensure_can_access_submissao_file(
         self,
         *,
@@ -379,12 +515,30 @@ class SubmissaoService:
             )
 
         rows = session.execute(statement).all()
+        ultimas_versoes = self._build_latest_version_map([submissao for submissao, _, _ in rows])
         return [
-            self._build_historico_response(submissao=submissao, tcc=tcc, aluno=aluno)
+            self._build_historico_response(
+                submissao=submissao,
+                tcc=tcc,
+                aluno=aluno,
+                ultima_versao=submissao.versao == ultimas_versoes[(submissao.tcc_id, submissao.etapa)],
+            )
             for submissao, tcc, aluno in rows
         ]
 
-    def _build_response(self, submissao: SubmissaoEntregavelRecord) -> SubmissaoEntregavelResponse:
+    def _build_latest_version_map(self, submissoes) -> dict[tuple[str, str], int]:
+        ultimas_versoes: dict[tuple[str, str], int] = {}
+        for submissao in submissoes:
+            chave = (submissao.tcc_id, submissao.etapa)
+            ultimas_versoes[chave] = max(ultimas_versoes.get(chave, 0), submissao.versao)
+        return ultimas_versoes
+
+    def _build_response(
+        self,
+        submissao: SubmissaoEntregavelRecord,
+        *,
+        ultima_versao: bool,
+    ) -> SubmissaoEntregavelResponse:
         return SubmissaoEntregavelResponse(
             id=submissao.id,
             tipo_tcc=submissao.tipo_tcc.value,
@@ -394,6 +548,7 @@ class SubmissaoService:
             data_submissao=submissao.criado_em,
             fora_do_prazo=submissao.fora_do_prazo,
             foi_aceito=submissao.foi_aceito,
+            ultima_versao=ultima_versao,
             nome_comprovante=submissao.nome_comprovante,
             nota_automatica=submissao.nota_automatica,
         )
@@ -404,6 +559,7 @@ class SubmissaoService:
         submissao: SubmissaoEntregavelRecord,
         tcc: TCCRecord,
         aluno: UserRecord,
+        ultima_versao: bool,
     ) -> SubmissaoHistoricoResponse:
         return SubmissaoHistoricoResponse(
             id=submissao.id,
@@ -419,8 +575,21 @@ class SubmissaoService:
             data_submissao=submissao.criado_em,
             fora_do_prazo=submissao.fora_do_prazo,
             foi_aceito=submissao.foi_aceito,
+            ultima_versao=ultima_versao,
             nome_comprovante=submissao.nome_comprovante,
             nota_automatica=submissao.nota_automatica,
+        )
+
+    def _build_apresentacao_response(
+        self,
+        apresentacao: ApresentacaoArtigoRecord,
+    ) -> ApresentacaoArtigoResponse:
+        return ApresentacaoArtigoResponse(
+            id=apresentacao.id,
+            tcc_id=apresentacao.tcc_id,
+            data_apresentacao=apresentacao.data_apresentacao,
+            artigo_ja_aceito=apresentacao.artigo_ja_aceito,
+            criado_em=apresentacao.criado_em,
         )
 
 
