@@ -105,6 +105,16 @@
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
 }
 
+.al-info-grid > div {
+  min-width: 0;
+}
+
+.al-info-grid strong {
+  display: block;
+  overflow-wrap: break-word;
+  word-break: break-all;
+}
+
 .al-field-label {
   color: #718096;
   margin-bottom: 6px;
