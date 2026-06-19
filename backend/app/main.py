@@ -10,25 +10,31 @@ from backend.app.api.router import api_router
 from backend.app.core.config import get_settings
 from backend.app.middleware.authentication import jwt_authentication_middleware
 from backend.app.services.backup_service import run_daily_backup_loop
+from backend.app.services.notificacao_service import run_deadline_notification_loop
 
 settings = get_settings()
 backup_task: asyncio.Task | None = None
+notification_task: asyncio.Task | None = None
 
 
 @asynccontextmanager
 async def lifespan(_: FastAPI) -> AsyncIterator[None]:
-    global backup_task
+    global backup_task, notification_task
     backup_task = asyncio.create_task(run_daily_backup_loop())
+    notification_task = asyncio.create_task(run_deadline_notification_loop())
     try:
         yield
     finally:
-        if backup_task is not None:
-            backup_task.cancel()
+        for task in (backup_task, notification_task):
+            if task is None:
+                continue
+            task.cancel()
             try:
-                await backup_task
+                await task
             except asyncio.CancelledError:
                 pass
-            backup_task = None
+        backup_task = None
+        notification_task = None
 
 
 app = FastAPI(

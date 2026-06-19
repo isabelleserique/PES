@@ -275,6 +275,11 @@ class TCCService:
             periodo_id=periodo.id,
             status=StatusTCC.AGUARDANDO_ACEITE,
             prazo_excedido=prazo_excedido,
+            resumo=payload.resumo,
+            area_tematica=payload.area_tematica,
+            curso=payload.curso or "Ciência da Computação",
+            data_defesa=payload.data_defesa,
+            banca=payload.banca or None,
         )
         session.add(tcc)
         session.add(
@@ -364,6 +369,11 @@ class TCCService:
         tcc.status = StatusTCC.AGUARDANDO_ACEITE
         tcc.prazo_excedido = self._is_submission_late(periodo=periodo, tipo_tcc=payload.tipo_tcc)
         tcc.observacao_orientador = None
+        tcc.resumo = payload.resumo
+        tcc.area_tematica = payload.area_tematica
+        tcc.curso = payload.curso or tcc.curso or "Ciência da Computação"
+        tcc.data_defesa = payload.data_defesa
+        tcc.banca = payload.banca or None
 
         session.add(
             self._build_edit_log(
@@ -578,6 +588,11 @@ class TCCService:
             "status": tcc.status.value,
             "prazo_excedido": tcc.prazo_excedido,
             "observacao_orientador": tcc.observacao_orientador,
+            "resumo": tcc.resumo,
+            "area_tematica": tcc.area_tematica,
+            "curso": tcc.curso,
+            "data_defesa": tcc.data_defesa.isoformat() if tcc.data_defesa else None,
+            "banca": tcc.banca or [],
         }
 
     def _build_tcc_response(
@@ -606,6 +621,11 @@ class TCCService:
             prazo_excedido=tcc.prazo_excedido,
             alerta_prazo=alerta,
             observacao_orientador=tcc.observacao_orientador,
+            resumo=tcc.resumo,
+            area_tematica=tcc.area_tematica,
+            curso=tcc.curso,
+            data_defesa=tcc.data_defesa,
+            banca=tcc.banca or [],
             criado_em=tcc.criado_em,
             atualizado_em=tcc.atualizado_em,
         )

@@ -135,6 +135,11 @@ class TCCRecord(Base):
     )
     prazo_excedido: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     observacao_orientador: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    resumo: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    area_tematica: Mapped[Optional[str]] = mapped_column(String, nullable=True, index=True)
+    curso: Mapped[str] = mapped_column(String, default="Ciência da Computação", nullable=False, index=True)
+    data_defesa: Mapped[Optional[date]] = mapped_column(Date, nullable=True, index=True)
+    banca: Mapped[Optional[list[str]]] = mapped_column(JSON, nullable=True)
     criado_em: Mapped[datetime] = mapped_column(
         DateTime(timezone=False),
         server_default=func.now(),
@@ -337,3 +342,38 @@ class AuditLogRecord(Base):
         index=True,
     )
     user: Mapped[Optional[UserRecord]] = relationship(back_populates="audit_logs")
+
+
+class NotificacaoPrazoRecord(Base):
+    __tablename__ = "notificacoes_prazos"
+    __table_args__ = (
+        UniqueConstraint("tcc_id", "prazo_id", "tipo_alerta", name="uq_notificacoes_prazos_tcc_prazo_tipo"),
+    )
+
+    id: Mapped[str] = mapped_column(String, primary_key=True)
+    tcc_id: Mapped[str] = mapped_column(
+        String,
+        ForeignKey("tccs.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    aluno_id: Mapped[str] = mapped_column(
+        String,
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    prazo_id: Mapped[str] = mapped_column(
+        String,
+        ForeignKey("prazos_etapas.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    tipo_alerta: Mapped[str] = mapped_column(String, nullable=False, index=True)
+    canal: Mapped[str] = mapped_column(String, default="EMAIL", nullable=False)
+    enviado_em: Mapped[datetime] = mapped_column(
+        DateTime(timezone=False),
+        server_default=func.now(),
+        nullable=False,
+        index=True,
+    )

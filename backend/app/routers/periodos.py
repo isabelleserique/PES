@@ -10,6 +10,8 @@ from backend.app.schemas.periodo import (
     PeriodoResponse,
     UpdatePeriodoRequest,
 )
+from backend.app.schemas.dashboard import PeriodoDashboardResponse
+from backend.app.services.periodo_dashboard_service import PeriodoDashboardService, get_periodo_dashboard_service
 from backend.app.services.periodo_service import PeriodoService, get_periodo_service
 
 router = APIRouter(tags=["periodos"])
@@ -73,6 +75,19 @@ async def get_active_periodo_cronograma(
         current_user=current_user,
         orientando_id=orientando_id,
     )
+
+
+@router.get(
+    "/periodos/ativo/dashboard",
+    status_code=status.HTTP_200_OK,
+)
+async def get_active_periodo_dashboard(
+    session: Session = Depends(get_db_session),
+    dashboard_service: PeriodoDashboardService = Depends(get_periodo_dashboard_service),
+    current_coordenador: UserRecord = Depends(get_current_active_coordenador),
+) -> PeriodoDashboardResponse:
+    _ = current_coordenador
+    return dashboard_service.get_dashboard(session=session)
 
 
 @router.get(

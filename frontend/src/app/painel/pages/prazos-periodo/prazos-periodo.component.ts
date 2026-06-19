@@ -90,8 +90,19 @@ export class PrazosPeriodoComponent implements OnInit {
 
   getStatusClass(prazo: PrazoDisplay): string {
     if (prazo.cor === 'vermelho') return 'status-atrasado';
-    if (prazo.cor === 'amarelo' || prazo.cor === 'laranja') return 'status-urgente';
+    if (prazo.cor === 'laranja') return 'status-hoje';
+    if (prazo.cor === 'amarelo') return 'status-proximo';
     return 'status-ok';
+  }
+
+  getStatusAriaLabel(prazo: PrazoDisplay): string {
+    const labels: Record<string, string> = {
+      verde: 'Prazo dentro do esperado',
+      amarelo: 'Prazo se aproximando',
+      laranja: 'Prazo vence hoje',
+      vermelho: 'Prazo vencido',
+    };
+    return labels[prazo.cor] ?? prazo.status;
   }
 
   getTipoEntrega(nomeEtapa: string): string {

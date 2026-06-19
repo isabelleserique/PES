@@ -195,7 +195,8 @@
 }
 
 .tl-dot.status-ok      { background: #27ae60; box-shadow: 0 0 0 2px #27ae60; }
-.tl-dot.status-urgente { background: #ed8936; box-shadow: 0 0 0 2px #ed8936; }
+.tl-dot.status-proximo { background: #f9a825; box-shadow: 0 0 0 2px #f9a825; }
+.tl-dot.status-hoje { background: #ed8936; box-shadow: 0 0 0 2px #ed8936; }
 .tl-dot.status-atrasado { background: #e53e3e; box-shadow: 0 0 0 2px #e53e3e; }
 
 /* Box da etapa */
@@ -215,7 +216,8 @@
 }
 
 .tl-box.status-ok       { border-left-color: #27ae60; }
-.tl-box.status-urgente  { border-left-color: #ed8936; background: #fff8f0; }
+.tl-box.status-proximo  { border-left-color: #f9a825; background: #fffbe6; }
+.tl-box.status-hoje  { border-left-color: #ed8936; background: #fff8f0; }
 .tl-box.status-atrasado { border-left-color: #e53e3e; background: #fff5f5; }
 
 .tl-num {
@@ -230,8 +232,17 @@
 }
 
 .tl-dias.status-ok       { color: #27ae60; }
-.tl-dias.status-urgente  { color: #c06030; }
+.tl-dias.status-proximo  { color: #9a6a00; }
+.tl-dias.status-hoje  { color: #c06030; }
 .tl-dias.status-atrasado { color: #e53e3e; }
+
+.tl-status-label {
+  color: #4a5568;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
 
 /* ── Entregas Pendentes ── */
 .pp-card--pendentes {
@@ -280,7 +291,11 @@
   color: #e53e3e;
 }
 
-.pp-pendentes-table tbody tr.status-urgente td {
+.pp-pendentes-table tbody tr.status-proximo td {
+  color: #9a6a00;
+}
+
+.pp-pendentes-table tbody tr.status-hoje td {
   color: #c06030;
 }
 

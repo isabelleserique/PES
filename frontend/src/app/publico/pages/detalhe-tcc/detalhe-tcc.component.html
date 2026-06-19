@@ -1,0 +1,125 @@
+<div class="public-shell">
+  <nav class="public-navbar" aria-label="Navegação pública">
+    <a class="public-brand" routerLink="/consultor-externo" aria-label="TCComp - página pública">
+      <span class="public-logo">IC</span>
+      <span>
+        <strong>TCComp</strong>
+        <small>Biblioteca pública de TCC</small>
+      </span>
+    </a>
+    <div class="public-nav-links">
+      <a routerLink="/consultor-externo">Consultor externo</a>
+      <a routerLink="/auth/login">Login</a>
+      <a routerLink="/auth/cadastro">Cadastro</a>
+    </div>
+  </nav>
+
+  <main class="public-page">
+    <p class="status-message status-message--error" role="alert" *ngIf="errorMessage">{{ errorMessage }}</p>
+
+    <section class="dt-card" *ngIf="isLoading">
+      <p class="dt-empty">Carregando detalhes do trabalho...</p>
+    </section>
+
+    <ng-container *ngIf="!isLoading && !errorMessage && tcc as trabalho">
+      <header class="dt-hero">
+        <div>
+          <span class="dt-eyebrow">US035 · Consultor externo</span>
+          <h1>{{ trabalho.titulo }}</h1>
+          <p>{{ trabalho.aluno_nome }} · {{ trabalho.curso }}</p>
+        </div>
+        <span class="dt-tipo-badge">{{ trabalho.tipo_tcc }}</span>
+      </header>
+
+      <div class="dt-grid">
+        <section class="dt-card">
+          <div class="dt-card-heading">
+            <span class="dt-card-label">Informações</span>
+            <h2>Detalhes do trabalho</h2>
+          </div>
+
+          <div class="dt-info-grid">
+            <div>
+              <span class="dt-field-label">Área temática</span>
+              <strong>{{ trabalho.area_tematica || 'Não informada' }}</strong>
+            </div>
+            <div>
+              <span class="dt-field-label">Orientador</span>
+              <strong>{{ trabalho.orientador_nome }}</strong>
+            </div>
+            <div>
+              <span class="dt-field-label">Data de defesa</span>
+              <strong>{{ trabalho.data_defesa ? (trabalho.data_defesa | date:'dd/MM/yyyy') : 'Não informada' }}</strong>
+            </div>
+          </div>
+
+          <section class="dt-section" *ngIf="trabalho.banca.length > 0">
+            <span class="dt-field-label">Composição da banca</span>
+            <ul class="dt-banca-list">
+              <li *ngFor="let membro of trabalho.banca">{{ membro }}</li>
+            </ul>
+          </section>
+
+          <section class="dt-section" *ngIf="trabalho.resumo">
+            <span class="dt-field-label">Resumo</span>
+            <p class="dt-resumo">{{ trabalho.resumo }}</p>
+          </section>
+        </section>
+
+        <aside class="dt-card dt-docs-card" aria-labelledby="documentos-title">
+          <div class="dt-card-heading">
+            <span class="dt-card-label">Documentos</span>
+            <h2 id="documentos-title">Preview e download</h2>
+          </div>
+
+          <div class="dt-docs-list" *ngIf="trabalho.documentos.length > 0; else emptyDocs">
+            <article class="dt-doc-item" *ngFor="let doc of trabalho.documentos">
+              <div class="dt-doc-info">
+                <span class="dt-doc-tipo">{{ doc.tipo }}</span>
+                <span class="dt-doc-nome">{{ doc.nome_arquivo }}</span>
+              </div>
+              <div class="dt-doc-actions">
+                <button
+                  *ngIf="doc.url_preview"
+                  mat-stroked-button
+                  type="button"
+                  class="dt-btn-preview"
+                  (click)="abrirPreview(doc.url_preview)">
+                  Visualizar
+                </button>
+                <a
+                  mat-raised-button
+                  class="dt-btn-download"
+                  [href]="doc.url_download"
+                  target="_blank"
+                  rel="noopener noreferrer">
+                  Baixar
+                </a>
+              </div>
+            </article>
+          </div>
+
+          <ng-template #emptyDocs>
+            <p class="dt-empty">Nenhum documento disponível para este trabalho.</p>
+          </ng-template>
+        </aside>
+      </div>
+    </ng-container>
+  </main>
+
+  <div
+    class="dt-preview-overlay"
+    role="dialog"
+    aria-modal="true"
+    aria-label="Visualização do documento"
+    *ngIf="safePreviewUrl"
+    (click)="fecharPreview()">
+    <div class="dt-preview-modal" (click)="$event.stopPropagation()">
+      <div class="dt-preview-header">
+        <span>Visualização do documento</span>
+        <button mat-stroked-button type="button" class="dt-preview-close" (click)="fecharPreview()">Fechar</button>
+      </div>
+      <iframe class="dt-preview-frame" [src]="safePreviewUrl" title="Preview do documento"></iframe>
+    </div>
+  </div>
+</div>

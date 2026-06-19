@@ -98,6 +98,11 @@ export interface TccPayload {
   tipo_tcc: TipoTccAluno;
   orientador_id: string;
   coorientador_id?: string;
+  resumo?: string;
+  area_tematica?: string;
+  curso?: string;
+  data_defesa?: string;
+  banca?: string[];
 }
 
 export interface TccResponse {
@@ -114,6 +119,11 @@ export interface TccResponse {
   prazo_excedido: boolean;
   alerta_prazo: string | null;
   observacao_orientador: string | null;
+  resumo: string | null;
+  area_tematica: string | null;
+  curso: string;
+  data_defesa: string | null;
+  banca: string[];
   criado_em: string;
   atualizado_em: string;
 }
@@ -174,6 +184,47 @@ export interface SessaoOrientacao {
   resumo: string;
   proximos_passos: string;
   criado_em: string;
+}
+
+export interface VisaoGeralTipoTcc {
+  monografia: number;
+  artigo: number;
+  relatorio_estagio: number;
+  sem_tcc: number;
+}
+
+export interface VisaoGeralDepositoBiblioteca {
+  depositados: number;
+  pendentes: number;
+  status: string;
+}
+
+export interface VisaoGeralAlunosResumo {
+  total: number;
+  por_tipo: VisaoGeralTipoTcc;
+  sem_orientador_aceito: number;
+  com_prazo_vencido_sem_entrega: number;
+  deposito_biblioteca: VisaoGeralDepositoBiblioteca;
+}
+
+export interface VisaoGeralAlunoDetalhe {
+  aluno_id: string;
+  nome: string;
+  matricula: string | null;
+  titulo_tcc: string | null;
+  tipo_tcc: string | null;
+  status_tcc: string;
+  orientador_nome: string | null;
+  sem_orientador_aceito: boolean;
+  prazos_vencidos_sem_entrega: number;
+  entregas_pendentes: number;
+  deposito_biblioteca: string;
+}
+
+export interface VisaoGeralPeriodo {
+  periodo: PeriodoResumo;
+  alunos: VisaoGeralAlunosResumo;
+  alunos_detalhados: VisaoGeralAlunoDetalhe[];
 }
 
 @Injectable({ providedIn: 'root' })
@@ -242,5 +293,9 @@ export class PainelService {
 
   listarMinhasSessoes(): Observable<SessaoOrientacao[]> {
     return this.http.get<SessaoOrientacao[]>(`${this.api}/tcc/me/sessoes`);
+  }
+
+  getVisaoGeralPeriodo(): Observable<VisaoGeralPeriodo> {
+    return this.http.get<VisaoGeralPeriodo>(`${this.api}/periodos/ativo/dashboard`);
   }
 }

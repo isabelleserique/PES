@@ -1,0 +1,99 @@
+<div class="public-shell">
+  <nav class="public-navbar" aria-label="Navegação pública">
+    <a class="public-brand" routerLink="/consultor-externo" aria-label="TCComp - página pública">
+      <span class="public-logo">IC</span>
+      <span>
+        <strong>TCComp</strong>
+        <small>Biblioteca pública de TCC</small>
+      </span>
+    </a>
+    <div class="public-nav-links">
+      <a routerLink="/consultor-externo" aria-current="page">Consultor externo</a>
+      <a routerLink="/auth/login">Login</a>
+      <a routerLink="/auth/cadastro">Cadastro</a>
+    </div>
+  </nav>
+
+  <main class="public-page">
+    <header class="bt-hero">
+      <span class="bt-eyebrow">Consultor externo</span>
+      <h1>Encontre trabalhos de conclusão do IComp</h1>
+      <p>
+        Pesquise por área temática, curso, aluno ou título e acesse os documentos disponíveis para visualização e download.
+      </p>
+    </header>
+
+    <section class="bt-card bt-search-card" aria-labelledby="busca-tcc-title">
+      <div class="bt-card-heading">
+        <span class="bt-card-label">US034</span>
+        <h2 id="busca-tcc-title">Busca pública de TCC</h2>
+      </div>
+
+      <form [formGroup]="form" (ngSubmit)="buscar()" aria-describedby="busca-ajuda">
+        <p id="busca-ajuda" class="bt-help">Preencha um ou mais filtros. Sem filtros, a busca lista os trabalhos disponíveis.</p>
+        <div class="bt-form-grid">
+          <mat-form-field appearance="outline">
+            <mat-label>Título do trabalho</mat-label>
+            <input matInput formControlName="titulo" autocomplete="off">
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Nome do aluno</mat-label>
+            <input matInput formControlName="aluno" autocomplete="off">
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Área temática</mat-label>
+            <input matInput formControlName="area_tematica" autocomplete="off">
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Curso</mat-label>
+            <input matInput formControlName="curso" autocomplete="off">
+          </mat-form-field>
+        </div>
+
+        <div class="bt-form-actions">
+          <button mat-raised-button type="submit" class="bt-btn-primary" [disabled]="isLoading">
+            {{ isLoading ? 'Buscando...' : 'Buscar trabalhos' }}
+          </button>
+        </div>
+      </form>
+    </section>
+
+    <p class="status-message status-message--error" role="alert" *ngIf="errorMessage">{{ errorMessage }}</p>
+
+    <section class="bt-results" aria-live="polite" *ngIf="buscaRealizada">
+      <div class="bt-results-header">
+        <span class="bt-card-label">Resultados</span>
+        <h2>{{ resultados.length }} trabalho(s) encontrado(s)</h2>
+      </div>
+
+      <div class="bt-results-grid" *ngIf="resultados.length > 0; else emptyResults">
+        <article class="bt-result-card" *ngFor="let tcc of resultados">
+          <div class="bt-result-header">
+            <span class="bt-tipo-badge">{{ tcc.tipo_tcc }}</span>
+            <span class="bt-defesa-date" *ngIf="tcc.data_defesa">{{ tcc.data_defesa | date:'dd/MM/yyyy' }}</span>
+          </div>
+          <h3>{{ tcc.titulo }}</h3>
+          <p class="bt-result-aluno">{{ tcc.aluno_nome }}</p>
+          <div class="bt-result-meta">
+            <span *ngIf="tcc.area_tematica">{{ tcc.area_tematica }}</span>
+            <span>{{ tcc.curso }}</span>
+          </div>
+          <p class="bt-orientador">Orientador: {{ tcc.orientador_nome }}</p>
+          <p class="bt-banca" *ngIf="tcc.banca.length">Banca: {{ tcc.banca.join(', ') }}</p>
+          <button mat-stroked-button type="button" class="bt-card-action" (click)="verDetalhe(tcc.id)">
+            Ver documentos
+          </button>
+        </article>
+      </div>
+
+      <ng-template #emptyResults>
+        <section class="bt-card">
+          <p class="bt-empty">Nenhum trabalho encontrado para os filtros informados.</p>
+        </section>
+      </ng-template>
+    </section>
+  </main>
+</div>
