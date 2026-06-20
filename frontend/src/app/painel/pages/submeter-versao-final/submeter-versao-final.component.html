@@ -1,0 +1,129 @@
+<div class="app-shell">
+
+  <!-- Navbar -->
+  <nav class="app-navbar">
+    <div class="navbar-brand">
+      <div class="logo-badge">IC</div>
+      <span class="logo-name">IComp</span>
+    </div>
+    <div class="navbar-sep"></div>
+    <span class="navbar-app-name">TCComp</span>
+    <span class="vf-navbar-spacer"></span>
+    <a mat-stroked-button class="vf-nav-btn" routerLink="/painel/aluno">Home</a>
+    <button mat-stroked-button type="button" class="vf-nav-btn" (click)="voltar()">Voltar</button>
+  </nav>
+
+  <main class="app-page-content">
+
+    <!-- Tela de sucesso -->
+    <ng-container *ngIf="isSubmitted; else formView">
+      <div class="vf-success-card">
+        <mat-icon class="vf-success-icon">check_circle</mat-icon>
+        <h2>Versão final submetida com sucesso!</h2>
+        <p>
+          Sua versão final e os documentos obrigatórios foram enviados. O processo de depósito na
+          biblioteca foi iniciado e está <strong>Em revisão</strong>.
+        </p>
+        <button mat-raised-button class="vf-btn-primary" (click)="irParaStatus()">
+          Acompanhar status do depósito
+        </button>
+      </div>
+    </ng-container>
+
+    <ng-template #formView>
+
+      <h1 class="vf-page-title">Submeter Versão Final do Trabalho</h1>
+      <p class="vf-page-subtitle">
+        Envie a versão final do trabalho e os documentos obrigatórios para iniciar o depósito na
+        biblioteca. Formatos aceitos: <strong>PDF</strong> ou <strong>DOCX</strong> (máx. {{ maxFileSizeMb }} MB por arquivo).
+      </p>
+
+      <p class="vf-tcc-info" *ngIf="meuTcc">
+        <mat-icon>menu_book</mat-icon> {{ meuTcc.titulo }}
+      </p>
+
+      <p class="status-message status-message--error" *ngIf="fileSizeError">{{ fileSizeError }}</p>
+      <p class="status-message status-message--error" *ngIf="errorMessage">{{ errorMessage }}</p>
+
+      <div class="vf-loading" *ngIf="isLoading">
+        <mat-icon>hourglass_empty</mat-icon><span>Carregando...</span>
+      </div>
+
+      <ng-container *ngIf="!isLoading">
+
+        <!-- ── Versão final (US026 / US051) ── -->
+        <div class="vf-card">
+          <div class="vf-section-header">VERSÃO FINAL DO TRABALHO</div>
+
+          <div class="vf-upload-area" *ngIf="!versaoFinalFile" (click)="versaoInput.click()">
+            <mat-icon>upload_file</mat-icon>
+            <span>Clique para selecionar a versão final (PDF ou DOCX)</span>
+          </div>
+
+          <div class="vf-file-selected" *ngIf="versaoFinalFile">
+            <mat-icon>description</mat-icon>
+            <div class="vf-file-info">
+              <span class="vf-file-name">{{ versaoFinalFile.name }}</span>
+              <span class="vf-file-size">{{ formatarTamanho(versaoFinalFile.size) }}</span>
+            </div>
+            <button mat-icon-button type="button" (click)="removerVersaoFinal()" title="Remover">
+              <mat-icon>close</mat-icon>
+            </button>
+          </div>
+
+          <input #versaoInput type="file" [accept]="formatosAceitos" hidden (change)="onVersaoFinalChange($event)" />
+        </div>
+
+        <!-- ── Documentos obrigatórios (US027) ── -->
+        <div class="vf-card">
+          <div class="vf-section-header">DOCUMENTOS OBRIGATÓRIOS</div>
+
+          <div class="vf-docs">
+            <div class="vf-doc" *ngFor="let doc of documentos" [class.vf-doc--ok]="doc.file">
+              <div class="vf-doc__info">
+                <mat-icon class="vf-doc__icon">{{ doc.file ? 'task_alt' : 'radio_button_unchecked' }}</mat-icon>
+                <div>
+                  <span class="vf-doc__label">{{ doc.label }} <span class="vf-required">*</span></span>
+                  <span class="vf-doc__desc">{{ doc.descricao }}</span>
+                </div>
+              </div>
+
+              <div class="vf-doc__action">
+                <span class="vf-doc__filename" *ngIf="doc.file" [title]="doc.file.name">{{ doc.file.name }}</span>
+                <button mat-stroked-button type="button" *ngIf="!doc.file" (click)="docInput.click()">
+                  Anexar
+                </button>
+                <button mat-icon-button type="button" *ngIf="doc.file" (click)="removerDocumento(doc)" title="Remover">
+                  <mat-icon>close</mat-icon>
+                </button>
+                <input #docInput type="file" [accept]="formatosAceitos" hidden (change)="onDocumentoChange($event, doc)" />
+              </div>
+            </div>
+          </div>
+
+          <p class="vf-docs-hint" *ngIf="documentosPendentes.length > 0">
+            <mat-icon>info</mat-icon>
+            Anexe todos os documentos obrigatórios para habilitar o envio.
+          </p>
+        </div>
+
+        <!-- ── Ações ── -->
+        <div class="vf-actions">
+          <button mat-stroked-button type="button" (click)="voltar()">Cancelar</button>
+          <button
+            mat-raised-button
+            type="button"
+            class="vf-btn-submeter"
+            [disabled]="!podeSubmeter || isSubmitting"
+            (click)="submeter()">
+            <mat-icon *ngIf="!isSubmitting">cloud_upload</mat-icon>
+            {{ isSubmitting ? 'Enviando...' : 'Submeter para depósito' }}
+          </button>
+        </div>
+
+      </ng-container>
+
+    </ng-template>
+
+  </main>
+</div>

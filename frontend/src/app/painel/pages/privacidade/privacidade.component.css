@@ -1,0 +1,143 @@
+.pv-navbar-spacer {
+  flex: 1;
+}
+
+.pv-nav-btn {
+  border-color: rgba(255, 255, 255, 0.32) !important;
+  color: #fff !important;
+}
+
+/* ── Título ── */
+.pv-page-title {
+  color: #0d2137;
+  font-size: 1.55rem;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+.pv-page-subtitle {
+  color: #4a5568;
+  font-size: 0.92rem;
+  margin-bottom: 22px;
+  max-width: 720px;
+}
+
+.pv-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 40px;
+  color: #a0aec0;
+}
+
+/* ── Aviso LGPD ── */
+.pv-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  background: #eef5ff;
+  border: 1px solid rgba(21, 101, 192, 0.2);
+  border-radius: 12px;
+  padding: 18px 20px;
+  margin-bottom: 20px;
+  color: #14365e;
+}
+
+.pv-notice mat-icon {
+  color: #1565c0;
+  flex-shrink: 0;
+}
+
+.pv-notice p {
+  margin-top: 4px;
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+
+/* ── Card ── */
+.pv-card {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 20px;
+}
+
+.pv-section-header {
+  background: #1565c0;
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.82rem;
+  letter-spacing: 0.08em;
+  padding: 10px 16px;
+  border-radius: 6px;
+  margin-bottom: 16px;
+}
+
+/* ── Linha de toggle ── */
+.pv-toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 16px 0;
+  border-bottom: 1px solid #f4f7fb;
+}
+
+.pv-toggle-row:last-child {
+  border-bottom: none;
+}
+
+.pv-toggle-info {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.pv-toggle-label {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #0d2137;
+}
+
+.pv-toggle-desc {
+  font-size: 0.82rem;
+  color: #718096;
+  line-height: 1.4;
+  max-width: 540px;
+}
+
+.pv-atualizado {
+  margin-top: 14px;
+  font-size: 0.8rem;
+  color: #a0aec0;
+}
+
+/* ── Ações ── */
+.pv-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.pv-btn-salvar {
+  background: #0d2137 !important;
+  color: #fff !important;
+  min-width: 190px;
+  font-weight: 600 !important;
+}
+
+/* ── Responsivo (US045) ── */
+@media (max-width: 768px) {
+  .pv-card {
+    padding: 20px 16px;
+  }
+
+  .pv-actions {
+    justify-content: stretch;
+  }
+
+  .pv-btn-salvar {
+    width: 100%;
+  }
+}

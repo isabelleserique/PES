@@ -19,6 +19,11 @@ import { RegistrarApresentacaoComponent } from './pages/registrar-apresentacao/r
 import { LogsSistemaComponent } from './pages/logs-sistema/logs-sistema.component';
 import { SubmissoesAtrasadasComponent } from './pages/submissoes-atrasadas/submissoes-atrasadas.component';
 import { VisaoGeralComponent } from './pages/visao-geral/visao-geral.component';
+import { RegistrarBancaComponent } from './pages/registrar-banca/registrar-banca.component';
+import { SubmeterVersaoFinalComponent } from './pages/submeter-versao-final/submeter-versao-final.component';
+import { StatusDepositoComponent } from './pages/status-deposito/status-deposito.component';
+import { NotificacoesComponent } from './pages/notificacoes/notificacoes.component';
+import { PrivacidadeComponent } from './pages/privacidade/privacidade.component';
 
 const routes: Routes = [
   {
@@ -127,6 +132,33 @@ const routes: Routes = [
     component: PainelOrientadorComponent,
     canActivate: [AuthGuard, ProfileGuard],
     data: { perfil: 'ORIENTADOR' },
+  },
+  {
+    path: 'registrar-banca',
+    component: RegistrarBancaComponent,
+    canActivate: [AuthGuard, ProfileGuard],
+    data: { perfil: 'ORIENTADOR' },
+  },
+  {
+    path: 'submeter-versao-final',
+    component: SubmeterVersaoFinalComponent,
+    canActivate: [AuthGuard, ProfileGuard],
+    data: { perfil: 'ALUNO' },
+  },
+  {
+    path: 'status-deposito',
+    component: StatusDepositoComponent,
+    canActivate: [AuthGuard],
+  },
+  {
+    path: 'notificacoes',
+    component: NotificacoesComponent,
+    canActivate: [AuthGuard],
+  },
+  {
+    path: 'privacidade',
+    component: PrivacidadeComponent,
+    canActivate: [AuthGuard],
   },
   {
     path: '**',

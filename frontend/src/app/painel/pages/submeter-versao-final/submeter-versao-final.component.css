@@ -1,0 +1,308 @@
+.vf-navbar-spacer {
+  flex: 1;
+}
+
+.vf-nav-btn {
+  border-color: rgba(255, 255, 255, 0.32) !important;
+  color: #fff !important;
+}
+
+/* ── Título ── */
+.vf-page-title {
+  color: #0d2137;
+  font-size: 1.55rem;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+.vf-page-subtitle {
+  color: #4a5568;
+  font-size: 0.92rem;
+  line-height: 1.5;
+  max-width: 760px;
+  margin-bottom: 16px;
+}
+
+.vf-tcc-info {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #eef5ec;
+  border: 1px solid rgba(13, 148, 136, 0.2);
+  color: #0d4d44;
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin-bottom: 20px;
+}
+
+.vf-tcc-info mat-icon {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+}
+
+.vf-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 40px;
+  color: #a0aec0;
+}
+
+/* ── Card ── */
+.vf-card {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 20px;
+}
+
+.vf-section-header {
+  background: #0d9488;
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.82rem;
+  letter-spacing: 0.08em;
+  padding: 10px 16px;
+  border-radius: 6px;
+  margin-bottom: 20px;
+}
+
+/* ── Upload da versão final ── */
+.vf-upload-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 2px dashed #cbd5e0;
+  border-radius: 10px;
+  padding: 28px 20px;
+  cursor: pointer;
+  color: #718096;
+  font-size: 0.88rem;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.vf-upload-area:hover {
+  border-color: #0d9488;
+  background: #f0fdfa;
+  color: #0d9488;
+}
+
+.vf-upload-area mat-icon {
+  font-size: 32px;
+  width: 32px;
+  height: 32px;
+}
+
+.vf-file-selected {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #f0fdfa;
+  border: 1px solid rgba(13, 148, 136, 0.25);
+  border-radius: 8px;
+  padding: 12px 14px;
+}
+
+.vf-file-selected mat-icon {
+  color: #0d9488;
+  flex-shrink: 0;
+}
+
+.vf-file-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.vf-file-name {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #0d2137;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.vf-file-size {
+  font-size: 0.78rem;
+  color: #718096;
+}
+
+/* ── Documentos obrigatórios ── */
+.vf-docs {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.vf-doc {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 14px 16px;
+}
+
+.vf-doc--ok {
+  border-color: rgba(13, 148, 136, 0.35);
+  background: #f0fdfa;
+}
+
+.vf-doc__info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.vf-doc__icon {
+  color: #a0aec0;
+  flex-shrink: 0;
+}
+
+.vf-doc--ok .vf-doc__icon {
+  color: #0d9488;
+}
+
+.vf-doc__label {
+  display: block;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #0d2137;
+}
+
+.vf-doc__desc {
+  display: block;
+  font-size: 0.78rem;
+  color: #718096;
+}
+
+.vf-required {
+  color: #e53e3e;
+}
+
+.vf-doc__action {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.vf-doc__filename {
+  font-size: 0.8rem;
+  color: #0d4d44;
+  max-width: 180px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.vf-docs-hint {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 16px;
+  font-size: 0.82rem;
+  color: #92400e;
+}
+
+.vf-docs-hint mat-icon {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+}
+
+/* ── Ações ── */
+.vf-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.vf-btn-submeter {
+  background: #0d9488 !important;
+  color: #fff !important;
+  min-width: 200px;
+  font-weight: 600 !important;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* ── Sucesso ── */
+.vf-success-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid rgba(13, 148, 136, 0.2);
+  border-radius: 18px;
+  box-shadow: 0 8px 40px rgba(13, 33, 55, 0.08);
+  padding: 56px 40px;
+  max-width: 560px;
+  margin: 40px auto;
+  text-align: center;
+}
+
+.vf-success-icon {
+  font-size: 56px !important;
+  width: 56px !important;
+  height: 56px !important;
+  color: #0d9488;
+}
+
+.vf-success-card h2 {
+  color: #0d2137;
+  font-size: 1.4rem;
+}
+
+.vf-success-card p {
+  color: #4a5568;
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+
+.vf-btn-primary {
+  background: #0d2137 !important;
+  color: #fff !important;
+}
+
+/* ── Responsivo (US045) ── */
+@media (max-width: 768px) {
+  .vf-card {
+    padding: 20px 16px;
+  }
+
+  .vf-doc {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .vf-doc__action {
+    justify-content: space-between;
+  }
+
+  .vf-doc__filename {
+    max-width: none;
+  }
+
+  .vf-actions {
+    flex-direction: column-reverse;
+  }
+
+  .vf-actions button {
+    width: 100%;
+  }
+}

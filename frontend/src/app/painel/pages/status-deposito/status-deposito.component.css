@@ -1,0 +1,278 @@
+.sd-navbar-spacer {
+  flex: 1;
+}
+
+.sd-nav-btn {
+  border-color: rgba(255, 255, 255, 0.32) !important;
+  color: #fff !important;
+}
+
+/* ── Título ── */
+.sd-page-title {
+  color: #0d2137;
+  font-size: 1.55rem;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+.sd-page-subtitle {
+  color: #4a5568;
+  font-size: 0.92rem;
+  margin-bottom: 22px;
+}
+
+.sd-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 40px;
+  color: #a0aec0;
+}
+
+/* ── Card ── */
+.sd-card {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 20px;
+}
+
+.sd-card--head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.sd-label {
+  display: block;
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #718096;
+  margin-bottom: 4px;
+}
+
+.sd-titulo {
+  color: #0d2137;
+  font-size: 1.2rem;
+  margin-bottom: 4px;
+}
+
+.sd-aluno {
+  color: #4a5568;
+  font-size: 0.9rem;
+}
+
+/* ── Badge de status ── */
+.sd-badge {
+  flex-shrink: 0;
+  border-radius: 999px;
+  padding: 8px 16px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.sd-badge--aguardando_envio {
+  background: #eef2f7;
+  color: #475569;
+}
+
+.sd-badge--em_revisao {
+  background: #e3f2fd;
+  color: #0d47a1;
+}
+
+.sd-badge--devolvido_correcao {
+  background: #fff3e0;
+  color: #bf360c;
+}
+
+.sd-badge--aprovado {
+  background: #e8f5e9;
+  color: #1b5e20;
+}
+
+.sd-badge--depositado {
+  background: #ede7f6;
+  color: #4527a0;
+}
+
+/* ── Alerta devolução ── */
+.sd-alert {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  background: #fff3e0;
+  border: 1px solid #ef6c00;
+  border-radius: 12px;
+  padding: 16px 18px;
+  margin-bottom: 20px;
+  color: #92400e;
+}
+
+.sd-alert mat-icon {
+  color: #ef6c00;
+  flex-shrink: 0;
+}
+
+.sd-alert p {
+  margin-top: 4px;
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+
+/* ── Cabeçalho de seção ── */
+.sd-section-header {
+  background: #1565c0;
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.82rem;
+  letter-spacing: 0.08em;
+  padding: 10px 16px;
+  border-radius: 6px;
+  margin-bottom: 24px;
+}
+
+/* ── Timeline ── */
+.sd-timeline {
+  display: flex;
+  flex-direction: column;
+}
+
+.sd-step {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  position: relative;
+  padding-bottom: 26px;
+}
+
+.sd-step:not(:last-child)::before {
+  content: '';
+  position: absolute;
+  left: 19px;
+  top: 40px;
+  bottom: 0;
+  width: 2px;
+  background: #e2e8f0;
+}
+
+.sd-step--concluida:not(:last-child)::before {
+  background: #1565c0;
+}
+
+.sd-step__marker {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border: 2px solid #e2e8f0;
+  background: #fff;
+  color: #a0aec0;
+  z-index: 1;
+}
+
+.sd-step__marker mat-icon {
+  font-size: 20px;
+  width: 20px;
+  height: 20px;
+}
+
+.sd-step--concluida .sd-step__marker {
+  background: #1565c0;
+  border-color: #1565c0;
+  color: #fff;
+}
+
+.sd-step--atual .sd-step__marker {
+  background: #fff;
+  border-color: #1565c0;
+  color: #1565c0;
+  box-shadow: 0 0 0 4px rgba(21, 101, 192, 0.15);
+}
+
+.sd-step__body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-top: 7px;
+}
+
+.sd-step__label {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #0d2137;
+}
+
+.sd-step--pendente .sd-step__label {
+  color: #a0aec0;
+}
+
+.sd-step__desc {
+  font-size: 0.82rem;
+  color: #718096;
+  line-height: 1.4;
+}
+
+/* ── Documentos ── */
+.sd-doc {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid #f4f7fb;
+  font-size: 0.88rem;
+  color: #0d2137;
+}
+
+.sd-doc:last-child {
+  border-bottom: none;
+}
+
+.sd-doc mat-icon {
+  color: #1565c0;
+  font-size: 20px;
+  width: 20px;
+  height: 20px;
+}
+
+/* ── Vazio ── */
+.sd-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  color: #a0aec0;
+  text-align: center;
+  padding: 40px;
+}
+
+.sd-empty mat-icon {
+  font-size: 36px;
+  width: 36px;
+  height: 36px;
+}
+
+/* ── Responsivo (US045) ── */
+@media (max-width: 768px) {
+  .sd-card {
+    padding: 20px 16px;
+  }
+
+  .sd-card--head {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .sd-badge {
+    align-self: flex-start;
+  }
+}

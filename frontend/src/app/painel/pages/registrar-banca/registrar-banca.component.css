@@ -1,0 +1,168 @@
+.rb-navbar-spacer {
+  flex: 1;
+}
+
+.rb-nav-btn {
+  border-color: rgba(255, 255, 255, 0.32) !important;
+  color: #fff !important;
+}
+
+/* ── Título ── */
+.rb-page-title {
+  color: #0d2137;
+  font-size: 1.55rem;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+.rb-page-subtitle {
+  color: #4a5568;
+  font-size: 0.92rem;
+  line-height: 1.5;
+  max-width: 760px;
+  margin-bottom: 22px;
+}
+
+/* ── Card ── */
+.rb-card {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 28px;
+}
+
+.rb-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 32px;
+  color: #a0aec0;
+  font-size: 0.9rem;
+}
+
+.rb-loading mat-icon {
+  font-size: 28px;
+  width: 28px;
+  height: 28px;
+}
+
+/* ── Cabeçalho de seção ── */
+.rb-section-header {
+  background: #b45309;
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.82rem;
+  letter-spacing: 0.08em;
+  padding: 10px 16px;
+  border-radius: 6px;
+  margin-bottom: 22px;
+}
+
+.rb-section-header--secondary {
+  margin-top: 28px;
+}
+
+/* ── Grid de campos ── */
+.rb-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px 18px;
+}
+
+.rb-field-full {
+  grid-column: 1 / -1;
+}
+
+mat-form-field {
+  width: 100%;
+}
+
+/* ── Membros ── */
+.rb-membros {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.rb-membro {
+  border: 1px solid #e2e8f0;
+  border-left: 4px solid #b45309;
+  border-radius: 10px;
+  padding: 14px 18px 0;
+  background: #fbf7f0;
+}
+
+.rb-membro__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.rb-membro__num {
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #8a3d06;
+}
+
+.rb-membro__remove {
+  color: #b3261e;
+}
+
+.rb-membro__fields {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1.5fr;
+  gap: 4px 16px;
+}
+
+.rb-membro__fields .rb-field-full {
+  grid-column: auto;
+}
+
+/* ── Botão adicionar ── */
+.rb-add-btn {
+  margin-top: 16px;
+  color: #b45309 !important;
+  border-color: rgba(180, 83, 9, 0.4) !important;
+}
+
+/* ── Ações ── */
+.rb-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 28px;
+  padding-top: 20px;
+  border-top: 1px solid #e2e8f0;
+}
+
+.rb-btn-salvar {
+  background: #0d2137 !important;
+  color: #fff !important;
+  min-width: 170px;
+  font-weight: 600 !important;
+}
+
+/* ── Responsivo (US045) ── */
+@media (max-width: 768px) {
+  .rb-card {
+    padding: 22px 18px;
+  }
+
+  .rb-grid,
+  .rb-membro__fields {
+    grid-template-columns: 1fr;
+  }
+
+  .rb-actions {
+    flex-direction: column-reverse;
+  }
+
+  .rb-btn-salvar,
+  .rb-actions button {
+    width: 100%;
+  }
+}

@@ -1,0 +1,142 @@
+.nt-navbar-spacer {
+  flex: 1;
+}
+
+.nt-nav-btn {
+  border-color: rgba(255, 255, 255, 0.32) !important;
+  color: #fff !important;
+}
+
+/* ── Título ── */
+.nt-page-title {
+  color: #0d2137;
+  font-size: 1.55rem;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+.nt-page-subtitle {
+  color: #4a5568;
+  font-size: 0.92rem;
+  margin-bottom: 22px;
+}
+
+.nt-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 40px;
+  color: #a0aec0;
+}
+
+/* ── Card ── */
+.nt-card {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 20px;
+}
+
+.nt-section-header {
+  background: #1565c0;
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.82rem;
+  letter-spacing: 0.08em;
+  padding: 10px 16px;
+  border-radius: 6px;
+  margin-bottom: 20px;
+}
+
+/* ── Linha de toggle ── */
+.nt-toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 16px 0;
+  border-bottom: 1px solid #f4f7fb;
+}
+
+.nt-toggle-row:last-child {
+  border-bottom: none;
+}
+
+.nt-toggle-info {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.nt-toggle-label {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #0d2137;
+}
+
+.nt-toggle-desc {
+  font-size: 0.82rem;
+  color: #718096;
+  line-height: 1.4;
+}
+
+.nt-subfield {
+  padding-top: 14px;
+}
+
+.nt-subfield mat-form-field {
+  width: 240px;
+  max-width: 100%;
+}
+
+/* ── Vazio ── */
+.nt-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  color: #a0aec0;
+  text-align: center;
+  padding: 40px;
+}
+
+.nt-empty mat-icon {
+  font-size: 36px;
+  width: 36px;
+  height: 36px;
+}
+
+/* ── Ações ── */
+.nt-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.nt-btn-salvar {
+  background: #0d2137 !important;
+  color: #fff !important;
+  min-width: 190px;
+  font-weight: 600 !important;
+}
+
+/* ── Responsivo (US045) ── */
+@media (max-width: 768px) {
+  .nt-card {
+    padding: 20px 16px;
+  }
+
+  .nt-toggle-row {
+    flex-direction: row;
+    align-items: flex-start;
+  }
+
+  .nt-actions {
+    justify-content: stretch;
+  }
+
+  .nt-btn-salvar {
+    width: 100%;
+  }
+}

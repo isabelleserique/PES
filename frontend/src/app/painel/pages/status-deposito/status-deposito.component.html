@@ -1,0 +1,90 @@
+<div class="app-shell">
+
+  <!-- Navbar -->
+  <nav class="app-navbar">
+    <div class="navbar-brand">
+      <div class="logo-badge">IC</div>
+      <span class="logo-name">IComp</span>
+    </div>
+    <div class="navbar-sep"></div>
+    <span class="navbar-app-name">TCComp</span>
+    <span class="sd-navbar-spacer"></span>
+    <button mat-stroked-button type="button" class="sd-nav-btn" (click)="voltar()">Voltar</button>
+  </nav>
+
+  <main class="app-page-content">
+
+    <h1 class="sd-page-title">Status de Depósito na Biblioteca</h1>
+    <p class="sd-page-subtitle">Acompanhe a situação do depósito do TCC no acervo da biblioteca.</p>
+
+    <p class="status-message status-message--error" *ngIf="errorMessage">{{ errorMessage }}</p>
+
+    <div class="sd-loading" *ngIf="isLoading">
+      <mat-icon>hourglass_empty</mat-icon><span>Carregando status...</span>
+    </div>
+
+    <ng-container *ngIf="!isLoading">
+
+      <!-- Cabeçalho do TCC -->
+      <div class="sd-card sd-card--head" *ngIf="deposito">
+        <div>
+          <span class="sd-label">Trabalho</span>
+          <h2 class="sd-titulo">{{ deposito.titulo_tcc }}</h2>
+          <span class="sd-aluno">{{ deposito.aluno_nome }}</span>
+        </div>
+        <span class="sd-badge" [ngClass]="'sd-badge--' + statusAtual.toLowerCase()">
+          {{ statusAtualLabel }}
+        </span>
+      </div>
+
+      <!-- Alerta de devolução para correção -->
+      <div class="sd-alert" *ngIf="foiDevolvido">
+        <mat-icon>error_outline</mat-icon>
+        <div>
+          <strong>Depósito devolvido para correção.</strong>
+          <p *ngIf="deposito?.observacao_revisao">{{ deposito?.observacao_revisao }}</p>
+          <p *ngIf="!deposito?.observacao_revisao">
+            Ajuste os documentos conforme orientação da biblioteca e reenvie o depósito.
+          </p>
+        </div>
+      </div>
+
+      <!-- Timeline -->
+      <div class="sd-card">
+        <div class="sd-section-header">SITUAÇÃO DO DEPÓSITO</div>
+
+        <div class="sd-timeline">
+          <div
+            class="sd-step"
+            *ngFor="let etapa of etapas"
+            [ngClass]="'sd-step--' + estadoDaEtapa(etapa)">
+            <div class="sd-step__marker">
+              <mat-icon>{{ estadoDaEtapa(etapa) === 'concluida' ? 'check' : etapa.icone }}</mat-icon>
+            </div>
+            <div class="sd-step__body">
+              <span class="sd-step__label">{{ etapa.label }}</span>
+              <span class="sd-step__desc">{{ etapa.descricao }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Documentos enviados -->
+      <div class="sd-card" *ngIf="deposito && deposito.documentos.length > 0">
+        <div class="sd-section-header">DOCUMENTOS ENVIADOS</div>
+        <div class="sd-doc" *ngFor="let doc of deposito.documentos">
+          <mat-icon>description</mat-icon>
+          <span class="sd-doc__name">{{ doc.nome_arquivo }}</span>
+        </div>
+      </div>
+
+      <!-- Sem depósito -->
+      <div class="sd-card sd-empty" *ngIf="!deposito">
+        <mat-icon>inbox</mat-icon>
+        <p>Nenhum depósito iniciado. O status inicial é <strong>Aguardando envio</strong>.</p>
+      </div>
+
+    </ng-container>
+
+  </main>
+</div>

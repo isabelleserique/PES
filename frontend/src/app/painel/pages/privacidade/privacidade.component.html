@@ -1,0 +1,87 @@
+<div class="app-shell">
+
+  <!-- Navbar -->
+  <nav class="app-navbar">
+    <div class="navbar-brand">
+      <div class="logo-badge">IC</div>
+      <span class="logo-name">IComp</span>
+    </div>
+    <div class="navbar-sep"></div>
+    <span class="navbar-app-name">TCComp</span>
+    <span class="pv-navbar-spacer"></span>
+    <button mat-stroked-button type="button" class="pv-nav-btn" (click)="voltar()">Voltar</button>
+  </nav>
+
+  <main class="app-page-content">
+
+    <h1 class="pv-page-title">Privacidade e Proteção de Dados</h1>
+    <p class="pv-page-subtitle">
+      Em conformidade com a LGPD, você controla o uso dos seus dados pessoais no sistema.
+    </p>
+
+    <p class="status-message status-message--error" *ngIf="errorMessage">{{ errorMessage }}</p>
+    <p class="status-message status-message--success" *ngIf="successMessage">{{ successMessage }}</p>
+
+    <div class="pv-loading" *ngIf="isLoading">
+      <mat-icon>hourglass_empty</mat-icon><span>Carregando...</span>
+    </div>
+
+    <ng-container *ngIf="!isLoading">
+
+      <!-- Aviso LGPD -->
+      <div class="pv-notice">
+        <mat-icon>shield</mat-icon>
+        <div>
+          <strong>Seus dados estão protegidos.</strong>
+          <p>
+            Dados pessoais não são compartilhados com terceiros sem o seu consentimento. O portal
+            público exibe apenas dados de TCCs finalizados e aprovados para publicação.
+          </p>
+        </div>
+      </div>
+
+      <!-- Consentimentos -->
+      <div class="pv-card">
+        <div class="pv-section-header">CONSENTIMENTOS</div>
+
+        <div class="pv-toggle-row">
+          <div class="pv-toggle-info">
+            <span class="pv-toggle-label">Publicar meu TCC no portal público</span>
+            <span class="pv-toggle-desc">
+              Autorizo a exibição dos dados do meu TCC no portal público, após finalizado e aprovado.
+            </span>
+          </div>
+          <mat-slide-toggle color="primary" [(ngModel)]="consentimento.publicar_portal_publico"></mat-slide-toggle>
+        </div>
+
+        <div class="pv-toggle-row">
+          <div class="pv-toggle-info">
+            <span class="pv-toggle-label">Compartilhar dados com terceiros</span>
+            <span class="pv-toggle-desc">
+              Autorizo o compartilhamento dos meus dados pessoais com terceiros (parcerias, pesquisas).
+            </span>
+          </div>
+          <mat-slide-toggle color="primary" [(ngModel)]="consentimento.compartilhar_terceiros"></mat-slide-toggle>
+        </div>
+
+        <p class="pv-atualizado" *ngIf="consentimento.atualizado_em">
+          Última atualização: {{ consentimento.atualizado_em | date:'dd/MM/yyyy HH:mm' }}
+        </p>
+      </div>
+
+      <!-- Ações -->
+      <div class="pv-actions">
+        <button
+          mat-raised-button
+          type="button"
+          class="pv-btn-salvar"
+          [disabled]="isSaving"
+          (click)="salvar()">
+          {{ isSaving ? 'Salvando...' : 'Salvar preferências' }}
+        </button>
+      </div>
+
+    </ng-container>
+
+  </main>
+</div>

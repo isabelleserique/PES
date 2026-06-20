@@ -3,6 +3,7 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatNativeDateModule } from '@angular/material/core';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatSelectModule } from '@angular/material/select';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatStepperModule } from '@angular/material/stepper';
 
 import { SharedModule } from '../shared/shared.module';
@@ -23,6 +24,11 @@ import { RegistrarApresentacaoComponent } from './pages/registrar-apresentacao/r
 import { LogsSistemaComponent } from './pages/logs-sistema/logs-sistema.component';
 import { SubmissoesAtrasadasComponent } from './pages/submissoes-atrasadas/submissoes-atrasadas.component';
 import { VisaoGeralComponent } from './pages/visao-geral/visao-geral.component';
+import { RegistrarBancaComponent } from './pages/registrar-banca/registrar-banca.component';
+import { SubmeterVersaoFinalComponent } from './pages/submeter-versao-final/submeter-versao-final.component';
+import { StatusDepositoComponent } from './pages/status-deposito/status-deposito.component';
+import { NotificacoesComponent } from './pages/notificacoes/notificacoes.component';
+import { PrivacidadeComponent } from './pages/privacidade/privacidade.component';
 import { PainelRoutingModule } from './painel-routing.module';
 
 @NgModule({
@@ -44,6 +50,11 @@ import { PainelRoutingModule } from './painel-routing.module';
     LogsSistemaComponent,
     SubmissoesAtrasadasComponent,
     VisaoGeralComponent,
+    RegistrarBancaComponent,
+    SubmeterVersaoFinalComponent,
+    StatusDepositoComponent,
+    NotificacoesComponent,
+    PrivacidadeComponent,
   ],
   imports: [
     SharedModule,
@@ -52,6 +63,7 @@ import { PainelRoutingModule } from './painel-routing.module';
     MatNativeDateModule,
     MatCheckboxModule,
     MatSelectModule,
+    MatSlideToggleModule,
     MatStepperModule,
   ],
 })
