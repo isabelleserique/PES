@@ -43,6 +43,25 @@ const deposito = {
 const prefs = { email_prazos_orientandos: true, antecedencia_dias: 7, email_notas_parciais: true, email_notas_finais: true };
 const consentimento = { publicar_portal_publico: true, compartilhar_terceiros: false, atualizado_em: '2026-06-18T14:30:00Z' };
 
+const professores = [
+  { id: 'p1', nome: 'Profa. Maria Oliveira', titulacao: 'Doutora', area_atuacao: 'Inteligência Artificial', instituicao: 'IComp/UFAM', total_orientacoes: 12 },
+  { id: 'p2', nome: 'Prof. João Mendes', titulacao: 'Doutor', area_atuacao: 'Engenharia de Software', instituicao: 'IComp/UFAM', total_orientacoes: 8 },
+  { id: 'p3', nome: 'Profa. Ana Beatriz', titulacao: 'Doutora', area_atuacao: 'Redes de Computadores', instituicao: 'IComp/UFAM', total_orientacoes: 5 },
+];
+
+const professorDetalhe = {
+  id: 'p1', nome: 'Profa. Maria Oliveira', titulacao: 'Doutora em Ciência da Computação',
+  area_atuacao: 'Inteligência Artificial', instituicao: 'IComp/UFAM', total_orientacoes: 12,
+  email: 'maria.oliveira@icomp.ufam.edu.br', lattes_url: 'http://lattes.cnpq.br/0000000000000000',
+  bio: 'Professora associada do Instituto de Computação, atua em aprendizado de máquina, visão computacional e processamento de linguagem natural.',
+  areas: ['Inteligência Artificial', 'Aprendizado de Máquina', 'Visão Computacional', 'PLN'],
+  tccs_orientados: [
+    { id: 't1', titulo: 'Detecção de fraudes com aprendizado de máquina', tipo_tcc: 'Monografia', ano: 2025, aluno_nome: 'Mariana Souza' },
+    { id: 't2', titulo: 'Classificação de imagens médicas com redes neurais', tipo_tcc: 'Artigo', ano: 2024, aluno_nome: 'Pedro Lima' },
+    { id: 't3', titulo: 'Análise de sentimentos em redes sociais', tipo_tcc: 'Monografia', ano: 2024, aluno_nome: 'Júlia Ramos' },
+  ],
+};
+
 const telas = [
   { nome: 'US024-registrar-banca', perfil: 'ORIENTADOR', rota: '/painel/registrar-banca', mocks: { '**/periodos/ativo/cronograma**': cronograma } },
   { nome: 'US026-US027-submeter-versao-final', perfil: 'ALUNO', rota: '/painel/submeter-versao-final', mocks: { '**/tcc/me': meuTcc } },
@@ -51,6 +70,8 @@ const telas = [
   { nome: 'US031-notificacoes-aluno', perfil: 'ALUNO', rota: '/painel/notificacoes', mocks: { '**/notificacoes/preferencias': prefs } },
   { nome: 'US038-privacidade', perfil: 'ALUNO', rota: '/painel/privacidade', mocks: { '**/privacidade/consentimento': consentimento } },
   { nome: 'US045-responsivo-mobile', perfil: 'ALUNO', rota: '/painel/submeter-versao-final', mocks: { '**/tcc/me': meuTcc }, viewport: { width: 390, height: 844 } },
+  { nome: 'US005-listar-professores', perfil: 'ALUNO', rota: '/tcc/professores', mocks: { '**/public/professores': professores }, click: 'button[type="submit"]' },
+  { nome: 'US005-detalhe-professor', perfil: 'ALUNO', rota: '/tcc/professores/p1', mocks: { '**/public/professores/*': professorDetalhe } },
 ];
 
 (async () => {
@@ -68,6 +89,10 @@ const telas = [
     }
 
     await page.goto(`${BASE}${t.rota}`, { waitUntil: 'networkidle' });
+    if (t.click) {
+      await page.click(t.click);
+      await page.waitForTimeout(600);
+    }
     await page.waitForTimeout(1200);
     const file = path.join(OUT, `${t.nome}.png`);
     await page.screenshot({ path: file, fullPage: !t.viewport });

@@ -1,0 +1,80 @@
+<div class="app-shell">
+  <nav class="app-navbar">
+    <div class="navbar-brand">
+      <div class="logo-badge">IC</div>
+      <span class="logo-name">IComp</span>
+    </div>
+    <div class="navbar-sep"></div>
+    <span class="navbar-app-name">TCComp</span>
+    <span class="dp-navbar-spacer"></span>
+    <a mat-stroked-button class="dp-nav-btn" routerLink="/tcc/professores">Professores</a>
+    <button mat-stroked-button type="button" class="dp-nav-btn" (click)="voltar()">Voltar</button>
+  </nav>
+
+  <main class="app-page-content dp-page">
+
+    <p class="status-message status-message--error" *ngIf="errorMessage">{{ errorMessage }}</p>
+
+    <div class="dp-loading" *ngIf="isLoading">
+      <mat-icon>hourglass_empty</mat-icon><span>Carregando perfil...</span>
+    </div>
+
+    <ng-container *ngIf="!isLoading && professor as prof">
+
+      <!-- Cabeçalho do perfil -->
+      <section class="dp-card dp-header-card">
+        <div class="dp-avatar"><mat-icon>person</mat-icon></div>
+        <div class="dp-header-info">
+          <h1 class="dp-nome">{{ prof.nome }}</h1>
+          <span class="dp-titulacao">{{ prof.titulacao }}</span>
+          <span class="dp-instituicao" *ngIf="prof.instituicao">{{ prof.instituicao }}</span>
+          <div class="dp-links">
+            <a class="dp-link" *ngIf="prof.email" [href]="'mailto:' + prof.email">
+              <mat-icon>mail</mat-icon> {{ prof.email }}
+            </a>
+            <a class="dp-link" *ngIf="prof.lattes_url" [href]="prof.lattes_url" target="_blank" rel="noopener">
+              <mat-icon>open_in_new</mat-icon> Currículo Lattes
+            </a>
+          </div>
+        </div>
+        <span class="dp-badge">{{ prof.total_orientacoes }} orientação(ões)</span>
+      </section>
+
+      <!-- Áreas de atuação -->
+      <section class="dp-card" *ngIf="prof.areas.length > 0">
+        <h2 class="dp-section-title">Áreas de atuação</h2>
+        <div class="dp-areas">
+          <span class="dp-area-chip" *ngFor="let area of prof.areas">{{ area }}</span>
+        </div>
+      </section>
+
+      <!-- Biografia -->
+      <section class="dp-card" *ngIf="prof.bio">
+        <h2 class="dp-section-title">Sobre</h2>
+        <p class="dp-bio">{{ prof.bio }}</p>
+      </section>
+
+      <!-- TCCs orientados -->
+      <section class="dp-card">
+        <h2 class="dp-section-title">Trabalhos orientados</h2>
+
+        <div class="dp-tcc-list" *ngIf="prof.tccs_orientados.length > 0; else semTccs">
+          <article class="dp-tcc-item" *ngFor="let tcc of prof.tccs_orientados" (click)="verTcc(tcc.id)">
+            <div class="dp-tcc-main">
+              <span class="dp-tipo-badge">{{ tcc.tipo_tcc }}</span>
+              <h3 class="dp-tcc-titulo">{{ tcc.titulo }}</h3>
+              <span class="dp-tcc-aluno">{{ tcc.aluno_nome }}</span>
+            </div>
+            <span class="dp-tcc-ano" *ngIf="tcc.ano">{{ tcc.ano }}</span>
+            <mat-icon class="dp-tcc-arrow">chevron_right</mat-icon>
+          </article>
+        </div>
+
+        <ng-template #semTccs>
+          <p class="dp-empty">Este professor ainda não possui trabalhos publicados no portal.</p>
+        </ng-template>
+      </section>
+
+    </ng-container>
+  </main>
+</div>

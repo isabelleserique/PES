@@ -1,0 +1,225 @@
+.dp-page {
+  display: grid;
+  gap: 20px;
+}
+
+.dp-navbar-spacer {
+  flex: 1;
+}
+
+.dp-nav-btn {
+  border-color: rgba(255, 255, 255, 0.32) !important;
+  color: #fff !important;
+}
+
+.dp-loading {
+  align-items: center;
+  color: #a0aec0;
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  padding: 60px;
+}
+
+.dp-card {
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid rgba(13, 33, 55, 0.08);
+  border-radius: 16px;
+  box-shadow: 0 12px 36px rgba(13, 33, 55, 0.08);
+  padding: 28px;
+}
+
+/* ── Cabeçalho ── */
+.dp-header-card {
+  align-items: flex-start;
+  border-top: 5px solid #1565c0;
+  display: flex;
+  gap: 20px;
+}
+
+.dp-avatar {
+  align-items: center;
+  background: rgba(21, 101, 192, 0.1);
+  border-radius: 50%;
+  color: #1565c0;
+  display: flex;
+  flex-shrink: 0;
+  height: 72px;
+  justify-content: center;
+  width: 72px;
+}
+
+.dp-avatar mat-icon {
+  font-size: 40px;
+  height: 40px;
+  width: 40px;
+}
+
+.dp-header-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+  min-width: 0;
+}
+
+.dp-nome {
+  color: #0d2137;
+  font-size: 1.6rem;
+  font-weight: 700;
+}
+
+.dp-titulacao {
+  color: #1565c0;
+  font-size: 0.92rem;
+  font-weight: 600;
+}
+
+.dp-instituicao {
+  color: #4a5568;
+  font-size: 0.88rem;
+}
+
+.dp-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-top: 8px;
+}
+
+.dp-link {
+  align-items: center;
+  color: #1565c0;
+  display: inline-flex;
+  font-size: 0.85rem;
+  gap: 4px;
+  text-decoration: none;
+}
+
+.dp-link:hover {
+  text-decoration: underline;
+}
+
+.dp-link mat-icon {
+  font-size: 16px;
+  height: 16px;
+  width: 16px;
+}
+
+.dp-badge {
+  background: #0d2137;
+  border-radius: 999px;
+  color: #fff;
+  flex-shrink: 0;
+  font-size: 0.8rem;
+  font-weight: 700;
+  padding: 8px 14px;
+}
+
+/* ── Seções ── */
+.dp-section-title {
+  color: #0d2137;
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 16px;
+}
+
+.dp-areas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.dp-area-chip {
+  background: rgba(21, 101, 192, 0.1);
+  border-radius: 999px;
+  color: #1565c0;
+  font-size: 0.82rem;
+  font-weight: 600;
+  padding: 6px 14px;
+}
+
+.dp-bio {
+  color: #4a5568;
+  line-height: 1.6;
+}
+
+/* ── Lista de TCCs ── */
+.dp-tcc-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.dp-tcc-item {
+  align-items: center;
+  border: 1px solid rgba(13, 33, 55, 0.08);
+  border-radius: 12px;
+  cursor: pointer;
+  display: flex;
+  gap: 16px;
+  padding: 16px 18px;
+  transition: border-color 0.18s, box-shadow 0.18s;
+}
+
+.dp-tcc-item:hover {
+  border-color: #1565c0;
+  box-shadow: 0 8px 24px rgba(13, 33, 55, 0.1);
+}
+
+.dp-tcc-main {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+  min-width: 0;
+}
+
+.dp-tipo-badge {
+  align-self: flex-start;
+  background: rgba(21, 101, 192, 0.1);
+  border-radius: 999px;
+  color: #1565c0;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 3px 10px;
+}
+
+.dp-tcc-titulo {
+  color: #0d2137;
+  font-size: 0.98rem;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.dp-tcc-aluno {
+  color: #4a5568;
+  font-size: 0.85rem;
+}
+
+.dp-tcc-ano {
+  color: #718096;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.dp-tcc-arrow {
+  color: #cbd5e0;
+}
+
+.dp-empty {
+  color: #718096;
+  font-size: 0.9rem;
+  padding: 16px 0;
+  text-align: center;
+}
+
+@media (max-width: 768px) {
+  .dp-header-card {
+    flex-direction: column;
+  }
+
+  .dp-badge {
+    align-self: flex-start;
+  }
+}

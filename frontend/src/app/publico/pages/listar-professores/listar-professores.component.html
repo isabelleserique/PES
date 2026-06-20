@@ -1,0 +1,78 @@
+<div class="app-shell">
+  <nav class="app-navbar">
+    <div class="navbar-brand">
+      <div class="logo-badge">IC</div>
+      <span class="logo-name">IComp</span>
+    </div>
+    <div class="navbar-sep"></div>
+    <span class="navbar-app-name">TCComp</span>
+    <span class="lp-navbar-spacer"></span>
+    <a mat-stroked-button class="lp-nav-btn" routerLink="/tcc">Buscar TCCs</a>
+    <a mat-stroked-button class="lp-nav-btn" routerLink="/auth/login">Área restrita</a>
+  </nav>
+
+  <main class="app-page-content lp-page">
+    <header class="lp-page-header">
+      <span class="lp-eyebrow">US005 · Consultor Externo</span>
+      <h1 class="lp-page-title">Perfis de professores</h1>
+      <p class="lp-page-subtitle">
+        Consulte os professores do IComp, suas áreas de atuação e os trabalhos orientados.
+        Acesso público, sem necessidade de login.
+      </p>
+    </header>
+
+    <section class="lp-card lp-search-card">
+      <form [formGroup]="form" (ngSubmit)="buscar()">
+        <div class="lp-form-grid">
+          <mat-form-field appearance="outline">
+            <mat-label>Nome do professor</mat-label>
+            <input matInput formControlName="nome" placeholder="Ex: Maria Oliveira">
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Área de atuação</mat-label>
+            <input matInput formControlName="area" placeholder="Ex: Inteligência Artificial">
+          </mat-form-field>
+        </div>
+
+        <div class="lp-form-actions">
+          <button mat-raised-button type="submit" class="lp-btn-primary" [disabled]="isLoading">
+            {{ isLoading ? 'Buscando...' : 'Buscar' }}
+          </button>
+        </div>
+      </form>
+    </section>
+
+    <p class="status-message status-message--error" *ngIf="errorMessage">{{ errorMessage }}</p>
+
+    <ng-container *ngIf="buscaRealizada">
+      <div class="lp-results-header">
+        <h2 class="lp-results-title">{{ resultados.length }} professor(es) encontrado(s)</h2>
+      </div>
+
+      <div class="lp-results-grid" *ngIf="resultados.length > 0; else emptyResults">
+        <article class="lp-result-card" *ngFor="let prof of resultados" (click)="verPerfil(prof.id)">
+          <div class="lp-result-avatar"><mat-icon>person</mat-icon></div>
+          <div class="lp-result-body">
+            <h3 class="lp-result-nome">{{ prof.nome }}</h3>
+            <span class="lp-result-titulacao">{{ prof.titulacao }}</span>
+            <div class="lp-result-meta">
+              <span *ngIf="prof.area_atuacao">{{ prof.area_atuacao }}</span>
+              <span *ngIf="prof.instituicao">{{ prof.instituicao }}</span>
+            </div>
+            <span class="lp-result-orientacoes">
+              {{ prof.total_orientacoes }} trabalho(s) orientado(s)
+            </span>
+          </div>
+          <mat-icon class="lp-result-arrow">chevron_right</mat-icon>
+        </article>
+      </div>
+
+      <ng-template #emptyResults>
+        <section class="lp-card">
+          <p class="lp-empty">Nenhum professor encontrado para os filtros informados.</p>
+        </section>
+      </ng-template>
+    </ng-container>
+  </main>
+</div>

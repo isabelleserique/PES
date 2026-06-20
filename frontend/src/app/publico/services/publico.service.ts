@@ -36,6 +36,36 @@ export interface BuscarTccParams {
   titulo?: string;
 }
 
+export interface ProfessorPublico {
+  id: string;
+  nome: string;
+  titulacao: string;
+  area_atuacao: string;
+  instituicao: string;
+  total_orientacoes: number;
+}
+
+export interface TccOrientadoPublico {
+  id: string;
+  titulo: string;
+  tipo_tcc: 'Monografia' | 'Artigo' | 'Relatorio de Estagio';
+  ano: number | null;
+  aluno_nome: string;
+}
+
+export interface ProfessorPublicoDetalhe extends ProfessorPublico {
+  email: string | null;
+  lattes_url: string | null;
+  bio: string | null;
+  areas: string[];
+  tccs_orientados: TccOrientadoPublico[];
+}
+
+export interface BuscarProfessoresParams {
+  nome?: string;
+  area?: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class PublicoService {
   private readonly api = environment.apiUrl;
@@ -53,5 +83,16 @@ export class PublicoService {
 
   getDetalheTcc(id: string): Observable<TccPublicoDetalhe> {
     return this.http.get<TccPublicoDetalhe>(`${this.api}/public/tcc/${id}`);
+  }
+
+  buscarProfessores(params: BuscarProfessoresParams): Observable<ProfessorPublico[]> {
+    let httpParams = new HttpParams();
+    if (params.nome) httpParams = httpParams.set('nome', params.nome);
+    if (params.area) httpParams = httpParams.set('area', params.area);
+    return this.http.get<ProfessorPublico[]>(`${this.api}/public/professores`, { params: httpParams });
+  }
+
+  getDetalheProfessor(id: string): Observable<ProfessorPublicoDetalhe> {
+    return this.http.get<ProfessorPublicoDetalhe>(`${this.api}/public/professores/${id}`);
   }
 }
