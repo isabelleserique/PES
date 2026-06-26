@@ -6,6 +6,7 @@ import { forkJoin, of, throwError } from 'rxjs';
 import { catchError, finalize } from 'rxjs/operators';
 
 import { getApiErrorMessage } from '../../../auth/utils/api-error.util';
+import { StatusLabelPipe } from '../../../shared/pipes/status-label.pipe';
 import {
   CronogramaAluno,
   CronogramaPeriodoResponse,
@@ -96,8 +97,10 @@ export class DefinirTccComponent implements OnInit {
     return this.cronograma?.aluno ?? null;
   }
 
+  private readonly statusLabelPipe = new StatusLabelPipe();
+
   get statusAtual(): string {
-    return this.meuTcc?.status ?? 'SEM ENVIO';
+    return this.meuTcc?.status ? this.statusLabelPipe.transform(this.meuTcc.status) : 'Sem envio';
   }
 
   get resumoPrazo(): string | null {
@@ -124,7 +127,7 @@ export class DefinirTccComponent implements OnInit {
 
   get successStatusLabel(): string {
     if (this.submittedAction === 'update') {
-      return this.meuTcc?.status ?? 'Atualizado';
+      return this.meuTcc?.status ? this.statusLabelPipe.transform(this.meuTcc.status) : 'Atualizado';
     }
 
     return 'Aguardando Aceite do Orientador';

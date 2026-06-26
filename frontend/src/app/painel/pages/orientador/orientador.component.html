@@ -89,7 +89,7 @@
           </div>
           <div>
             <span class="or-field-label">Status</span>
-            <strong>{{ user.status }}</strong>
+            <strong>{{ user.status | statusLabel }}</strong>
           </div>
         </div>
       </section>
@@ -198,7 +198,7 @@
               </div>
               <div>
                 <span class="or-field-label">Status do TCC</span>
-                <strong>{{ orientando.status_tcc }}</strong>
+                <strong>{{ orientando.status_tcc | statusLabel }}</strong>
               </div>
             </div>
 
@@ -221,7 +221,7 @@
                 </div>
                 <div class="or-timeline-meta">
                   <strong>{{ prazo.data_limite | date:'dd/MM/yyyy' }}</strong>
-                  <span>{{ prazo.status }}</span>
+                  <span>{{ prazo.status | statusLabel }}</span>
                   <p>{{ prazo.mensagem }}</p>
                 </div>
               </article>

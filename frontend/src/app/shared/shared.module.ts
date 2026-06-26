@@ -9,9 +9,13 @@ import { MatInputModule } from '@angular/material/input';
 import { MatRadioModule } from '@angular/material/radio';
 import { MatSelectModule } from '@angular/material/select';
 
+import { StatusLabelPipe } from './pipes/status-label.pipe';
+
 @NgModule({
   imports: [CommonModule],
+  declarations: [StatusLabelPipe],
   exports: [
+    StatusLabelPipe,
     CommonModule,
     FormsModule,
     ReactiveFormsModule,

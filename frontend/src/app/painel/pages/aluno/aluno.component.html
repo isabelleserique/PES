@@ -55,7 +55,7 @@
           </div>
           <div>
             <span class="al-field-label">Status</span>
-            <strong>{{ user.status }}</strong>
+            <strong>{{ user.status | statusLabel }}</strong>
           </div>
           <div *ngIf="user.matricula">
             <span class="al-field-label">Matrícula</span>
@@ -70,7 +70,7 @@
             <span class="al-card-label">US008</span>
             <h2 class="al-card-title">Formalização do TCC</h2>
           </div>
-          <span class="al-badge al-badge--soft">{{ meuTcc ? meuTcc.status : 'SEM ENVIO' }}</span>
+          <span class="al-badge al-badge--soft">{{ meuTcc ? (meuTcc.status | statusLabel) : 'Sem envio' }}</span>
         </div>
 
         <div class="al-alert" *ngIf="meuTcc?.alerta_prazo">
@@ -180,7 +180,7 @@
             </div>
             <div class="al-timeline-meta">
               <strong>{{ prazo.data_limite | date:'dd/MM/yyyy' }}</strong>
-              <span>{{ prazo.status }}</span>
+              <span>{{ prazo.status | statusLabel }}</span>
               <p>{{ prazo.mensagem }}</p>
             </div>
           </article>

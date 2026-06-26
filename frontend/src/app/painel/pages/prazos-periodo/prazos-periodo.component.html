@@ -22,7 +22,7 @@
       </div>
       <div class="pp-status-badge" *ngIf="statusUsuario">
         <span class="pp-status-label">Status:</span>
-        <span class="pp-status-value">{{ statusUsuario }}</span>
+        <span class="pp-status-value">{{ statusUsuario | statusLabel }}</span>
       </div>
     </header>
 
