@@ -1,7 +1,6 @@
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 
-from backend.app.api.deps import require_perfis
 from backend.app.db.models import UserRecord
 from backend.app.db.session import get_db_session
 from backend.app.models.user import Perfil
@@ -16,6 +15,12 @@ from backend.app.schemas.tcc import (
 from backend.app.services.audit_service import AuditService, get_audit_service
 from backend.app.services.email_service import EmailService, get_email_service
 from backend.app.services.tcc_service import TCCService, get_tcc_service
+from backend.app.schemas.tcc import BancaRequest, BancaResponse
+from backend.app.api.deps import (
+    require_perfis,
+    get_current_authenticated_user,
+)
+
 
 router = APIRouter(prefix="/tcc", tags=["tcc"])
 
@@ -122,4 +127,39 @@ async def decide_orientation_request(
         current_user=current_orientador,
         email_service=email_service,
         audit_service=audit_service,
+    )
+
+@router.post(
+    "/{tcc_id}/banca",
+    status_code=200,
+)
+async def register_banca(
+    tcc_id: str,
+    payload: BancaRequest,
+    session: Session = Depends(get_db_session),
+    tcc_service: TCCService = Depends(get_tcc_service),
+    current_orientador: UserRecord = Depends(require_perfis(Perfil.ORIENTADOR)),
+) -> BancaResponse:
+    return tcc_service.register_banca(
+        session=session,
+        tcc_id=tcc_id,
+        payload=payload,
+        current_user=current_orientador,
+    )
+
+
+@router.get(
+    "/{tcc_id}/banca",
+    status_code=200,
+)
+async def get_banca(
+    tcc_id: str,
+    session: Session = Depends(get_db_session),
+    tcc_service: TCCService = Depends(get_tcc_service),
+    current_user: UserRecord = Depends(get_current_authenticated_user),
+) -> BancaResponse:
+    return tcc_service.get_banca(
+        session=session,
+        tcc_id=tcc_id,
+        current_user=current_user,
     )

@@ -10,6 +10,7 @@ from backend.app.db.base import Base
 from backend.app.models.periodo import TipoTCC
 from backend.app.models.tcc import AcaoEdicaoTCC, StatusTCC
 from backend.app.models.user import Perfil, StatusCadastro
+from backend.app.models.banca import PapelBanca
 
 TIPO_TCC_ENUM = Enum(
     TipoTCC,
@@ -43,6 +44,7 @@ class UserRecord(Base):
         nullable=False,
     )
     audit_logs: Mapped[list["AuditLogRecord"]] = relationship(back_populates="user")
+    membro_bancas: Mapped[list["MembroBancaRecord"]] = relationship()
 
 
 class PeriodoLetivoRecord(Base):
@@ -162,6 +164,10 @@ class TCCRecord(Base):
     apresentacoes_artigo: Mapped[list["ApresentacaoArtigoRecord"]] = relationship(
         back_populates="tcc",
         cascade="all, delete-orphan",
+    )
+    banca: Mapped[Optional["BancaRecord"]] = relationship(
+        back_populates="tcc",
+        uselist=False
     )
 
 
@@ -337,3 +343,65 @@ class AuditLogRecord(Base):
         index=True,
     )
     user: Mapped[Optional[UserRecord]] = relationship(back_populates="audit_logs")
+
+class BancaRecord(Base):
+    __tablename__ = "bancas"
+
+    id: Mapped[str] = mapped_column(String, primary_key=True)
+    tcc_id: Mapped[str] = mapped_column(
+        String,
+        ForeignKey("tccs.id", ondelete="CASCADE"),
+        nullable=False,
+        unique=True,
+        index=True,
+    )
+
+    data_defesa: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+    local: Mapped[str] = mapped_column(String, nullable=False)
+
+    criado_em: Mapped[datetime] = mapped_column(
+        DateTime(timezone=False),
+        server_default=func.now(),
+        nullable=False,
+    )
+
+    tcc: Mapped["TCCRecord"] = relationship(back_populates="banca")
+    membros: Mapped[list["MembroBancaRecord"]] = relationship(
+        back_populates="banca",
+        cascade="all, delete-orphan",
+    )
+
+class MembroBancaRecord(Base):
+    __tablename__ = "membros_banca"
+
+    __table_args__ = (
+        UniqueConstraint("banca_id", "papel", name="uq_banca_papel"),
+    )
+
+    id: Mapped[str] = mapped_column(String, primary_key=True)
+
+    banca_id: Mapped[str] = mapped_column(
+        String,
+        ForeignKey("bancas.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+
+    user_id: Mapped[Optional[str]] = mapped_column(
+        String,
+        ForeignKey("users.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+
+    nome: Mapped[str] = mapped_column(String, nullable=False)
+    titulacao: Mapped[str] = mapped_column(String, nullable=False)
+    instituicao: Mapped[str] = mapped_column(String, nullable=False)
+
+    papel: Mapped[PapelBanca] = mapped_column(
+        Enum(PapelBanca, name="PapelBanca"),
+        nullable=False,
+    )
+
+    banca: Mapped["BancaRecord"] = relationship(back_populates="membros")
+    user: Mapped[Optional["UserRecord"]] = relationship()

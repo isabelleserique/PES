@@ -27,6 +27,9 @@ from backend.app.schemas.tcc import (
 )
 from backend.app.services.audit_service import AuditService
 from backend.app.services.email_service import EmailService
+from backend.app.db.models import BancaRecord, MembroBancaRecord
+from backend.app.schemas.tcc import BancaResponse, MembroBancaResponse, BancaRequest, MembroBancaRequest
+from backend.app.models.banca import PapelBanca
 
 NO_ACTIVE_PERIODO_FOUND_DETAIL = "Nenhum periodo letivo ativo encontrado."
 TCC_ALREADY_EXISTS_DETAIL = "Aluno ja informou um TCC neste periodo. Use a edicao para atualizar os dados."
@@ -659,6 +662,146 @@ class TCCService:
             return False, "Prazo final de aceite: hoje.", prazo.data_limite
         return False, f"Prazo de aceite ate {prazo.data_limite.isoformat()}.", prazo.data_limite
 
+    def register_banca(
+        self,
+        *,
+        session: Session,
+        tcc_id: str,
+        payload: BancaRequest,
+        current_user: UserRecord,
+    ) -> BancaResponse:
+        tcc = session.scalar(select(TCCRecord).where(TCCRecord.id == tcc_id))
+
+        if tcc is None:
+            raise HTTPException(status_code=404, detail="TCC nao encontrado.")
+
+        if tcc.orientador_id != current_user.id:
+            raise HTTPException(
+                status_code=403,
+                detail="Apenas o orientador do TCC pode registrar a banca.",
+            )
+
+        required = {
+            PapelBanca.AVALIADOR_INTERNO,
+            PapelBanca.AVALIADOR_EXTERNO,
+            PapelBanca.SUPLENTE,
+        }
+
+        payload_papeis = {m.papel for m in payload.membros}
+
+        if PapelBanca.ORIENTADOR in payload_papeis:
+            raise HTTPException(
+                status_code=400,
+                detail="Orientador não deve ser informado manualmente.",
+            )
+
+        if payload_papeis != required:
+            raise HTTPException(
+                status_code=400,
+                detail="Banca deve conter avaliador interno, avaliador externo e suplente.",
+            )
+
+        banca = session.scalar(
+            select(BancaRecord)
+            .options(selectinload(BancaRecord.membros))
+            .where(BancaRecord.tcc_id == tcc_id)
+        )
+
+        if banca is None:
+            banca = BancaRecord(
+                id=str(uuid4()),
+                tcc_id=tcc_id,
+                data_defesa=payload.data_defesa,
+                local=payload.local,
+            )
+            session.add(banca)
+            session.flush()
+        else:
+            banca.data_defesa = payload.data_defesa
+            banca.local = payload.local
+
+            session.query(MembroBancaRecord)\
+                .filter(MembroBancaRecord.banca_id == banca.id)\
+                .delete(synchronize_session=False)
+
+            session.flush()
+
+        orientador = session.scalar(
+            select(UserRecord).where(UserRecord.id == tcc.orientador_id)
+        )
+
+        session.add(
+            MembroBancaRecord(
+                id=str(uuid4()),
+                banca_id=banca.id,
+                user_id=tcc.orientador_id,
+                nome=orientador.nome_completo if orientador else "Orientador",
+                titulacao="Orientador do TCC",
+                instituicao="Instituição",
+                papel=PapelBanca.ORIENTADOR,
+            )
+        )
+
+        for m in payload.membros:
+            session.add(
+                MembroBancaRecord(
+                    id=str(uuid4()),
+                    banca_id=banca.id,
+                    nome=m.nome,
+                    titulacao=m.titulacao,
+                    instituicao=m.instituicao,
+                    papel=m.papel,
+                )
+            )
+
+        session.commit()
+        session.refresh(banca)
+
+        return self._build_banca_response(banca)
+
+    def get_banca(
+        self,
+        *,
+        session: Session,
+        tcc_id: str,
+        current_user: UserRecord,
+    ) -> BancaResponse:
+        tcc = session.scalar(select(TCCRecord).where(TCCRecord.id == tcc_id))
+
+        if tcc is None:
+            raise HTTPException(status_code=404, detail="TCC nao encontrado.")
+
+        if current_user.perfil == Perfil.ALUNO and tcc.aluno_id != current_user.id:
+            raise HTTPException(status_code=403, detail="Sem permissao.")
+
+        banca = session.scalar(
+            select(BancaRecord)
+            .options(selectinload(BancaRecord.membros))
+            .where(BancaRecord.tcc_id == tcc_id)
+        )
+
+        if banca is None:
+            raise HTTPException(status_code=404, detail="Banca nao cadastrada.")
+
+        return self._build_banca_response(banca)
+
+    def _build_banca_response(self, banca: BancaRecord) -> BancaResponse:
+        return BancaResponse(
+            id=banca.id,
+            tcc_id=banca.tcc_id,
+            data_defesa=banca.data_defesa,
+            local=banca.local,
+            membros=[
+                MembroBancaResponse(
+                    id=m.id,
+                    nome=m.nome,
+                    titulacao=m.titulacao,
+                    instituicao=m.instituicao,
+                    papel=m.papel,
+                )
+                for m in banca.membros
+            ],
+        )
 
 async def get_tcc_service() -> TCCService:
     return TCCService()

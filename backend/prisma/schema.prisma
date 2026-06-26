@@ -65,6 +65,7 @@ model User {
   orientacao_sessoes_orientador OrientacaoSessao[] @relation("OrientadorOrientacaoSessao")
   apresentacoes_artigo ApresentacaoArtigo[] @relation("AlunoApresentacaoArtigo")
   audit_logs            AuditLog[]
+  membro_bancas MembroBanca[]
 
   @@map("users")
 }
@@ -121,6 +122,7 @@ model TCC {
   submissoes_entregaveis SubmissaoEntregavel[]
   orientacao_sessoes OrientacaoSessao[]
   apresentacoes_artigo ApresentacaoArtigo[]
+  banca Banca?
 
   @@unique([aluno_id, periodo_id])
   @@index([orientador_id])
@@ -236,4 +238,44 @@ model AuditLog {
   @@index([entidade])
   @@index([criado_em])
   @@map("audit_logs")
+}
+
+enum PapelBanca {
+  ORIENTADOR
+  AVALIADOR_INTERNO
+  AVALIADOR_EXTERNO
+  SUPLENTE
+}
+
+model Banca {
+  id          String   @id
+  tcc_id      String   @unique
+  data_defesa DateTime 
+  local       String
+  criado_em   DateTime @default(now())
+
+  tcc TCC @relation(fields: [tcc_id], references: [id], onDelete: Cascade)
+  membros MembroBanca[]
+
+  @@map("bancas")
+}
+
+model MembroBanca {
+  id          String     @id
+  banca_id    String
+  user_id     String?
+  nome        String
+  titulacao   String
+  instituicao String
+  papel       PapelBanca
+
+  banca Banca @relation(fields: [banca_id], references: [id], onDelete: Cascade)
+  user  User? @relation(fields: [user_id], references: [id])
+
+  @@index([banca_id])
+  @@index([user_id])
+
+  @@unique([banca_id, papel])
+
+  @@map("membros_banca")
 }

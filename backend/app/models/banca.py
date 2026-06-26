@@ -1,0 +1,7 @@
+from enum import Enum as PyEnum
+
+class PapelBanca(PyEnum):
+    ORIENTADOR = "ORIENTADOR"
+    AVALIADOR_INTERNO = "AVALIADOR_INTERNO"
+    AVALIADOR_EXTERNO = "AVALIADOR_EXTERNO"
+    SUPLENTE = "SUPLENTE"

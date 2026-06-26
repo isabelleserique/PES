@@ -7,6 +7,7 @@ from pydantic import BaseModel, Field, field_validator, model_validator
 
 from backend.app.models.periodo import TipoTCC
 from backend.app.models.tcc import StatusTCC
+from backend.app.models.banca import PapelBanca
 
 
 class TCCWriteRequest(BaseModel):
@@ -114,3 +115,63 @@ class OrientationDecisionResponse(BaseModel):
     observacao_orientador: Optional[str] = None
     acao_fora_do_prazo: bool
     alerta_acao_prazo: Optional[str] = None
+
+class MembroBancaRequest(BaseModel):
+    nome: str = Field(min_length=2, max_length=255)
+    titulacao: str = Field(min_length=2, max_length=255)
+    instituicao: str = Field(min_length=2, max_length=255)
+    papel: PapelBanca
+
+    @field_validator("nome", "titulacao", "instituicao")
+    @classmethod
+    def normalize(cls, value: str) -> str:
+        return value.strip()
+
+
+class BancaRequest(BaseModel):
+    data_defesa: datetime
+    local: str = Field(min_length=2, max_length=255)
+    membros: list[MembroBancaRequest]
+
+    @field_validator("local")
+    @classmethod
+    def normalize_local(cls, value: str) -> str:
+        return value.strip()
+
+    @model_validator(mode="after")
+    def validate_membros(self) -> "BancaRequest":
+        if len(self.membros) != 3:
+            raise ValueError(
+                "A banca deve possuir exatamente três membros informados (avaliador interno, avaliador externo e suplente)."
+            )
+
+        papeis = [m.papel for m in self.membros]
+
+        required = {
+            PapelBanca.AVALIADOR_INTERNO,
+            PapelBanca.AVALIADOR_EXTERNO,
+            PapelBanca.SUPLENTE,
+        }
+
+        if set(papeis) != required:
+            raise ValueError(
+                "A banca deve conter exatamente um avaliador interno, um avaliador externo e um suplente."
+            )
+
+        return self
+
+
+class MembroBancaResponse(BaseModel):
+    id: str
+    nome: str
+    titulacao: str
+    instituicao: str
+    papel: PapelBanca
+
+
+class BancaResponse(BaseModel):
+    id: str
+    tcc_id: str
+    data_defesa: datetime
+    local: str
+    membros: list[MembroBancaResponse]
