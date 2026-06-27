@@ -737,7 +737,7 @@ class TCCService:
                 user_id=tcc.orientador_id,
                 nome=orientador.nome_completo if orientador else "Orientador",
                 titulacao="Orientador do TCC",
-                instituicao="Instituição",
+                instituicao="UFAM",
                 papel=PapelBanca.ORIENTADOR,
             )
         )

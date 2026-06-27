@@ -5,6 +5,9 @@ from typing import Optional
 
 from pydantic import BaseModel
 
+from enum import Enum
+from pydantic import BaseModel
+
 
 class SubmissaoEntregavelResponse(BaseModel):
     id: str
@@ -74,3 +77,45 @@ class ApresentacaoArtigoResponse(BaseModel):
     data_apresentacao: date
     artigo_ja_aceito: bool
     criado_em: datetime
+
+class DocumentoDepositoResponse(BaseModel):
+    id: str
+    tipo_documento: str
+    nome_original: str
+    mime_type: Optional[str] = None
+    tamanho_bytes: int
+    possui_preview: bool
+
+
+class DepositoFinalResponse(BaseModel):
+    id: str
+    tcc_id: str
+    status: str
+    submetido_em: Optional[datetime] = None
+    documentos: list[DocumentoDepositoResponse]
+
+
+class DepositoFinalCreateResponse(BaseModel):
+    id: str
+    status: str
+    mensagem: str
+    submetido_em: datetime
+
+
+class StatusDepositoResponse(BaseModel):
+    tcc_id: str
+    status: str
+    submetido_em: Optional[datetime] = None
+    documentos_enviados: int
+    documentos_obrigatorios: int
+    completo: bool
+
+class StatusDepositoUpdate(str, Enum):
+    EM_REVISAO = "EM_REVISAO"
+    DEVOLVIDO_PARA_CORRECAO = "DEVOLVIDO_PARA_CORRECAO"
+    APROVADO = "APROVADO"
+    DEPOSITADO = "DEPOSITADO"
+
+
+class DepositoStatusUpdateRequest(BaseModel):
+    status: StatusDepositoUpdate

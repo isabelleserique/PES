@@ -123,6 +123,7 @@ model TCC {
   orientacao_sessoes OrientacaoSessao[]
   apresentacoes_artigo ApresentacaoArtigo[]
   banca Banca?
+  deposito_final DepositoFinal?
 
   @@unique([aluno_id, periodo_id])
   @@index([orientador_id])
@@ -278,4 +279,56 @@ model MembroBanca {
   @@unique([banca_id, papel])
 
   @@map("membros_banca")
+}
+
+enum StatusDeposito {
+  AGUARDANDO_ENVIO
+  EM_REVISAO
+  DEVOLVIDO_PARA_CORRECAO
+  APROVADO
+  DEPOSITADO
+}
+
+enum TipoDocumentoDeposito {
+  TCC_FINAL
+  ATA_DEFESA
+  TERMO_PUBLICACAO
+  NADA_CONSTA_BIBLIOTECA
+}
+
+model DepositoFinal {
+  id             String            @id @default(cuid())
+  tcc_id         String            @unique
+  status         StatusDeposito   @default(AGUARDANDO_ENVIO)
+  submetido_em   DateTime?
+  criado_em      DateTime          @default(now())
+  atualizado_em  DateTime          @updatedAt
+
+  tcc            TCC               @relation(fields: [tcc_id], references: [id], onDelete: Cascade)
+  documentos     DocumentoDeposito[]
+
+  @@index([status])
+  @@map("depositos_finais")
+}
+
+model DocumentoDeposito {
+  id                    String                  @id @default(cuid())
+  deposito_id           String
+  tipo_documento        TipoDocumentoDeposito
+
+  nome_original         String
+  caminho_original      String
+
+  mime_type             String?
+  tamanho_bytes         Int
+
+  caminho_preview_pdf   String?
+
+  criado_em             DateTime                @default(now())
+
+  deposito              DepositoFinal          @relation(fields: [deposito_id], references: [id], onDelete: Cascade)
+
+  @@unique([deposito_id, tipo_documento])
+  @@index([deposito_id])
+  @@map("documentos_deposito")
 }

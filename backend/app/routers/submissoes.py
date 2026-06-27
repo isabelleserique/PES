@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, File, Form, UploadFile, status
 from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 
+from typing import List
 from backend.app.api.deps import require_perfis
 from backend.app.db.models import UserRecord
 from backend.app.db.session import get_db_session
@@ -9,6 +10,9 @@ from backend.app.models.user import Perfil
 from backend.app.schemas.submissao import (
     ApresentacaoArtigoPayload,
     ApresentacaoArtigoResponse,
+    DepositoStatusUpdateRequest,
+    DepositoFinalCreateResponse,
+    DepositoFinalResponse,
     SubmissaoAtrasadaResponse,
     SubmissaoEntregavelCreateResponse,
     SubmissaoEntregavelResponse,
@@ -52,6 +56,38 @@ async def submeter_entregavel(
         arquivo=arquivo,
         foi_aceito=foi_aceito,
         comprovante=comprovante,
+    )
+
+@router.post(
+    "/deposito-final",
+    status_code=status.HTTP_201_CREATED,
+)
+async def submeter_deposito_final(
+    tcc_final: UploadFile = File(...),
+    ata_defesa: UploadFile = File(...),
+    termo_publicacao: UploadFile = File(...),
+    nada_consta_biblioteca: UploadFile = File(...),
+    session: Session = Depends(get_db_session),
+    submissao_service: SubmissaoService = Depends(get_submissao_service),
+    current_aluno: UserRecord = Depends(require_perfis(Perfil.ALUNO)),
+) -> DepositoFinalCreateResponse:
+
+    deposito = await submissao_service.submeter_deposito_final(
+        session=session,
+        current_user=current_aluno,
+        documentos={
+            "TCC_FINAL": tcc_final,
+            "ATA_DEFESA": ata_defesa,
+            "TERMO_PUBLICACAO": termo_publicacao,
+            "NADA_CONSTA_BIBLIOTECA": nada_consta_biblioteca,
+        },
+    )
+
+    return DepositoFinalCreateResponse(
+        id=deposito.id,
+        status=deposito.status,
+        mensagem="Depósito final enviado para revisão.",
+        submetido_em=deposito.submetido_em,
     )
 
 
@@ -192,4 +228,59 @@ async def listar_submissoes_orientador(
     return submissao_service.listar_historico_orientador(
         session=session,
         current_user=current_orientador,
+    )
+
+@router.get(
+    "/deposito-final",
+    status_code=status.HTTP_200_OK,
+)
+async def buscar_deposito_final(
+    session: Session = Depends(get_db_session),
+    submissao_service: SubmissaoService = Depends(get_submissao_service),
+    current_aluno: UserRecord = Depends(require_perfis(Perfil.ALUNO)),
+) -> DepositoFinalResponse:
+    return submissao_service.buscar_deposito_final(
+        session=session,
+        current_user=current_aluno,
+    )
+
+@router.get(
+    "/deposito-final/{documento_id}/preview",
+    status_code=status.HTTP_200_OK,
+)
+async def visualizar_preview_deposito(
+    documento_id: str,
+    session: Session = Depends(get_db_session),
+    submissao_service: SubmissaoService = Depends(get_submissao_service),
+    current_aluno: UserRecord = Depends(require_perfis(Perfil.ALUNO)),
+) -> FileResponse:
+
+    preview = submissao_service.get_preview_deposito(
+        session=session,
+        current_user=current_aluno,
+        documento_id=documento_id,
+    )
+
+    return FileResponse(
+        path=preview,
+        media_type="application/pdf",
+        filename=preview.name,
+        content_disposition_type="inline",
+    )
+@router.patch(
+    "/deposito-final/{deposito_id}/status",
+    status_code=status.HTTP_200_OK,
+)
+async def atualizar_status_deposito_final(
+    deposito_id: str,
+    payload: DepositoStatusUpdateRequest,
+    session: Session = Depends(get_db_session),
+    submissao_service: SubmissaoService = Depends(get_submissao_service),
+    current_coordenador: UserRecord = Depends(require_perfis(Perfil.COORDENADOR)),
+):
+    return submissao_service.atualizar_status_deposito_final(
+        session=session,
+        current_user=current_coordenador,
+        deposito_id=deposito_id,
+        status=payload.status,
     )

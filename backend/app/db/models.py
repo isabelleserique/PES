@@ -19,6 +19,25 @@ TIPO_TCC_ENUM = Enum(
     validate_strings=True,
 )
 
+STATUS_DEPOSITO_ENUM = Enum(
+    "AGUARDANDO_ENVIO",
+    "EM_REVISAO",
+    "DEVOLVIDO_PARA_CORRECAO",
+    "APROVADO",
+    "DEPOSITADO",
+    name="StatusDeposito",
+    validate_strings=True,
+)
+
+TIPO_DOCUMENTO_DEPOSITO_ENUM = Enum(
+    "TCC_FINAL",
+    "ATA_DEFESA",
+    "TERMO_PUBLICACAO",
+    "NADA_CONSTA_BIBLIOTECA",
+    name="TipoDocumentoDeposito",
+    validate_strings=True,
+)
+
 
 class UserRecord(Base):
     __tablename__ = "users"
@@ -168,6 +187,11 @@ class TCCRecord(Base):
     banca: Mapped[Optional["BancaRecord"]] = relationship(
         back_populates="tcc",
         uselist=False
+    )
+    deposito_final: Mapped[Optional["DepositoFinalRecord"]] = relationship(
+        back_populates="tcc",
+        uselist=False,
+        cascade="all, delete-orphan",
     )
 
 
@@ -320,6 +344,115 @@ class PasswordResetTokenRecord(Base):
         nullable=False,
     )
 
+class DepositoFinalRecord(Base):
+    __tablename__ = "depositos_finais"
+
+    id: Mapped[str] = mapped_column(String, primary_key=True)
+
+    tcc_id: Mapped[str] = mapped_column(
+        String,
+        ForeignKey("tccs.id", ondelete="CASCADE"),
+        nullable=False,
+        unique=True,
+        index=True,
+    )
+
+    status: Mapped[str] = mapped_column(
+        STATUS_DEPOSITO_ENUM,
+        nullable=False,
+        default="AGUARDANDO_ENVIO",
+    )
+
+    submetido_em: Mapped[Optional[datetime]] = mapped_column(
+        DateTime(timezone=False),
+        nullable=True,
+    )
+
+    criado_em: Mapped[datetime] = mapped_column(
+        DateTime(timezone=False),
+        server_default=func.now(),
+        nullable=False,
+    )
+
+    atualizado_em: Mapped[datetime] = mapped_column(
+        DateTime(timezone=False),
+        server_default=func.now(),
+        onupdate=func.now(),
+        nullable=False,
+    )
+
+    tcc: Mapped[TCCRecord] = relationship(
+        back_populates="deposito_final"
+    )
+
+    documentos: Mapped[list["DocumentoDepositoRecord"]] = relationship(
+        back_populates="deposito",
+        cascade="all, delete-orphan",
+    )
+
+
+class DocumentoDepositoRecord(Base):
+    __tablename__ = "documentos_deposito"
+
+    id: Mapped[str] = mapped_column(
+        String,
+        primary_key=True,
+    )
+
+    deposito_id: Mapped[str] = mapped_column(
+        String,
+        ForeignKey("depositos_finais.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+
+    tipo_documento: Mapped[str] = mapped_column(
+        TIPO_DOCUMENTO_DEPOSITO_ENUM,
+        nullable=False,
+    )
+
+    nome_original: Mapped[str] = mapped_column(
+        String,
+        nullable=False,
+    )
+
+    caminho_original: Mapped[str] = mapped_column(
+        String,
+        nullable=False,
+    )
+
+    mime_type: Mapped[Optional[str]] = mapped_column(
+        String,
+        nullable=True,
+    )
+
+    tamanho_bytes: Mapped[int] = mapped_column(
+        Integer,
+        nullable=False,
+    )
+
+    caminho_preview_pdf: Mapped[Optional[str]] = mapped_column(
+        String,
+        nullable=True,
+    )
+
+    criado_em: Mapped[datetime] = mapped_column(
+        DateTime(timezone=False),
+        server_default=func.now(),
+        nullable=False,
+    )
+
+    deposito: Mapped[DepositoFinalRecord] = relationship(
+        back_populates="documentos"
+    )
+
+    __table_args__ = (
+        UniqueConstraint(
+            "deposito_id",
+            "tipo_documento",
+            name="uq_documento_deposito_tipo",
+        ),
+    )
 
 class AuditLogRecord(Base):
     __tablename__ = "audit_logs"

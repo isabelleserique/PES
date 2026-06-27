@@ -3,9 +3,11 @@ from __future__ import annotations
 import re
 import unicodedata
 from dataclasses import dataclass
-from datetime import date
+from datetime import date, datetime
 from pathlib import Path
 from uuid import uuid4
+import shutil
+import subprocess
 
 from fastapi import HTTPException, UploadFile, status
 from sqlalchemy import func, select
@@ -14,6 +16,8 @@ from sqlalchemy.orm import Session, selectinload
 from backend.app.core.config import Settings, get_settings
 from backend.app.db.models import (
     ApresentacaoArtigoRecord,
+    DepositoFinalRecord,
+    DocumentoDepositoRecord,
     PeriodoLetivoRecord,
     PrazoEtapaRecord,
     SubmissaoEntregavelRecord,
@@ -25,10 +29,14 @@ from backend.app.models.user import Perfil
 from backend.app.schemas.submissao import (
     ApresentacaoArtigoPayload,
     ApresentacaoArtigoResponse,
+    DepositoFinalCreateResponse,
+    DepositoFinalResponse,
+    DocumentoDepositoResponse,
     SubmissaoAtrasadaResponse,
     SubmissaoEntregavelCreateResponse,
     SubmissaoEntregavelResponse,
     SubmissaoHistoricoResponse,
+    StatusDepositoUpdate,
 )
 from backend.app.services.audit_service import AuditService
 
@@ -46,6 +54,14 @@ INVALID_COMPROVANTE_FILE_DETAIL = "Comprovante deve estar nos formatos PDF, DOCX
 MAX_FILE_SIZE_BYTES = 50 * 1024 * 1024
 DELIVERABLE_EXTENSIONS = {".pdf", ".docx"}
 PROOF_EXTENSIONS = {".pdf", ".docx", ".jpg", ".jpeg", ".png"}
+DEPOSITO_EXTENSIONS = {".pdf", ".docx"}
+
+DOCUMENTOS_OBRIGATORIOS_DEPOSITO = {
+    "TCC_FINAL",
+    "ATA_DEFESA",
+    "TERMO_PUBLICACAO",
+    "NADA_CONSTA_BIBLIOTECA",
+}
 
 ETAPAS_BY_TIPO: dict[TipoTCC, tuple[str, ...]] = {
     TipoTCC.MONOGRAFIA: (
@@ -317,6 +333,251 @@ class SubmissaoService:
             mensagem="Entregavel submetido com sucesso.",
             nota_automatica=submissao.nota_automatica,
         )
+    
+    async def submeter_deposito_final(
+        self,
+        *,
+        session: Session,
+        current_user: UserRecord,
+        documentos: dict[str, UploadFile],
+    ) -> DepositoFinalRecord:
+
+        tcc = self._get_active_tcc(
+            session=session,
+            current_user=current_user,
+            raise_if_missing=True,
+        )
+
+        deposito_existente = session.scalar(
+            select(DepositoFinalRecord).where(
+                DepositoFinalRecord.tcc_id == tcc.id
+            )
+        )
+
+        if deposito_existente is not None:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Já existe um depósito final para este TCC.",
+            )
+
+        if tcc is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=NO_ACTIVE_TCC_DETAIL,
+            )
+
+        if not DOCUMENTOS_OBRIGATORIOS_DEPOSITO.issubset(set(documentos.keys())):
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="Todos os documentos obrigatórios devem ser enviados.",
+        )
+
+        deposito = DepositoFinalRecord(
+            id=str(uuid4()),
+            tcc_id=tcc.id,
+            status="EM_REVISAO",
+            submetido_em=datetime.now(),
+            atualizado_em=datetime.now(),
+        )
+
+        session.add(deposito)
+        session.flush()
+
+        base_dir = (
+            self.settings.upload_dir
+            / "submissoes"
+            / "depositos-finais"
+            / tcc.id
+        )
+
+        base_dir.mkdir(
+            parents=True,
+            exist_ok=True,
+        )
+
+        for tipo_documento, documento in documentos.items():
+
+            arquivo_bytes = await self._read_and_validate_file(
+                upload=documento,
+                allowed_extensions=DEPOSITO_EXTENSIONS,
+                invalid_detail=INVALID_FILE_DETAIL,
+            )
+
+            nome_original = Path(documento.filename or "arquivo").name
+
+            arquivo_path = (
+                base_dir
+                / f"{uuid4().hex}-{nome_original}"
+            )
+
+            arquivo_path.write_bytes(arquivo_bytes)
+
+            preview_path = None
+
+            if arquivo_path.suffix.lower() == ".docx":
+                preview_path = self._converter_docx_para_pdf(
+                    arquivo_path
+                )
+
+            documento_record = DocumentoDepositoRecord(
+                id=str(uuid4()),
+                deposito_id=deposito.id,
+                tipo_documento=tipo_documento,
+                nome_original=nome_original,
+                caminho_original=str(arquivo_path),
+                mime_type=documento.content_type,
+                tamanho_bytes=len(arquivo_bytes),
+                caminho_preview_pdf=(
+                    str(preview_path)
+                    if preview_path is not None
+                    else str(arquivo_path)
+                ),
+            )
+
+            session.add(documento_record)
+
+        session.commit()
+        session.refresh(deposito)
+
+        return deposito
+
+    def buscar_deposito_final(
+        self,
+        *,
+        session: Session,
+        current_user: UserRecord,
+    ) -> DepositoFinalResponse:
+
+        tcc = self._get_active_tcc(
+            session=session,
+            current_user=current_user,
+            raise_if_missing=True,
+        )
+
+        deposito = session.scalar(
+            select(DepositoFinalRecord)
+            .options(
+                selectinload(
+                    DepositoFinalRecord.documentos
+                )
+            )
+            .where(
+                DepositoFinalRecord.tcc_id == tcc.id
+            )
+        )
+
+        if deposito is None:
+            return DepositoFinalResponse(
+            id="",
+            tcc_id=tcc.id,
+            status="AGUARDANDO_ENVIO",
+            submetido_em=None,
+            documentos=[],
+        )
+
+        documentos = [
+            DocumentoDepositoResponse(
+                id=documento.id,
+                tipo_documento=documento.tipo_documento,
+                nome_original=documento.nome_original,
+                mime_type=documento.mime_type,
+                tamanho_bytes=documento.tamanho_bytes,
+                possui_preview=documento.caminho_preview_pdf is not None,
+            )
+            for documento in deposito.documentos
+        ]
+
+        return DepositoFinalResponse(
+            id=deposito.id,
+            tcc_id=deposito.tcc_id,
+            status=deposito.status,
+            submetido_em=deposito.submetido_em,
+            documentos=documentos,
+        )
+
+
+    def get_preview_deposito(
+        self,
+        *,
+        session: Session,
+        current_user: UserRecord,
+        documento_id: str,
+    ) -> Path:
+
+        documento = session.scalar(
+            select(DocumentoDepositoRecord)
+            .join(
+                DepositoFinalRecord,
+                DepositoFinalRecord.id == DocumentoDepositoRecord.deposito_id,
+            )
+            .join(
+                TCCRecord,
+                TCCRecord.id == DepositoFinalRecord.tcc_id,
+            )
+            .where(
+                DocumentoDepositoRecord.id == documento_id,
+                TCCRecord.aluno_id == current_user.id,
+            )
+        )
+
+        if documento is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Documento não encontrado.",
+            )
+
+
+        preview = Path(
+            documento.caminho_preview_pdf
+            or documento.caminho_original
+        )
+
+
+        if not preview.exists():
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Arquivo de preview não encontrado.",
+            )
+
+
+        return preview
+
+    def atualizar_status_deposito_final(
+        self,
+        *,
+        session: Session,
+        current_user: UserRecord,
+        deposito_id: str,
+        status: StatusDepositoUpdate,
+    ) -> DepositoFinalRecord:
+        deposito = session.scalar(
+            select(DepositoFinalRecord)
+            .join(TCCRecord, TCCRecord.id == DepositoFinalRecord.tcc_id)
+            .where(DepositoFinalRecord.id == deposito_id)
+        )
+
+        if deposito is None:
+            return DepositoFinalResponse(
+                id="",
+                tcc_id=tcc.id,
+                status="AGUARDANDO_ENVIO",
+                submetido_em=None,
+                documentos=[],
+            )
+
+        if current_user.perfil != Perfil.COORDENADOR:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Apenas coordenadores podem atualizar o status do depósito.",
+            )
+
+        deposito.status = status.value
+
+        session.commit()
+        session.refresh(deposito)
+
+        return deposito
+
 
     def _get_active_tcc(
         self,
@@ -390,6 +651,78 @@ class SubmissaoService:
                 detail="Arquivo excede o limite de 50 MB.",
             )
         return content
+
+    def _identificar_tipo_documento(self, filename: str) -> str:
+        nome = self._normalize_text(Path(filename).stem)
+
+        if "ata" in nome and "defesa" in nome:
+            return "ATA_DEFESA"
+
+        if "publicacao" in nome or "publicacao" in nome:
+            return "TERMO_PUBLICACAO"
+
+        if "nada" in nome and "consta" in nome:
+            return "NADA_CONSTA_BIBLIOTECA"
+
+        if "tcc" in nome or "monografia" in nome or "artigo" in nome:
+            return "TCC_FINAL"
+
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=f"Não foi possível identificar o tipo do documento: {filename}",
+        )
+
+
+    def _converter_docx_para_pdf(self, arquivo_docx: Path) -> Path:
+        output_dir = arquivo_docx.parent
+
+        try:
+            result = subprocess.run(
+                [
+                    "libreoffice",
+                    "--headless",
+                    "--convert-to",
+                    "pdf",
+                    "--outdir",
+                    str(output_dir),
+                    str(arquivo_docx),
+                ],
+                check=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                timeout=60,
+            )
+
+        except subprocess.CalledProcessError as exc:
+            raise HTTPException(
+                status_code=500,
+                detail=f"Erro ao converter DOCX para PDF: {exc.stderr.decode(errors='ignore')}",
+            ) from exc
+
+        pdf_path = arquivo_docx.with_suffix(".pdf")
+
+        if not pdf_path.exists():
+            raise HTTPException(
+                status_code=500,
+                detail="Preview PDF não foi gerado.",
+            )
+
+        return pdf_path
+
+
+    def _validar_documentos_obrigatorios(
+        self,
+        documentos: list[DocumentoDepositoRecord],
+    ) -> bool:
+
+        tipos_recebidos = {
+            documento.tipo_documento
+            for documento in documentos
+        }
+
+        return DOCUMENTOS_OBRIGATORIOS_DEPOSITO.issubset(
+            tipos_recebidos
+        )
 
     def _write_file(self, *, base_dir: Path, upload: UploadFile, content: bytes, prefix: str) -> Path:
         filename = self._safe_filename(upload.filename or prefix)
