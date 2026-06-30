@@ -6,6 +6,7 @@
     </div>
     <div class="navbar-sep"></div>
     <span class="navbar-app-name">TCComp</span>
+    <app-painel-nav></app-painel-nav>
     <span class="or-navbar-spacer"></span>
     <button mat-stroked-button type="button" class="or-logout-btn" (click)="logout()">Sair</button>
   </nav>
@@ -18,14 +19,6 @@
         <p class="or-subtitle">
           Acompanhe solicitações de orientação, cronogramas por orientando e alertas de prazo.
         </p>
-      </div>
-      <div class="or-hero-actions">
-        <a mat-raised-button class="or-btn-primary" routerLink="/painel/aceite-orientacao">Aceites pendentes</a>
-        <a mat-stroked-button routerLink="/painel/registrar-sessao">Registrar sessão</a>
-        <a mat-stroked-button routerLink="/painel/registrar-banca">Registrar banca</a>
-        <a mat-stroked-button routerLink="/painel/prazos-periodo">Ver prazos</a>
-        <a mat-stroked-button routerLink="/painel/notificacoes">Notificações</a>
-        <a mat-stroked-button routerLink="/painel/historico-submissoes">Histórico de submissões</a>
       </div>
     </header>
 
@@ -65,7 +58,7 @@
       <section class="or-card" *ngIf="hasPendingRequests; else semSolicitacoesPendentes">
         <div class="or-card-header">
           <div>
-            <span class="or-card-label">US009</span>
+            <span class="or-card-label">Solicitações</span>
             <h2 class="or-card-title">Solicitações pendentes de orientação</h2>
           </div>
           <span class="or-badge or-badge--soft">{{ pendingRequests.length }} pendente(s)</span>
@@ -127,7 +120,7 @@
       <section class="or-card or-card--accent">
         <div class="or-card-header">
           <div>
-            <span class="or-card-label">US007</span>
+            <span class="or-card-label">Cronograma</span>
             <h2 class="or-card-title">Cronograma do período {{ cronograma?.periodo?.nome }}</h2>
           </div>
           <span class="or-badge or-badge--soft">{{ orientandosVisiveis.length }} orientando(s)</span>
@@ -206,7 +199,7 @@
         <section class="or-card">
           <div class="or-card-header">
             <div>
-              <span class="or-card-label">US009</span>
+              <span class="or-card-label">Solicitações</span>
               <h2 class="or-card-title">Solicitações pendentes de orientação</h2>
             </div>
           </div>

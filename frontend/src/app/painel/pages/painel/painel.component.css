@@ -44,13 +44,6 @@
   line-height: 1.6;
 }
 
-.coord-hero-actions,
-.coord-action-grid {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-}
-
 .coord-card {
   background: rgba(255, 255, 255, 0.96);
   border: 1px solid rgba(13, 33, 55, 0.08);

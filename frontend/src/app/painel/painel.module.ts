@@ -2,6 +2,7 @@ import { NgModule } from '@angular/core';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatNativeDateModule } from '@angular/material/core';
 import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatMenuModule } from '@angular/material/menu';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatStepperModule } from '@angular/material/stepper';
@@ -62,6 +63,7 @@ import { PainelRoutingModule } from './painel-routing.module';
     MatDatepickerModule,
     MatNativeDateModule,
     MatCheckboxModule,
+    MatMenuModule,
     MatSelectModule,
     MatStepperModule,
     MatSlideToggleModule,

@@ -58,7 +58,7 @@ export class HistoricoSubmissoesComponent implements OnInit {
   }
 
   get pageScopeLabel(): string {
-    return this.perfil === 'ORIENTADOR' ? 'US016 - Orientador' : 'US016 - Coordenador';
+    return this.perfil === 'ORIENTADOR' ? 'Orientador' : 'Coordenador';
   }
 
   get pageSubtitle(): string {

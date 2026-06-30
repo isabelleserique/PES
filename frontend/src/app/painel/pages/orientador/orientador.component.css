@@ -44,12 +44,6 @@
   line-height: 1.6;
 }
 
-.or-hero-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-}
-
 .or-card {
   background: rgba(255, 255, 255, 0.96);
   border: 1px solid rgba(13, 33, 55, 0.08);

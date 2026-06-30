@@ -6,6 +6,7 @@
     </div>
     <div class="navbar-sep"></div>
     <span class="navbar-app-name">TCComp</span>
+    <app-painel-nav></app-painel-nav>
     <span class="admin-navbar-spacer"></span>
     <button mat-stroked-button type="button" class="admin-logout-btn" (click)="logout()">Sair</button>
   </nav>
@@ -18,9 +19,6 @@
         <p class="admin-subtitle">
           Área reservada para logs do sistema e futuras features de segurança.
         </p>
-      </div>
-      <div class="admin-hero-actions">
-        <a mat-raised-button class="admin-btn-primary" routerLink="/painel/logs-sistema">Logs do sistema</a>
       </div>
     </header>
 
@@ -55,17 +53,5 @@
       </div>
     </section>
 
-    <section class="admin-card admin-card--accent" *ngIf="!isLoading">
-      <div class="admin-card-header">
-        <div>
-          <span class="admin-card-label">Segurança</span>
-          <h2 class="admin-card-title">Ações administrativas</h2>
-        </div>
-      </div>
-
-      <div class="admin-action-grid">
-        <a mat-raised-button class="admin-btn-primary" routerLink="/painel/logs-sistema">Consultar logs do sistema</a>
-      </div>
-    </section>
   </main>
 </div>

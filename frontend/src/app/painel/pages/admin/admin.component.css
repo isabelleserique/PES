@@ -43,28 +43,12 @@
   margin: 0;
 }
 
-.admin-hero-actions,
-.admin-action-grid {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-}
-
-.admin-btn-primary {
-  background: #0d2137 !important;
-  color: #fff !important;
-}
-
 .admin-card {
   background: #fff;
   border: 1px solid #e2e8f0;
   border-radius: 18px;
   box-shadow: 0 18px 44px rgba(13, 33, 55, 0.08);
   padding: 24px;
-}
-
-.admin-card--accent {
-  background: linear-gradient(135deg, #f8fbff 0%, #eef6ff 100%);
 }
 
 .admin-card-header {

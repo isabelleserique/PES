@@ -3,6 +3,7 @@ import { Component, OnInit } from '@angular/core';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { ActivatedRoute } from '@angular/router';
 
+import { AuthService } from '../../../auth/services/auth.service';
 import { getApiErrorMessage } from '../../../auth/utils/api-error.util';
 import { PublicoService, TccPublicoDetalhe } from '../../services/publico.service';
 
@@ -16,13 +17,19 @@ export class DetalheTccComponent implements OnInit {
   errorMessage = '';
   tcc: TccPublicoDetalhe | null = null;
   safePreviewUrl: SafeResourceUrl | null = null;
+  readonly isAuthenticated: boolean;
+  readonly painelRoute: string[];
 
   constructor(
     private readonly location: Location,
     private readonly route: ActivatedRoute,
+    private readonly authService: AuthService,
     private readonly publicoService: PublicoService,
     private readonly sanitizer: DomSanitizer,
-  ) {}
+  ) {
+    this.isAuthenticated = this.authService.isAuthenticated();
+    this.painelRoute = this.authService.getPostLoginRoute();
+  }
 
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id');

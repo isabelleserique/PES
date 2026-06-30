@@ -6,6 +6,7 @@
     </div>
     <div class="navbar-sep"></div>
     <span class="navbar-app-name">TCComp</span>
+    <app-painel-nav></app-painel-nav>
     <span class="al-navbar-spacer"></span>
     <button mat-stroked-button type="button" class="al-logout-btn" (click)="logout()">Sair</button>
   </nav>
@@ -18,15 +19,6 @@
         <p class="al-subtitle">
           Acompanhe sua formalização de TCC, orientador e prazos do período letivo atual.
         </p>
-      </div>
-      <div class="al-hero-actions">
-        <a mat-raised-button class="al-btn-primary" routerLink="/painel/definir-tcc">Definir TCC</a>
-        <a mat-stroked-button routerLink="/painel/submeter-entregaveis" *ngIf="meuTcc">Submeter entregáveis</a>
-        <a mat-stroked-button routerLink="/painel/submeter-versao-final" *ngIf="meuTcc">Versão final</a>
-        <a mat-stroked-button routerLink="/painel/status-deposito" *ngIf="meuTcc">Status do depósito</a>
-        <a mat-stroked-button routerLink="/painel/prazos-periodo">Ver prazos</a>
-        <a mat-stroked-button routerLink="/painel/notificacoes">Notificações</a>
-        <a mat-stroked-button routerLink="/painel/privacidade">Privacidade</a>
       </div>
     </header>
 
@@ -70,7 +62,7 @@
       <section class="al-card al-card--accent">
         <div class="al-card-header">
           <div>
-            <span class="al-card-label">US008</span>
+            <span class="al-card-label">Formalização</span>
             <h2 class="al-card-title">Formalização do TCC</h2>
           </div>
           <span class="al-badge al-badge--soft">{{ meuTcc ? meuTcc.status : 'SEM ENVIO' }}</span>
@@ -154,7 +146,7 @@
       <section class="al-card" *ngIf="meuTcc">
         <div class="al-card-header">
           <div>
-            <span class="al-card-label">US017</span>
+            <span class="al-card-label">Orientação</span>
             <h2 class="al-card-title">Sessões de orientação</h2>
           </div>
           <span class="al-badge al-badge--soft">{{ sessoesOrientacao.length }} registro(s)</span>
@@ -190,7 +182,7 @@
       <section class="al-card" *ngIf="cronogramaAluno as cronogramaAlunoData">
         <div class="al-card-header">
           <div>
-            <span class="al-card-label">US007</span>
+            <span class="al-card-label">Cronograma</span>
             <h2 class="al-card-title">Cronograma do período {{ cronograma?.periodo?.nome }}</h2>
           </div>
           <span class="al-badge al-badge--soft">{{ cronogramaAlunoData.tipo_tcc || 'Prazos gerais' }}</span>

@@ -14,6 +14,11 @@
       </div>
     </div>
     <div class="form-panel">
+      <div class="auth-public-links" aria-label="Navegação pública">
+        <a routerLink="/consultor-externo">Home</a>
+        <a routerLink="/consultor-externo" fragment="biblioteca">Consultor externo</a>
+      </div>
+
       <form [formGroup]="form" (ngSubmit)="submit()" class="form-gap">
         <p class="status-message status-message--error" *ngIf="errorMessage">{{ errorMessage }}</p>
         <p class="status-message status-message--success" *ngIf="successMessage">{{ successMessage }}</p>

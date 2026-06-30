@@ -1,14 +1,33 @@
-<nav class="painel-nav" *ngIf="links.length > 0">
+<div class="painel-nav" *ngIf="links.length > 0">
   <div class="painel-nav__links">
     <a
-      *ngFor="let link of links"
+      *ngFor="let link of primaryLinks"
       class="painel-nav__link"
       [routerLink]="link.path"
       routerLinkActive="painel-nav__link--active"
       [routerLinkActiveOptions]="{ exact: false }">
-      {{ link.label }}
+      <span class="painel-nav__label">{{ link.label }}</span>
+      <span class="painel-nav__short-label">{{ link.shortLabel || link.label }}</span>
     </a>
+
+    <button
+      *ngIf="overflowLinks.length > 0"
+      mat-button
+      type="button"
+      class="painel-nav__link painel-nav__more-trigger"
+      [matMenuTriggerFor]="maisMenu">
+      Mais
+    </button>
+
+    <mat-menu #maisMenu="matMenu" xPosition="before" yPosition="below">
+      <a
+        mat-menu-item
+        *ngFor="let link of overflowLinks"
+        [routerLink]="link.path">
+        {{ link.label }}
+      </a>
+    </mat-menu>
   </div>
 
   <span class="painel-nav__perfil">{{ perfilLabel }}</span>
-</nav>
+</div>

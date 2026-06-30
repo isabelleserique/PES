@@ -28,7 +28,9 @@ export class LoginComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.authService.clearSession();
+    if (this.authService.isAuthenticated()) {
+      void this.router.navigate(this.authService.getPostLoginRoute());
+    }
   }
 
   submit(): void {
