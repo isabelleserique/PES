@@ -274,6 +274,14 @@
   letter-spacing: -0.06em;
 }
 
+.bt-prof-photo img {
+  display: block;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  width: 100%;
+}
+
 .bt-prof-body {
   padding: 22px;
 }
@@ -282,6 +290,24 @@
   color: #1f6f5e;
   display: block;
   margin: 8px 0;
+}
+
+.bt-prof-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  margin-top: 12px;
+}
+
+.bt-prof-links a {
+  color: #b45309;
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.bt-prof-links a:hover {
+  text-decoration: underline;
 }
 
 .bt-prof-tags,

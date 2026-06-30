@@ -103,18 +103,30 @@
         <span class="bt-card-label">Professores disponíveis</span>
         <h2 id="professores-title">Linhas de orientação</h2>
         <p>
-          Conteúdo estático inicial para vitrine de orientadores. Depois você pode substituir nomes,
-          fotos, objetos de estudo e descrições pelos dados oficiais.
+          Dados públicos do corpo docente do IComp/UFAM, com linhas de pesquisa, temas de interesse,
+          contato institucional e currículo Lattes.
         </p>
       </div>
 
       <div class="bt-prof-grid">
         <article class="bt-prof-card" *ngFor="let professor of professores">
-          <div class="bt-prof-photo" aria-hidden="true">{{ professor.foto }}</div>
+          <div class="bt-prof-photo">
+            <img
+              *ngIf="professor.fotoUrl; else fotoFallback"
+              [src]="professor.fotoUrl"
+              [alt]="professor.nome"
+              loading="lazy"
+            >
+            <ng-template #fotoFallback>{{ professor.foto }}</ng-template>
+          </div>
           <div class="bt-prof-body">
             <h3>{{ professor.nome }}</h3>
             <strong>{{ professor.titulo }}</strong>
             <p>{{ professor.descricao }}</p>
+            <div class="bt-prof-links">
+              <a [href]="'mailto:' + professor.email">{{ professor.email }}</a>
+              <a [href]="professor.lattes" target="_blank" rel="noopener noreferrer">Lattes</a>
+            </div>
             <div class="bt-prof-tags">
               <span *ngFor="let objeto of professor.objetosEstudo">{{ objeto }}</span>
             </div>
