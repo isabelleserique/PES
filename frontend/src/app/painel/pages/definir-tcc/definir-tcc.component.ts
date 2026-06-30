@@ -42,6 +42,7 @@ export class DefinirTccComponent implements OnInit {
   readonly step1Form = this.fb.nonNullable.group({
     titulo: ['', [Validators.required, Validators.minLength(3)]],
     tipoDeTCC: ['Artigo Científico', Validators.required],
+    area_tematica: [''],
     resumo: ['', Validators.required],
   });
 
@@ -293,6 +294,7 @@ export class DefinirTccComponent implements OnInit {
       this.step1Form.reset({
         titulo: '',
         tipoDeTCC: 'Artigo Científico',
+        area_tematica: '',
         resumo: '',
       });
       this.step2Form.reset({ orientadorId: '' });
@@ -305,7 +307,8 @@ export class DefinirTccComponent implements OnInit {
     this.step1Form.reset({
       titulo: tcc.titulo,
       tipoDeTCC: TIPO_TCC_LABEL_BY_VALUE[tcc.tipo_tcc],
-      resumo: '',
+      area_tematica: tcc.area_tematica ?? '',
+      resumo: tcc.resumo ?? '',
     });
     this.step2Form.reset({ orientadorId: tcc.orientador_id });
     this.step3Form.reset({ coorientadorId: tcc.coorientador_id ?? '' });
@@ -322,6 +325,9 @@ export class DefinirTccComponent implements OnInit {
       titulo: step1.titulo.trim(),
       tipo_tcc: TIPO_TCC_BY_LABEL[step1.tipoDeTCC],
       orientador_id: step2.orientadorId,
+      resumo: step1.resumo.trim(),
+      curso: 'Ciência da Computação',
+      ...(step1.area_tematica.trim() ? { area_tematica: step1.area_tematica.trim() } : {}),
       ...(step3.coorientadorId ? { coorientador_id: step3.coorientadorId } : {}),
     };
   }

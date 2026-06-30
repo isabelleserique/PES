@@ -22,6 +22,7 @@ import { PainelRedirectComponent } from './pages/redirect/redirect.component';
 import { PainelOrientadorComponent } from './pages/orientador/orientador.component';
 import { SubmissoesAtrasadasComponent } from './pages/submissoes-atrasadas/submissoes-atrasadas.component';
 import { SubmeterArtigoComponent } from './pages/submeter-artigo/submeter-artigo.component';
+import { VisaoGeralComponent } from './pages/visao-geral/visao-geral.component';
 import { PainelRoutingModule } from './painel-routing.module';
 
 @NgModule({
@@ -42,6 +43,7 @@ import { PainelRoutingModule } from './painel-routing.module';
     RegistrarApresentacaoComponent,
     SubmissoesAtrasadasComponent,
     LogsSistemaComponent,
+    VisaoGeralComponent,
   ],
   imports: [
     SharedModule,

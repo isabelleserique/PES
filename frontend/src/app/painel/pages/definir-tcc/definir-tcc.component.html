@@ -65,6 +65,11 @@
             </div>
 
             <mat-form-field appearance="outline" class="dt-field-full">
+              <mat-label>Área temática</mat-label>
+              <input matInput formControlName="area_tematica" placeholder="Ex: Inteligência Artificial, Engenharia de Software" />
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="dt-field-full">
               <mat-label>3. Resumo do Tema</mat-label>
               <textarea matInput formControlName="resumo" rows="5"></textarea>
               <mat-error *ngIf="step1Form.controls['resumo'].hasError('required')">Campo obrigatório</mat-error>
@@ -198,6 +203,10 @@
               <div class="dt-review-item dt-review-item--full">
                 <span class="dt-review-label">Resumo do Tema</span>
                 <span class="dt-review-value">{{ step1Form.value.resumo }}</span>
+              </div>
+              <div class="dt-review-item" *ngIf="step1Form.value.area_tematica">
+                <span class="dt-review-label">Área temática</span>
+                <span class="dt-review-value">{{ step1Form.value.area_tematica }}</span>
               </div>
               <div class="dt-review-item">
                 <span class="dt-review-label">Orientador</span>

@@ -103,6 +103,29 @@ class EmailService:
             f"Aluno: {aluno_nome}\n"
         )
 
+    def build_deadline_notification_body(
+        self,
+        *,
+        aluno_nome: str,
+        titulo: str,
+        etapa: str,
+        data_limite: str,
+        tipo_alerta: str,
+    ) -> str:
+        mensagens = {
+            "A_VENCER": "O prazo de entrega está se aproximando.",
+            "VENCE_HOJE": "O prazo de entrega vence hoje.",
+            "VENCIDO": "O prazo de entrega venceu e ainda não há submissão registrada.",
+        }
+        return (
+            f"Ola, {aluno_nome}!\n\n"
+            f"{mensagens.get(tipo_alerta, 'Ha uma atualizacao sobre um prazo do seu TCC.')}\n\n"
+            f"TCC: {titulo}\n"
+            f"Etapa: {etapa}\n"
+            f"Data limite: {data_limite}\n\n"
+            "Acesse o TCComp para acompanhar o cronograma e realizar a submissao quando aplicavel.\n"
+        )
+
     def send_email(self, to_email: str, subject: str, body: str) -> None:
         if not self.settings.smtp_user or not self.settings.smtp_pass:
             raise ValueError("SMTP_USER e SMTP_PASS precisam estar configurados.")
@@ -277,6 +300,41 @@ class EmailService:
             self.send_email(to_email=to_email, subject=subject, body=body)
         except Exception:
             logger.exception("Falha ao enviar decisao de orientacao para %s", to_email)
+            return False
+
+        return True
+
+    def send_deadline_notification(
+        self,
+        *,
+        to_email: str,
+        aluno_nome: str,
+        titulo: str,
+        etapa: str,
+        data_limite: str,
+        tipo_alerta: str,
+    ) -> bool:
+        subjects = {
+            "A_VENCER": "Prazo de TCC se aproximando",
+            "VENCE_HOJE": "Prazo de TCC vence hoje",
+            "VENCIDO": "Prazo de TCC vencido",
+        }
+        body = self.build_deadline_notification_body(
+            aluno_nome=aluno_nome,
+            titulo=titulo,
+            etapa=etapa,
+            data_limite=data_limite,
+            tipo_alerta=tipo_alerta,
+        )
+
+        try:
+            self.send_email(
+                to_email=to_email,
+                subject=subjects.get(tipo_alerta, "Alerta de prazo de TCC"),
+                body=body,
+            )
+        except Exception:
+            logger.exception("Falha ao enviar alerta de prazo para %s", to_email)
             return False
 
         return True

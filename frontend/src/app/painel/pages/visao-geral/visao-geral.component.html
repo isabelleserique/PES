@@ -1,0 +1,134 @@
+<div class="app-shell">
+  <nav class="app-navbar">
+    <div class="navbar-brand">
+      <div class="logo-badge">IC</div>
+      <span class="logo-name">IComp</span>
+    </div>
+    <div class="navbar-sep"></div>
+    <span class="navbar-app-name">TCComp</span>
+    <span class="vg-navbar-spacer"></span>
+    <a mat-stroked-button class="vg-nav-btn" routerLink="/painel/coordenador">Home</a>
+    <button mat-stroked-button type="button" class="vg-nav-btn" (click)="voltar()">Voltar</button>
+  </nav>
+
+  <main class="app-page-content vg-page">
+    <header class="vg-hero">
+      <div>
+        <span class="vg-eyebrow">US020</span>
+        <h1>Visão geral do período letivo</h1>
+        <p>
+          Acompanhe total de alunos, situação por tipo de TCC, orientações pendentes, prazos vencidos e depósito na biblioteca.
+        </p>
+      </div>
+      <div class="vg-period-badge" *ngIf="dados">
+        <span>Período ativo</span>
+        <strong>{{ dados.periodo.nome }}</strong>
+      </div>
+    </header>
+
+    <p class="status-message status-message--error" role="alert" *ngIf="errorMessage">{{ errorMessage }}</p>
+
+    <section class="vg-card" *ngIf="isLoading">
+      <p class="vg-empty">Carregando visão geral do período...</p>
+    </section>
+
+    <ng-container *ngIf="!isLoading && !errorMessage && dados as d">
+      <section class="vg-stats-grid" aria-label="Resumo do período">
+        <article class="vg-stat-card">
+          <span>Total de alunos</span>
+          <strong>{{ d.alunos.total }}</strong>
+        </article>
+        <article class="vg-stat-card vg-stat-card--warn">
+          <span>Sem orientador aceito</span>
+          <strong>{{ d.alunos.sem_orientador_aceito }}</strong>
+        </article>
+        <article class="vg-stat-card vg-stat-card--danger">
+          <span>Prazo vencido sem entrega</span>
+          <strong>{{ d.alunos.com_prazo_vencido_sem_entrega }}</strong>
+        </article>
+        <article class="vg-stat-card vg-stat-card--ok">
+          <span>Depositados na biblioteca</span>
+          <strong>{{ d.alunos.deposito_biblioteca.depositados }}</strong>
+        </article>
+      </section>
+
+      <div class="vg-grid">
+        <section class="vg-card">
+          <div class="vg-card-header">
+            <span class="vg-card-label">Distribuição</span>
+            <h2>Situação por tipo de TCC</h2>
+          </div>
+          <div class="vg-tipo-list">
+            <div class="vg-tipo-item">
+              <span>Monografia</span>
+              <strong>{{ d.alunos.por_tipo.monografia }}</strong>
+            </div>
+            <div class="vg-tipo-item">
+              <span>Artigo científico</span>
+              <strong>{{ d.alunos.por_tipo.artigo }}</strong>
+            </div>
+            <div class="vg-tipo-item">
+              <span>Relatório de estágio</span>
+              <strong>{{ d.alunos.por_tipo.relatorio_estagio }}</strong>
+            </div>
+            <div class="vg-tipo-item vg-tipo-item--muted">
+              <span>Sem TCC registrado</span>
+              <strong>{{ d.alunos.por_tipo.sem_tcc }}</strong>
+            </div>
+          </div>
+        </section>
+
+        <section class="vg-card">
+          <div class="vg-card-header">
+            <span class="vg-card-label">Biblioteca</span>
+            <h2>Status do depósito</h2>
+          </div>
+          <div class="vg-deposito-grid">
+            <div class="vg-deposito-item vg-deposito-item--ok">
+              <strong>{{ d.alunos.deposito_biblioteca.depositados }}</strong>
+              <span>Depositados</span>
+            </div>
+            <div class="vg-deposito-item vg-deposito-item--pending">
+              <strong>{{ d.alunos.deposito_biblioteca.pendentes }}</strong>
+              <span>Pendentes</span>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <section class="vg-card">
+        <div class="vg-card-header">
+          <span class="vg-card-label">Acompanhamento</span>
+          <h2>Alunos que exigem atenção</h2>
+        </div>
+
+        <p class="vg-empty" *ngIf="alunosComRisco.length === 0">
+          Nenhum aluno com orientação pendente ou prazo vencido sem entrega.
+        </p>
+
+        <div class="vg-table" *ngIf="alunosComRisco.length > 0">
+          <div class="vg-table-header">
+            <span>Aluno</span>
+            <span>TCC</span>
+            <span>Status</span>
+            <span>Prazos vencidos</span>
+            <span>Depósito</span>
+          </div>
+          <div class="vg-table-row" *ngFor="let aluno of alunosComRisco">
+            <div>
+              <strong>{{ aluno.nome }}</strong>
+              <span *ngIf="aluno.matricula">{{ aluno.matricula }}</span>
+            </div>
+            <div>
+              <strong>{{ aluno.titulo_tcc || 'Sem TCC registrado' }}</strong>
+              <span>{{ aluno.tipo_tcc || 'Sem tipo' }}</span>
+            </div>
+            <span class="vg-status">{{ aluno.status_tcc }}</span>
+            <span class="vg-danger-text">{{ aluno.prazos_vencidos_sem_entrega }}</span>
+            <span class="vg-status">{{ aluno.deposito_biblioteca }}</span>
+          </div>
+        </div>
+      </section>
+    </ng-container>
+  </main>
+</div>

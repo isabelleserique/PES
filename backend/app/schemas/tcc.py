@@ -14,8 +14,13 @@ class TCCWriteRequest(BaseModel):
     tipo_tcc: TipoTCC
     orientador_id: str = Field(min_length=1, max_length=255)
     coorientador_id: Optional[str] = Field(default=None, max_length=255)
+    resumo: Optional[str] = Field(default=None, max_length=4000)
+    area_tematica: Optional[str] = Field(default=None, max_length=255)
+    curso: Optional[str] = Field(default=None, max_length=255)
+    data_defesa: Optional[date] = None
+    banca: list[str] = Field(default_factory=list, max_length=10)
 
-    @field_validator("titulo", "orientador_id", "coorientador_id")
+    @field_validator("titulo", "orientador_id", "coorientador_id", "resumo", "area_tematica", "curso")
     @classmethod
     def normalize_text_fields(cls, value: Optional[str]) -> Optional[str]:
         if value is None:
@@ -24,6 +29,16 @@ class TCCWriteRequest(BaseModel):
         normalized = value.strip()
         if not normalized:
             return None
+        return normalized
+
+    @field_validator("banca")
+    @classmethod
+    def normalize_banca(cls, value: list[str]) -> list[str]:
+        normalized = []
+        for membro in value:
+            nome = membro.strip()
+            if nome:
+                normalized.append(nome)
         return normalized
 
     @model_validator(mode="after")
@@ -55,6 +70,11 @@ class TCCResponse(BaseModel):
     prazo_excedido: bool
     alerta_prazo: Optional[str] = None
     observacao_orientador: Optional[str] = None
+    resumo: Optional[str] = None
+    area_tematica: Optional[str] = None
+    curso: str
+    data_defesa: Optional[date] = None
+    banca: list[str] = Field(default_factory=list)
     criado_em: datetime
     atualizado_em: datetime
 

@@ -65,6 +65,7 @@ model User {
   orientacao_sessoes_orientador OrientacaoSessao[] @relation("OrientadorOrientacaoSessao")
   apresentacoes_artigo ApresentacaoArtigo[] @relation("AlunoApresentacaoArtigo")
   audit_logs            AuditLog[]
+  notificacoes_prazos   NotificacaoPrazo[]
 
   @@map("users")
 }
@@ -95,6 +96,7 @@ model PrazoEtapa {
   tipo_tcc    TipoTCC
   criado_em   DateTime      @default(now())
   periodo     PeriodoLetivo @relation(fields: [periodo_id], references: [id], onDelete: Cascade)
+  notificacoes_prazos NotificacaoPrazo[]
 
   @@index([periodo_id])
   @@map("prazos_etapas")
@@ -111,6 +113,11 @@ model TCC {
   status           StatusTCC    @default(AGUARDANDO_ACEITE)
   prazo_excedido   Boolean      @default(false)
   observacao_orientador String?
+  resumo           String?
+  area_tematica    String?
+  curso            String       @default("Ciência da Computação")
+  data_defesa      DateTime?    @db.Date
+  banca            Json?
   criado_em        DateTime     @default(now())
   atualizado_em    DateTime     @updatedAt
   aluno            User         @relation("AlunoTCC", fields: [aluno_id], references: [id], onDelete: Cascade)
@@ -121,11 +128,15 @@ model TCC {
   submissoes_entregaveis SubmissaoEntregavel[]
   orientacao_sessoes OrientacaoSessao[]
   apresentacoes_artigo ApresentacaoArtigo[]
+  notificacoes_prazos NotificacaoPrazo[]
 
   @@unique([aluno_id, periodo_id])
   @@index([orientador_id])
   @@index([coorientador_id])
   @@index([periodo_id])
+  @@index([area_tematica])
+  @@index([curso])
+  @@index([data_defesa])
   @@map("tccs")
 }
 
@@ -236,4 +247,25 @@ model AuditLog {
   @@index([entidade])
   @@index([criado_em])
   @@map("audit_logs")
+}
+
+model NotificacaoPrazo {
+  id          String   @id
+  tcc_id      String
+  aluno_id    String
+  prazo_id    String
+  tipo_alerta String
+  canal       String   @default("EMAIL")
+  enviado_em  DateTime @default(now())
+  tcc         TCC      @relation(fields: [tcc_id], references: [id], onDelete: Cascade)
+  aluno       User     @relation(fields: [aluno_id], references: [id], onDelete: Cascade)
+  prazo       PrazoEtapa @relation(fields: [prazo_id], references: [id], onDelete: Cascade)
+
+  @@unique([tcc_id, prazo_id, tipo_alerta], name: "uq_notificacoes_prazos_tcc_prazo_tipo", map: "uq_notificacoes_prazos_tcc_prazo_tipo")
+  @@index([tcc_id])
+  @@index([aluno_id])
+  @@index([prazo_id])
+  @@index([tipo_alerta])
+  @@index([enviado_em])
+  @@map("notificacoes_prazos")
 }

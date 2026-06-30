@@ -79,6 +79,7 @@
             <div class="tl-left">
               <div class="tl-box" *ngIf="i % 2 === 0" [ngClass]="getStatusClass(prazo)">
                 <span class="tl-num">{{ i + 1 }}.</span> {{ prazo.nomeEtapa }}
+                <span class="tl-status-label">{{ getStatusAriaLabel(prazo) }}</span>
                 <span class="tl-dias" [ngClass]="getStatusClass(prazo)">
                   {{ getDiasLabel(prazo) }}
                 </span>
@@ -87,13 +88,14 @@
 
             <!-- Ponto na linha -->
             <div class="tl-dot-wrap">
-              <div class="tl-dot" [ngClass]="getStatusClass(prazo)"></div>
+              <div class="tl-dot" [ngClass]="getStatusClass(prazo)" [attr.aria-label]="getStatusAriaLabel(prazo)"></div>
             </div>
 
             <!-- Box direito (índice ímpar) -->
             <div class="tl-right">
               <div class="tl-box" *ngIf="i % 2 !== 0" [ngClass]="getStatusClass(prazo)">
                 <span class="tl-num">{{ i + 1 }}.</span> {{ prazo.nomeEtapa }}
+                <span class="tl-status-label">{{ getStatusAriaLabel(prazo) }}</span>
                 <span class="tl-dias" [ngClass]="getStatusClass(prazo)">
                   {{ getDiasLabel(prazo) }}
                 </span>

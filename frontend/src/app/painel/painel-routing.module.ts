@@ -18,6 +18,7 @@ import { PainelRedirectComponent } from './pages/redirect/redirect.component';
 import { PainelOrientadorComponent } from './pages/orientador/orientador.component';
 import { SubmissoesAtrasadasComponent } from './pages/submissoes-atrasadas/submissoes-atrasadas.component';
 import { SubmeterArtigoComponent } from './pages/submeter-artigo/submeter-artigo.component';
+import { VisaoGeralComponent } from './pages/visao-geral/visao-geral.component';
 
 const routes: Routes = [
   {
@@ -47,6 +48,12 @@ const routes: Routes = [
   {
     path: 'gerenciar-periodos',
     component: GerenciarPeriodosComponent,
+    canActivate: [AuthGuard, ProfileGuard],
+    data: { perfil: 'COORDENADOR' },
+  },
+  {
+    path: 'visao-geral',
+    component: VisaoGeralComponent,
     canActivate: [AuthGuard, ProfileGuard],
     data: { perfil: 'COORDENADOR' },
   },
