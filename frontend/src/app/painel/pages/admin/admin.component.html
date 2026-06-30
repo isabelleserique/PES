@@ -1,0 +1,71 @@
+<div class="app-shell">
+  <nav class="app-navbar">
+    <div class="navbar-brand">
+      <div class="logo-badge">IC</div>
+      <span class="logo-name">IComp</span>
+    </div>
+    <div class="navbar-sep"></div>
+    <span class="navbar-app-name">TCComp</span>
+    <span class="admin-navbar-spacer"></span>
+    <button mat-stroked-button type="button" class="admin-logout-btn" (click)="logout()">Sair</button>
+  </nav>
+
+  <main class="app-page-content admin-page">
+    <header class="admin-hero">
+      <div>
+        <span class="admin-eyebrow">Administração</span>
+        <h1 class="admin-title">Painel do admin</h1>
+        <p class="admin-subtitle">
+          Área reservada para logs do sistema e futuras features de segurança.
+        </p>
+      </div>
+      <div class="admin-hero-actions">
+        <a mat-raised-button class="admin-btn-primary" routerLink="/painel/logs-sistema">Logs do sistema</a>
+      </div>
+    </header>
+
+    <p class="status-message status-message--error" *ngIf="errorMessage">{{ errorMessage }}</p>
+
+    <section class="admin-card" *ngIf="isLoading">
+      <p class="admin-empty">Carregando painel administrativo...</p>
+    </section>
+
+    <section class="admin-card admin-profile-card" *ngIf="!isLoading && currentUser as user">
+      <div class="admin-card-header">
+        <div>
+          <span class="admin-card-label">Sessão atual</span>
+          <h2 class="admin-card-title">{{ user.nome_completo }}</h2>
+        </div>
+        <span class="admin-badge">{{ user.perfil }}</span>
+      </div>
+
+      <div class="admin-info-grid">
+        <div>
+          <span class="admin-field-label">E-mail</span>
+          <strong>{{ user.email }}</strong>
+        </div>
+        <div>
+          <span class="admin-field-label">Username</span>
+          <strong>{{ user.username }}</strong>
+        </div>
+        <div>
+          <span class="admin-field-label">Status</span>
+          <strong>{{ user.status }}</strong>
+        </div>
+      </div>
+    </section>
+
+    <section class="admin-card admin-card--accent" *ngIf="!isLoading">
+      <div class="admin-card-header">
+        <div>
+          <span class="admin-card-label">Segurança</span>
+          <h2 class="admin-card-title">Ações administrativas</h2>
+        </div>
+      </div>
+
+      <div class="admin-action-grid">
+        <a mat-raised-button class="admin-btn-primary" routerLink="/painel/logs-sistema">Consultar logs do sistema</a>
+      </div>
+    </section>
+  </main>
+</div>

@@ -21,6 +21,8 @@ export class PainelNavComponent {
 
   private getPerfilLabel(perfil: UserPerfil | null): string {
     switch (perfil) {
+      case 'ADMIN':
+        return 'Administrador';
       case 'COORDENADOR':
         return 'Coordenador';
       case 'ALUNO':
@@ -34,6 +36,11 @@ export class PainelNavComponent {
 
   private buildLinks(perfil: UserPerfil | null): PainelNavLink[] {
     switch (perfil) {
+      case 'ADMIN':
+        return [
+          { label: 'Painel do Admin', path: '/painel/admin' },
+          { label: 'Logs do Sistema', path: '/painel/logs-sistema' },
+        ];
       case 'COORDENADOR':
         return [
           { label: 'Painel do Coordenador', path: '/painel/coordenador' },

@@ -9,6 +9,7 @@ import { MatStepperModule } from '@angular/material/stepper';
 import { SharedModule } from '../shared/shared.module';
 import { PainelNavComponent } from './components/painel-nav/painel-nav.component';
 import { PainelAlunoComponent } from './pages/aluno/aluno.component';
+import { PainelAdminComponent } from './pages/admin/admin.component';
 import { CriarPeriodoComponent } from './pages/criar-periodo/criar-periodo.component';
 import { AceiteOrientacaoComponent } from './pages/aceite-orientacao/aceite-orientacao.component';
 import { DefinirTccComponent } from './pages/definir-tcc/definir-tcc.component';
@@ -34,6 +35,7 @@ import { PainelRoutingModule } from './painel-routing.module';
   declarations: [
     PainelNavComponent,
     PainelCoordenadorComponent,
+    PainelAdminComponent,
     PainelAlunoComponent,
     PainelOrientadorComponent,
     PainelRedirectComponent,

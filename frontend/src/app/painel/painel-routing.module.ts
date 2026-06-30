@@ -4,6 +4,7 @@ import { RouterModule, Routes } from '@angular/router';
 import { AuthGuard } from '../auth/guards/auth.guard';
 import { ProfileGuard } from '../auth/guards/profile.guard';
 import { AceiteOrientacaoComponent } from './pages/aceite-orientacao/aceite-orientacao.component';
+import { PainelAdminComponent } from './pages/admin/admin.component';
 import { PainelAlunoComponent } from './pages/aluno/aluno.component';
 import { CriarPeriodoComponent } from './pages/criar-periodo/criar-periodo.component';
 import { DefinirTccComponent } from './pages/definir-tcc/definir-tcc.component';
@@ -30,6 +31,12 @@ const routes: Routes = [
     pathMatch: 'full',
     canActivate: [AuthGuard],
     component: PainelRedirectComponent,
+  },
+  {
+    path: 'admin',
+    component: PainelAdminComponent,
+    canActivate: [AuthGuard, ProfileGuard],
+    data: { perfil: 'ADMIN' },
   },
   {
     path: 'coordenador',
@@ -117,7 +124,7 @@ const routes: Routes = [
     path: 'logs-sistema',
     component: LogsSistemaComponent,
     canActivate: [AuthGuard, ProfileGuard],
-    data: { perfil: 'COORDENADOR' },
+    data: { perfil: 'ADMIN' },
   },
   {
     path: 'aceite-orientacao',

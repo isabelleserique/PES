@@ -678,10 +678,26 @@ def test_registrar_apresentacao_artigo_marks_existing_acceptance_and_logs(client
     assert list_response.status_code == 200
     assert len(list_response.json()) == 1
 
-    logs_response = client.request(
+    coordinator_logs_response = client.request(
         "GET",
         "/logs",
         headers=_build_auth_headers(user_id=coordenador.id, perfil=coordenador.perfil),
+    )
+    assert coordinator_logs_response.status_code == 403
+
+    admin = _seed_user(
+        db_session,
+        nome_completo="Admin Logs",
+        email="admin.logs@icomp.ufam.edu.br",
+        username="admin.logs",
+        perfil=Perfil.ADMIN,
+        status=StatusCadastro.ATIVO,
+        ativo=True,
+    )
+    logs_response = client.request(
+        "GET",
+        "/logs",
+        headers=_build_auth_headers(user_id=admin.id, perfil=admin.perfil),
     )
     assert logs_response.status_code == 200
     assert any(log["acao"] == "REGISTRO_APRESENTACAO_ARTIGO" for log in logs_response.json())

@@ -43,6 +43,8 @@ export class NotificacoesComponent implements OnInit {
 
   get homePath(): string {
     switch (this.perfil) {
+      case 'ADMIN':
+        return '/painel/admin';
       case 'ORIENTADOR':
         return '/painel/orientador';
       case 'COORDENADOR':

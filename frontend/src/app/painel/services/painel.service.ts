@@ -9,7 +9,7 @@ export interface AuthenticatedUserProfile {
   nome_completo: string;
   email: string;
   username: string;
-  perfil: 'COORDENADOR' | 'ALUNO' | 'ORIENTADOR';
+  perfil: 'ADMIN' | 'COORDENADOR' | 'ALUNO' | 'ORIENTADOR';
   matricula: string | null;
   status: 'PENDENTE' | 'ATIVO' | 'REJEITADO';
   ativo: boolean;
@@ -20,7 +20,7 @@ export interface PendingRegistration {
   nome_completo: string;
   email: string;
   username: string;
-  perfil: 'COORDENADOR' | 'ALUNO' | 'ORIENTADOR';
+  perfil: 'ADMIN' | 'COORDENADOR' | 'ALUNO' | 'ORIENTADOR';
   matricula: string | null;
   status: 'PENDENTE' | 'ATIVO' | 'REJEITADO';
 }
@@ -32,7 +32,7 @@ export interface ReviewRegistrationPayload {
 export interface ReviewRegistrationResponse {
   id: string;
   nome_completo: string;
-  perfil: 'COORDENADOR' | 'ALUNO' | 'ORIENTADOR';
+  perfil: 'ADMIN' | 'COORDENADOR' | 'ALUNO' | 'ORIENTADOR';
   status: 'PENDENTE' | 'ATIVO' | 'REJEITADO';
 }
 

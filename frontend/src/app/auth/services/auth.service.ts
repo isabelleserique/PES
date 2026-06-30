@@ -16,7 +16,7 @@ export interface AuthenticatedUser {
   id: string;
   nome_completo: string;
   email: string;
-  perfil: 'COORDENADOR' | 'ALUNO' | 'ORIENTADOR';
+  perfil: 'ADMIN' | 'COORDENADOR' | 'ALUNO' | 'ORIENTADOR';
 }
 
 export type UserPerfil = AuthenticatedUser['perfil'];
@@ -126,6 +126,8 @@ export class AuthService {
     const perfil = this.getStoredPerfil();
 
     switch (perfil) {
+      case 'ADMIN':
+        return ['/painel/admin'];
       case 'COORDENADOR':
         return ['/painel/coordenador'];
       case 'ALUNO':

@@ -12,6 +12,7 @@ enum Perfil {
   COORDENADOR
   ALUNO
   ORIENTADOR
+  ADMIN
 }
 
 enum UserStatus {
