@@ -601,6 +601,160 @@ def test_historico_submissoes_coordenador_and_orientador_include_versions_and_tc
     assert {"titulo_tcc", "aluno_nome", "matricula", "nota_automatica"}.issubset(body[0])
 
 
+def test_orientador_avalia_submissao_manual_and_grade_is_visible(client, db_session, email_service) -> None:
+    aluno = _seed_user(
+        db_session,
+        nome_completo="Aluno Avaliacao",
+        email="aluno.avaliacao@icomp.ufam.edu.br",
+        username="aluno.avaliacao",
+        perfil=Perfil.ALUNO,
+        status=StatusCadastro.ATIVO,
+        ativo=True,
+        matricula="2023123999",
+    )
+    coorientador = _seed_user(
+        db_session,
+        nome_completo="Prof. Avaliador",
+        email="prof.avaliador@icomp.ufam.edu.br",
+        username="prof.avaliador",
+        perfil=Perfil.ORIENTADOR,
+        status=StatusCadastro.ATIVO,
+        ativo=True,
+    )
+    coordenador = _seed_user(
+        db_session,
+        nome_completo="Coord Avaliacao",
+        email="coord.avaliacao@icomp.ufam.edu.br",
+        username="coord.avaliacao",
+        perfil=Perfil.COORDENADOR,
+        status=StatusCadastro.ATIVO,
+        ativo=True,
+    )
+    today = date.today()
+    periodo = _seed_periodo(
+        db_session,
+        nome="2027.2",
+        data_inicio=(today - timedelta(days=10)).isoformat(),
+        data_fim=(today + timedelta(days=90)).isoformat(),
+        ativo=True,
+    )
+    tcc = _seed_tcc(
+        db_session,
+        periodo_id=periodo.id,
+        aluno_id=aluno.id,
+        orientador_id=None,
+        coorientador_id=coorientador.id,
+        titulo="Monografia sem orientador principal",
+        tipo_tcc=TipoTCC.MONOGRAFIA,
+        status=StatusTCC.EM_ANDAMENTO,
+    )
+    submissao = _seed_submissao(
+        db_session,
+        tcc_id=tcc.id,
+        aluno_id=aluno.id,
+        tipo_tcc=TipoTCC.MONOGRAFIA,
+        etapa="1ª Entrega",
+        versao=1,
+        nome_arquivo="entrega.pdf",
+    )
+
+    response = client.patch(
+        f"/submissoes/entregaveis/{submissao.id}/avaliacao",
+        json={"nota": 8.5},
+        headers=_build_auth_headers(user_id=coorientador.id, perfil=coorientador.perfil),
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["status_avaliacao"] == "AVALIADO"
+    assert body["nota_orientador"] == 8.5
+    assert body["nota_final"] == 8.5
+    assert body["avaliado_por_nome"] == coorientador.nome_completo
+
+    db_session.refresh(submissao)
+    assert submissao.nota_orientador == 8.5
+    assert submissao.avaliado_por_id == coorientador.id
+
+    service = SubmissaoService()
+    historico_coordenador = service.listar_historico_coordenador(
+        session=db_session,
+        current_user=coordenador,
+    )
+    assert historico_coordenador[0].nota_final == 8.5
+    assert historico_coordenador[0].status_avaliacao == "AVALIADO"
+
+    historico_aluno = service.listar_entregaveis(session=db_session, current_user=aluno)
+    assert historico_aluno[0].nota_final == 8.5
+    assert historico_aluno[0].status_avaliacao == "AVALIADO"
+    assert email_service.grade_notifications == [
+        {
+            "to_email": aluno.email,
+            "aluno_nome": aluno.nome_completo,
+            "titulo": tcc.titulo,
+            "etapa": submissao.etapa,
+            "nota": 8.5,
+        }
+    ]
+
+
+def test_auto_graded_submission_cannot_receive_manual_grade(client, db_session) -> None:
+    aluno = _seed_user(
+        db_session,
+        nome_completo="Aluno Auto Grade",
+        email="aluno.auto.grade@icomp.ufam.edu.br",
+        username="aluno.auto.grade",
+        perfil=Perfil.ALUNO,
+        status=StatusCadastro.ATIVO,
+        ativo=True,
+    )
+    orientador = _seed_user(
+        db_session,
+        nome_completo="Prof. Auto Grade",
+        email="prof.auto.grade@icomp.ufam.edu.br",
+        username="prof.auto.grade",
+        perfil=Perfil.ORIENTADOR,
+        status=StatusCadastro.ATIVO,
+        ativo=True,
+    )
+    today = date.today()
+    periodo = _seed_periodo(
+        db_session,
+        nome="2027.3",
+        data_inicio=(today - timedelta(days=10)).isoformat(),
+        data_fim=(today + timedelta(days=90)).isoformat(),
+        ativo=True,
+    )
+    tcc = _seed_tcc(
+        db_session,
+        periodo_id=periodo.id,
+        aluno_id=aluno.id,
+        orientador_id=orientador.id,
+        titulo="Artigo aceito",
+        tipo_tcc=TipoTCC.ARTIGO,
+        status=StatusTCC.EM_ANDAMENTO,
+    )
+    submissao = _seed_submissao(
+        db_session,
+        tcc_id=tcc.id,
+        aluno_id=aluno.id,
+        tipo_tcc=TipoTCC.ARTIGO,
+        etapa="Artigo Final",
+        versao=1,
+        nome_arquivo="artigo.pdf",
+        foi_aceito=True,
+        nota_automatica=10,
+    )
+
+    response = client.patch(
+        f"/submissoes/entregaveis/{submissao.id}/avaliacao",
+        json={"nota": 7},
+        headers=_build_auth_headers(user_id=orientador.id, perfil=orientador.perfil),
+    )
+
+    assert response.status_code == 409
+    assert response.json()["detail"] == "Submissao com nota automatica nao pode receber nota manual."
+
+
 def test_registrar_apresentacao_artigo_marks_existing_acceptance_and_logs(client, db_session) -> None:
     coordenador = _seed_user(
         db_session,

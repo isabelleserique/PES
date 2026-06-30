@@ -12,7 +12,7 @@ from backend.app.models.tcc import StatusTCC
 class TCCWriteRequest(BaseModel):
     titulo: str = Field(min_length=3, max_length=255)
     tipo_tcc: TipoTCC
-    orientador_id: str = Field(min_length=1, max_length=255)
+    orientador_id: Optional[str] = Field(default=None, max_length=255)
     coorientador_id: Optional[str] = Field(default=None, max_length=255)
     resumo: Optional[str] = Field(default=None, max_length=4000)
     area_tematica: Optional[str] = Field(default=None, max_length=255)
@@ -60,8 +60,8 @@ class TCCResponse(BaseModel):
     id: str
     titulo: str
     tipo_tcc: TipoTCC
-    orientador_id: str
-    orientador_nome: str
+    orientador_id: Optional[str] = None
+    orientador_nome: Optional[str] = None
     coorientador_id: Optional[str] = None
     coorientador_nome: Optional[str] = None
     periodo_id: str

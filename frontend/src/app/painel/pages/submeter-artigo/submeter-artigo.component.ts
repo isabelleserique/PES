@@ -274,6 +274,32 @@ export class SubmeterArtigoComponent implements OnInit {
     });
   }
 
+  statusLabel(submissao: SubmissaoEntregavel): string {
+    if (submissao.status_avaliacao === 'ACEITO') return 'Aceito';
+    if (submissao.status_avaliacao === 'AVALIADO') return 'Avaliado';
+    return 'Aguardando';
+  }
+
+  statusIcon(submissao: SubmissaoEntregavel): string {
+    if (submissao.status_avaliacao === 'ACEITO') return 'verified';
+    if (submissao.status_avaliacao === 'AVALIADO') return 'grade';
+    return 'hourglass_empty';
+  }
+
+  statusBadgeClass(submissao: SubmissaoEntregavel): string {
+    if (submissao.status_avaliacao === 'ACEITO') return 'sa-badge--aceito';
+    if (submissao.status_avaliacao === 'AVALIADO') return 'sa-badge--avaliado';
+    return 'sa-badge--pendente';
+  }
+
+  formatarNota(nota: number | null | undefined): string {
+    if (nota === null || nota === undefined) return '-';
+    return nota.toLocaleString('pt-BR', {
+      minimumFractionDigits: Number.isInteger(nota) ? 1 : 2,
+      maximumFractionDigits: 2,
+    });
+  }
+
   private normalizarTexto(value: string): string {
     return value
       .normalize('NFD')

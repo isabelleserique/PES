@@ -115,7 +115,7 @@ class AuditService:
         *,
         aluno_id: str,
         tcc_id: str,
-        orientador_id: str,
+        orientador_id: str | None,
         prazo_excedido: bool,
     ) -> None:
         timestamp = datetime.now(UTC).isoformat()
@@ -133,7 +133,7 @@ class AuditService:
         *,
         aluno_id: str,
         tcc_id: str,
-        orientador_id: str,
+        orientador_id: str | None,
         prazo_excedido: bool,
     ) -> None:
         timestamp = datetime.now(UTC).isoformat()

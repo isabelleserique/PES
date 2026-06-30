@@ -107,6 +107,14 @@
               </div>
               <div
                 class="dt-professor-row"
+                [class.dt-professor-row--selected]="orientadorNenhumSelecionado"
+                (click)="selecionarNenhumOrientador()"
+              >
+                <span>Nenhum neste momento</span>
+                <span class="dt-area">Você poderá solicitar orientador depois</span>
+              </div>
+              <div
+                class="dt-professor-row"
                 *ngFor="let prof of professoresFiltrados"
                 [class.dt-professor-row--selected]="orientadorSelecionado?.id === prof.id"
                 (click)="selecionarOrientador(prof)"
@@ -120,6 +128,10 @@
             <div class="dt-orientador-selecionado" *ngIf="orientadorSelecionado">
               <mat-icon>person</mat-icon>
               <span>Selecionado: <strong>{{ orientadorSelecionado.nome }}</strong></span>
+            </div>
+            <div class="dt-orientador-selecionado" *ngIf="orientadorNenhumSelecionado">
+              <mat-icon>person_off</mat-icon>
+              <span>Orientador: <strong>Nenhum neste momento</strong></span>
             </div>
           </div>
 
@@ -211,7 +223,7 @@
               </div>
               <div class="dt-review-item">
                 <span class="dt-review-label">Orientador</span>
-                <span class="dt-review-value">{{ orientadorSelecionado?.nome }}</span>
+                <span class="dt-review-value">{{ orientadorSelecionado?.nome || 'Nenhum neste momento' }}</span>
               </div>
               <div class="dt-review-item" *ngIf="coorientadorSelecionado">
                 <span class="dt-review-label">Co-orientador</span>

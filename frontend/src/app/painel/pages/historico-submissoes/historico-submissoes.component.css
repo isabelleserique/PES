@@ -56,7 +56,7 @@
 .hs-table-header,
 .hs-table-row {
   display: grid;
-  grid-template-columns: 180px 200px 180px 70px 200px 150px 1fr 170px;
+  grid-template-columns: 170px 190px 160px 64px 190px 140px 190px 240px 150px;
   align-items: center;
   gap: 12px;
   padding: 12px 20px;
@@ -162,9 +162,49 @@
 .hs-badge mat-icon { font-size: 12px; width: 12px; height: 12px; }
 
 .hs-badge--aceito  { background: #e8f5e9; color: #1b5e20; }
+.hs-badge--avaliado { background: #e8f0fe; color: #174ea6; }
 .hs-badge--pendente { background: #e3f2fd; color: #0d47a1; }
 .hs-badge--atraso  { background: #fff3e0; color: #bf360c; }
 .hs-badge--nota    { background: #f3e5f5; color: #6a1b9a; }
+
+.hs-avaliador,
+.hs-avaliacao-data,
+.hs-sem-nota {
+  color: #718096;
+  font-size: 0.72rem;
+}
+
+.hs-avaliacao {
+  display: grid;
+  gap: 6px;
+}
+
+.hs-nota-field {
+  width: 100%;
+}
+
+.hs-nota-field ::ng-deep .mat-mdc-form-field-subscript-wrapper {
+  display: none;
+}
+
+.hs-nota-field ::ng-deep .mat-mdc-text-field-wrapper {
+  min-height: 38px;
+}
+
+.hs-save-grade-btn {
+  background: #1565c0 !important;
+  color: #fff !important;
+  line-height: 28px !important;
+  min-height: 28px;
+  padding: 0 10px !important;
+  width: fit-content;
+}
+
+.hs-nota-readonly {
+  color: #0d2137;
+  font-size: 1rem;
+  font-weight: 800;
+}
 
 .hs-actions {
   display: flex;

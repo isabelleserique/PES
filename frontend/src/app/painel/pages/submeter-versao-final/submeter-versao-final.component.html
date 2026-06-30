@@ -47,7 +47,7 @@
           <span class="sv-eyebrow">TCC atual</span>
           <h2>{{ tcc.titulo }}</h2>
           <p>{{ tcc.tipo_tcc }} - {{ tcc.periodo_nome }}</p>
-          <p>Orientador: {{ tcc.orientador_nome }}</p>
+          <p>Orientador: {{ tcc.orientador_nome || 'Nenhum neste momento' }}</p>
         </aside>
 
         <div class="sv-card">

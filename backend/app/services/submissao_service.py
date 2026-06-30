@@ -3,7 +3,7 @@ from __future__ import annotations
 import re
 import unicodedata
 from dataclasses import dataclass
-from datetime import date
+from datetime import UTC, date, datetime
 from pathlib import Path
 from uuid import uuid4
 
@@ -25,6 +25,7 @@ from backend.app.models.user import Perfil
 from backend.app.schemas.submissao import (
     ApresentacaoArtigoPayload,
     ApresentacaoArtigoResponse,
+    SubmissaoAvaliacaoRequest,
     SubmissaoAtrasadaResponse,
     SubmissaoEntregavelCreateResponse,
     SubmissaoEntregavelResponse,
@@ -39,6 +40,8 @@ ONLY_ARTIGO_PRESENTATION_DETAIL = "Registro de apresentacao disponivel apenas pa
 SUBMISSAO_NOT_FOUND_DETAIL = "Submissao nao encontrada."
 SUBMISSAO_FILE_NOT_FOUND_DETAIL = "Arquivo da submissao nao encontrado."
 SUBMISSAO_FILE_FORBIDDEN_DETAIL = "Perfil sem permissao para acessar o arquivo desta submissao."
+SUBMISSAO_AVALIACAO_FORBIDDEN_DETAIL = "Perfil sem permissao para avaliar esta submissao."
+SUBMISSAO_AUTO_GRADED_DETAIL = "Submissao com nota automatica nao pode receber nota manual."
 COMPROVANTE_FILE_NOT_FOUND_DETAIL = "Comprovante da submissao nao encontrado."
 INVALID_ETAPA_DETAIL = "Etapa de entrega invalida para o tipo de TCC do aluno."
 COMPROVANTE_REQUIRED_DETAIL = "Comprovante de aceite e obrigatorio quando o artigo ja foi aceito."
@@ -96,10 +99,12 @@ class SubmissaoService:
             .order_by(SubmissaoEntregavelRecord.criado_em.desc(), SubmissaoEntregavelRecord.versao.desc())
         ).all()
         ultimas_versoes = self._build_latest_version_map(submissoes)
+        avaliadores = self._load_avaliadores(session=session, submissoes=submissoes)
         return [
             self._build_response(
                 submissao,
                 ultima_versao=submissao.versao == ultimas_versoes[(submissao.tcc_id, submissao.etapa)],
+                avaliador=avaliadores.get(submissao.avaliado_por_id),
             )
             for submissao in submissoes
         ]
@@ -156,6 +161,72 @@ class SubmissaoService:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=missing_detail)
 
         return SubmissionStoredFile(path=path, filename=filename, media_type=media_type)
+
+    def avaliar_entregavel(
+        self,
+        *,
+        session: Session,
+        current_user: UserRecord,
+        submissao_id: str,
+        payload: SubmissaoAvaliacaoRequest,
+        email_service: EmailService | None,
+        audit_service: AuditService,
+    ) -> SubmissaoHistoricoResponse:
+        row = session.execute(
+            select(SubmissaoEntregavelRecord, TCCRecord, UserRecord)
+            .join(TCCRecord, TCCRecord.id == SubmissaoEntregavelRecord.tcc_id)
+            .join(UserRecord, UserRecord.id == SubmissaoEntregavelRecord.aluno_id)
+            .where(SubmissaoEntregavelRecord.id == submissao_id)
+        ).one_or_none()
+        if row is None:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=SUBMISSAO_NOT_FOUND_DETAIL)
+
+        submissao, tcc, aluno = row
+        if current_user.id not in {tcc.orientador_id, tcc.coorientador_id}:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=SUBMISSAO_AVALIACAO_FORBIDDEN_DETAIL)
+        if submissao.nota_automatica is not None:
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=SUBMISSAO_AUTO_GRADED_DETAIL)
+
+        submissao.nota_orientador = round(payload.nota, 2)
+        submissao.avaliado_por_id = current_user.id
+        submissao.avaliado_em = datetime.now(UTC).replace(tzinfo=None)
+        session.commit()
+        session.refresh(submissao)
+
+        audit_service.log_event(
+            session=session,
+            user_id=current_user.id,
+            action="AVALIACAO_SUBMISSAO",
+            entity="SUBMISSAO",
+            description=f"Lancou nota para {submissao.etapa} de {aluno.nome_completo}.",
+            data={
+                "submissao_id": submissao.id,
+                "tcc_id": tcc.id,
+                "aluno_id": aluno.id,
+                "nota": submissao.nota_orientador,
+                "etapa": submissao.etapa,
+                "versao": submissao.versao,
+            },
+        )
+        self._send_grade_notification_if_needed(
+            email_service=email_service,
+            aluno=aluno,
+            tcc=tcc,
+            submissao=submissao,
+        )
+
+        ultima_versao = submissao.versao == self._latest_version(
+            session=session,
+            tcc_id=submissao.tcc_id,
+            etapa=submissao.etapa,
+        )
+        return self._build_historico_response(
+            submissao=submissao,
+            tcc=tcc,
+            aluno=aluno,
+            ultima_versao=ultima_versao,
+            avaliador=current_user,
+        )
 
     def listar_apresentacoes_artigo(
         self,
@@ -365,6 +436,8 @@ class SubmissaoService:
             versao=submissao.versao,
             mensagem="Entregavel submetido com sucesso.",
             nota_automatica=submissao.nota_automatica,
+            nota_final=self._nota_final(submissao),
+            status_avaliacao=self._status_avaliacao(submissao),
         )
 
     def _get_active_tcc(
@@ -571,12 +644,17 @@ class SubmissaoService:
 
         rows = session.execute(statement).all()
         ultimas_versoes = self._build_latest_version_map([submissao for submissao, _, _ in rows])
+        avaliadores = self._load_avaliadores(
+            session=session,
+            submissoes=[submissao for submissao, _, _ in rows],
+        )
         return [
             self._build_historico_response(
                 submissao=submissao,
                 tcc=tcc,
                 aluno=aluno,
                 ultima_versao=submissao.versao == ultimas_versoes[(submissao.tcc_id, submissao.etapa)],
+                avaliador=avaliadores.get(submissao.avaliado_por_id),
             )
             for submissao, tcc, aluno in rows
         ]
@@ -588,11 +666,40 @@ class SubmissaoService:
             ultimas_versoes[chave] = max(ultimas_versoes.get(chave, 0), submissao.versao)
         return ultimas_versoes
 
+    def _latest_version(self, *, session: Session, tcc_id: str, etapa: str) -> int:
+        return int(
+            session.scalar(
+                select(func.max(SubmissaoEntregavelRecord.versao)).where(
+                    SubmissaoEntregavelRecord.tcc_id == tcc_id,
+                    SubmissaoEntregavelRecord.etapa == etapa,
+                )
+            )
+            or 0
+        )
+
+    def _load_avaliadores(
+        self,
+        *,
+        session: Session,
+        submissoes,
+    ) -> dict[str, UserRecord]:
+        avaliador_ids = {
+            submissao.avaliado_por_id
+            for submissao in submissoes
+            if submissao.avaliado_por_id is not None
+        }
+        if not avaliador_ids:
+            return {}
+
+        avaliadores = session.scalars(select(UserRecord).where(UserRecord.id.in_(avaliador_ids))).all()
+        return {avaliador.id: avaliador for avaliador in avaliadores}
+
     def _build_response(
         self,
         submissao: SubmissaoEntregavelRecord,
         *,
         ultima_versao: bool,
+        avaliador: UserRecord | None = None,
     ) -> SubmissaoEntregavelResponse:
         return SubmissaoEntregavelResponse(
             id=submissao.id,
@@ -606,6 +713,12 @@ class SubmissaoService:
             ultima_versao=ultima_versao,
             nome_comprovante=submissao.nome_comprovante,
             nota_automatica=submissao.nota_automatica,
+            nota_orientador=submissao.nota_orientador,
+            nota_final=self._nota_final(submissao),
+            status_avaliacao=self._status_avaliacao(submissao),
+            avaliado_por_id=submissao.avaliado_por_id,
+            avaliado_por_nome=avaliador.nome_completo if avaliador is not None else None,
+            avaliado_em=submissao.avaliado_em,
         )
 
     def _build_historico_response(
@@ -615,6 +728,7 @@ class SubmissaoService:
         tcc: TCCRecord,
         aluno: UserRecord,
         ultima_versao: bool,
+        avaliador: UserRecord | None = None,
     ) -> SubmissaoHistoricoResponse:
         return SubmissaoHistoricoResponse(
             id=submissao.id,
@@ -633,7 +747,25 @@ class SubmissaoService:
             ultima_versao=ultima_versao,
             nome_comprovante=submissao.nome_comprovante,
             nota_automatica=submissao.nota_automatica,
+            nota_orientador=submissao.nota_orientador,
+            nota_final=self._nota_final(submissao),
+            status_avaliacao=self._status_avaliacao(submissao),
+            avaliado_por_id=submissao.avaliado_por_id,
+            avaliado_por_nome=avaliador.nome_completo if avaliador is not None else None,
+            avaliado_em=submissao.avaliado_em,
         )
+
+    def _nota_final(self, submissao: SubmissaoEntregavelRecord) -> float | None:
+        if submissao.nota_automatica is not None:
+            return float(submissao.nota_automatica)
+        return submissao.nota_orientador
+
+    def _status_avaliacao(self, submissao: SubmissaoEntregavelRecord) -> str:
+        if submissao.nota_automatica is not None:
+            return "ACEITO"
+        if submissao.nota_orientador is not None:
+            return "AVALIADO"
+        return "AGUARDANDO"
 
     def _build_apresentacao_response(
         self,
@@ -660,7 +792,8 @@ class SubmissaoService:
         tcc: TCCRecord,
         submissao: SubmissaoEntregavelRecord,
     ) -> None:
-        if email_service is None or submissao.nota_automatica is None:
+        nota = self._nota_final(submissao)
+        if email_service is None or nota is None:
             return
 
         is_final = "final" in self._normalize_text(submissao.etapa)
@@ -674,7 +807,7 @@ class SubmissaoService:
             aluno_nome=aluno.nome_completo,
             titulo=tcc.titulo,
             etapa=submissao.etapa,
-            nota=submissao.nota_automatica,
+            nota=nota,
         )
 
 

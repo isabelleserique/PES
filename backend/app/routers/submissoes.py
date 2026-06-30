@@ -11,6 +11,7 @@ from backend.app.models.user import Perfil
 from backend.app.schemas.submissao import (
     ApresentacaoArtigoPayload,
     ApresentacaoArtigoResponse,
+    SubmissaoAvaliacaoRequest,
     SubmissaoAtrasadaResponse,
     SubmissaoEntregavelCreateResponse,
     SubmissaoEntregavelResponse,
@@ -125,6 +126,29 @@ async def visualizar_arquivo_entregavel(
         media_type=arquivo.media_type,
         filename=arquivo.filename,
         content_disposition_type="inline",
+    )
+
+
+@router.patch(
+    "/entregaveis/{submissao_id}/avaliacao",
+    status_code=status.HTTP_200_OK,
+)
+async def avaliar_entregavel(
+    submissao_id: str,
+    payload: SubmissaoAvaliacaoRequest,
+    session: Session = Depends(get_db_session),
+    submissao_service: SubmissaoService = Depends(get_submissao_service),
+    email_service: EmailService = Depends(get_email_service),
+    audit_service: AuditService = Depends(get_audit_service),
+    current_orientador: UserRecord = Depends(require_perfis(Perfil.ORIENTADOR)),
+) -> SubmissaoHistoricoResponse:
+    return submissao_service.avaliar_entregavel(
+        session=session,
+        current_user=current_orientador,
+        submissao_id=submissao_id,
+        payload=payload,
+        email_service=email_service,
+        audit_service=audit_service,
     )
 
 

@@ -235,14 +235,14 @@
               <span class="sa-arquivo-nome" [title]="s.nome_arquivo">{{ s.nome_arquivo }}</span>
               <span class="sa-data">{{ formatarData(s.data_submissao) }}</span>
               <div class="sa-badges">
-                <span class="sa-badge sa-badge--aceito" *ngIf="s.foi_aceito">
-                  <mat-icon>verified</mat-icon> Aceito
-                </span>
-                <span class="sa-badge sa-badge--pendente" *ngIf="!s.foi_aceito">
-                  <mat-icon>hourglass_empty</mat-icon> Aguardando
+                <span class="sa-badge" [ngClass]="statusBadgeClass(s)">
+                  <mat-icon>{{ statusIcon(s) }}</mat-icon> {{ statusLabel(s) }}
                 </span>
                 <span class="sa-badge sa-badge--atraso" *ngIf="s.fora_do_prazo">
                   Fora do prazo
+                </span>
+                <span class="sa-badge sa-badge--nota" *ngIf="s.nota_final !== null">
+                  Nota {{ formatarNota(s.nota_final) }}
                 </span>
               </div>
               <div class="sa-file-actions">

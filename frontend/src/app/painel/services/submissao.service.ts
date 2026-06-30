@@ -26,6 +26,12 @@ export interface SubmissaoEntregavel {
   foi_aceito: boolean;
   nome_comprovante?: string;
   nota_automatica?: number | null;
+  nota_orientador?: number | null;
+  nota_final?: number | null;
+  status_avaliacao: 'AGUARDANDO' | 'AVALIADO' | 'ACEITO';
+  avaliado_por_id?: string | null;
+  avaliado_por_nome?: string | null;
+  avaliado_em?: string | null;
 }
 
 export interface SubmissaoEntregavelResponse {
@@ -35,6 +41,8 @@ export interface SubmissaoEntregavelResponse {
   versao: number;
   mensagem: string;
   nota_automatica?: number;
+  nota_final?: number | null;
+  status_avaliacao: 'AGUARDANDO' | 'AVALIADO' | 'ACEITO';
 }
 
 export interface SubmissaoHistorico {
@@ -54,6 +62,16 @@ export interface SubmissaoHistorico {
   foi_aceito: boolean;
   nome_comprovante: string | null;
   nota_automatica: number | null;
+  nota_orientador: number | null;
+  nota_final: number | null;
+  status_avaliacao: 'AGUARDANDO' | 'AVALIADO' | 'ACEITO';
+  avaliado_por_id: string | null;
+  avaliado_por_nome: string | null;
+  avaliado_em: string | null;
+}
+
+export interface AvaliarSubmissaoPayload {
+  nota: number;
 }
 
 export interface SubmissaoAtrasada {
@@ -124,6 +142,13 @@ export class SubmissaoService {
 
   listarHistoricoOrientador(): Observable<SubmissaoHistorico[]> {
     return this.http.get<SubmissaoHistorico[]>(`${this.api}/submissoes/orientador`);
+  }
+
+  avaliarSubmissao(submissaoId: string, payload: AvaliarSubmissaoPayload): Observable<SubmissaoHistorico> {
+    return this.http.patch<SubmissaoHistorico>(
+      `${this.api}/submissoes/entregaveis/${submissaoId}/avaliacao`,
+      payload,
+    );
   }
 
   listarSubmissoesAtrasadas(): Observable<SubmissaoAtrasada[]> {

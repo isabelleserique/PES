@@ -69,6 +69,7 @@ model User {
   tccs_como_coorientador TCC[]               @relation("CoorientadorTCC")
   tcc_edit_logs         TCCEditLog[]         @relation("ActorTCCEdit")
   submissoes_entregaveis SubmissaoEntregavel[]
+  submissoes_avaliadas  SubmissaoEntregavel[] @relation("AvaliadorSubmissao")
   orientacao_sessoes_aluno OrientacaoSessao[] @relation("AlunoOrientacaoSessao")
   orientacao_sessoes_orientador OrientacaoSessao[] @relation("OrientadorOrientacaoSessao")
   apresentacoes_artigo ApresentacaoArtigo[] @relation("AlunoApresentacaoArtigo")
@@ -116,7 +117,7 @@ model TCC {
   titulo           String
   tipo_tcc         TipoTCC
   aluno_id         String
-  orientador_id    String
+  orientador_id    String?
   coorientador_id  String?
   periodo_id       String
   status           StatusTCC    @default(AGUARDANDO_ACEITE)
@@ -130,7 +131,7 @@ model TCC {
   criado_em        DateTime     @default(now())
   atualizado_em    DateTime     @updatedAt
   aluno            User         @relation("AlunoTCC", fields: [aluno_id], references: [id], onDelete: Cascade)
-  orientador       User         @relation("OrientadorTCC", fields: [orientador_id], references: [id], onDelete: Restrict)
+  orientador       User?        @relation("OrientadorTCC", fields: [orientador_id], references: [id], onDelete: Restrict)
   coorientador     User?        @relation("CoorientadorTCC", fields: [coorientador_id], references: [id], onDelete: SetNull)
   periodo          PeriodoLetivo @relation(fields: [periodo_id], references: [id], onDelete: Cascade)
   edit_logs        TCCEditLog[]
@@ -169,14 +170,19 @@ model SubmissaoEntregavel {
   tamanho_comprovante_bytes  Int?
   fora_do_prazo              Boolean  @default(false)
   nota_automatica            Int?
+  nota_orientador            Float?
+  avaliado_por_id            String?
+  avaliado_em                DateTime?
   criado_em                  DateTime @default(now())
   tcc                        TCC      @relation(fields: [tcc_id], references: [id], onDelete: Cascade)
   aluno                      User     @relation(fields: [aluno_id], references: [id], onDelete: Cascade)
+  avaliador                  User?    @relation("AvaliadorSubmissao", fields: [avaliado_por_id], references: [id], onDelete: SetNull)
   apresentacoes_artigo       ApresentacaoArtigo[]
 
   @@unique([tcc_id, etapa, versao], name: "uq_submissoes_entregaveis_tcc_etapa_versao")
   @@index([tcc_id])
   @@index([aluno_id])
+  @@index([avaliado_por_id])
   @@map("submissoes_entregaveis")
 }
 

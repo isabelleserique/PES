@@ -80,7 +80,7 @@
 
         <div class="al-summary" *ngIf="meuTcc as tcc">
           <span>{{ tcc.tipo_tcc }}</span>
-          <span>Orientador: {{ tcc.orientador_nome }}</span>
+          <span>Orientador: {{ tcc.orientador_nome || 'Nenhum neste momento' }}</span>
           <span *ngIf="tcc.coorientador_nome">Coorientador: {{ tcc.coorientador_nome }}</span>
           <span>Período: {{ tcc.periodo_nome }}</span>
         </div>
@@ -112,13 +112,11 @@
             <mat-form-field appearance="outline">
               <mat-label>Professor orientador</mat-label>
               <mat-select formControlName="orientador_id">
+                <mat-option value="">Nenhum neste momento</mat-option>
                 <mat-option *ngFor="let orientador of orientadores" [value]="orientador.id">
                   {{ orientador.nome_completo }}
                 </mat-option>
               </mat-select>
-              <mat-error *ngIf="tccForm.controls.orientador_id.touched && tccForm.controls.orientador_id.hasError('required')">
-                Selecione um orientador.
-              </mat-error>
             </mat-form-field>
           </div>
 
@@ -133,11 +131,11 @@
           </mat-form-field>
 
           <div class="al-form-actions">
-            <button mat-raised-button type="submit" class="al-btn-primary" [disabled]="isSavingTcc || orientadores.length === 0">
+            <button mat-raised-button type="submit" class="al-btn-primary" [disabled]="isSavingTcc">
               {{ isSavingTcc ? 'SALVANDO...' : (meuTcc ? 'ATUALIZAR TCC' : 'REGISTRAR TCC') }}
             </button>
             <p class="al-empty" *ngIf="orientadores.length === 0">
-              Nenhum orientador ativo está disponível no momento.
+              Nenhum orientador ativo está disponível no momento. Você ainda pode registrar o TCC sem orientador inicial.
             </p>
           </div>
         </form>

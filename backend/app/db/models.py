@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import date, datetime
 from typing import Any, Optional
 
-from sqlalchemy import Boolean, Date, DateTime, Enum, ForeignKey, Integer, JSON, String, UniqueConstraint, func
+from sqlalchemy import Boolean, Date, DateTime, Enum, Float, ForeignKey, Integer, JSON, String, UniqueConstraint, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from backend.app.db.base import Base
@@ -142,10 +142,10 @@ class TCCRecord(Base):
         nullable=False,
         index=True,
     )
-    orientador_id: Mapped[str] = mapped_column(
+    orientador_id: Mapped[Optional[str]] = mapped_column(
         String,
         ForeignKey("users.id", ondelete="RESTRICT"),
-        nullable=False,
+        nullable=True,
         index=True,
     )
     coorientador_id: Mapped[Optional[str]] = mapped_column(
@@ -249,6 +249,14 @@ class SubmissaoEntregavelRecord(Base):
     tamanho_comprovante_bytes: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     fora_do_prazo: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     nota_automatica: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    nota_orientador: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    avaliado_por_id: Mapped[Optional[str]] = mapped_column(
+        String,
+        ForeignKey("users.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+    avaliado_em: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=False), nullable=True)
     criado_em: Mapped[datetime] = mapped_column(
         DateTime(timezone=False),
         server_default=func.now(),

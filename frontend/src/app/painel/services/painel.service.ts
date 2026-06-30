@@ -96,8 +96,8 @@ export interface CronogramaPeriodoResponse {
 export interface TccPayload {
   titulo: string;
   tipo_tcc: TipoTccAluno;
-  orientador_id: string;
-  coorientador_id?: string;
+  orientador_id?: string | null;
+  coorientador_id?: string | null;
   resumo?: string;
   area_tematica?: string;
   curso?: string;
@@ -109,8 +109,8 @@ export interface TccResponse {
   id: string;
   titulo: string;
   tipo_tcc: TipoTccAluno;
-  orientador_id: string;
-  orientador_nome: string;
+  orientador_id: string | null;
+  orientador_nome: string | null;
   coorientador_id: string | null;
   coorientador_nome: string | null;
   periodo_id: string;

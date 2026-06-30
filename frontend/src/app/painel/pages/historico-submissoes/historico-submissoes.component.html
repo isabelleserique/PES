@@ -63,6 +63,7 @@
           <span>Arquivo</span>
           <span>Data</span>
           <span>Status</span>
+          <span>Avaliação</span>
           <span>Ações</span>
         </div>
 
@@ -97,18 +98,48 @@
           <span class="hs-data">{{ formatarData(submissao.data_submissao) }}</span>
 
           <div class="hs-badges">
-            <span class="hs-badge hs-badge--aceito" *ngIf="submissao.foi_aceito">
-              <mat-icon>verified</mat-icon> Aceito
-            </span>
-            <span class="hs-badge hs-badge--pendente" *ngIf="!submissao.foi_aceito">
-              <mat-icon>hourglass_empty</mat-icon> Aguardando
+            <span class="hs-badge" [ngClass]="statusBadgeClass(submissao)">
+              <mat-icon>{{ statusIcon(submissao) }}</mat-icon> {{ statusLabel(submissao) }}
             </span>
             <span class="hs-badge hs-badge--atraso" *ngIf="submissao.fora_do_prazo">
               Fora do prazo
             </span>
-            <span class="hs-badge hs-badge--nota" *ngIf="submissao.nota_automatica !== null">
-              Nota {{ submissao.nota_automatica }},0
+            <span class="hs-badge hs-badge--nota" *ngIf="submissao.nota_final !== null">
+              Nota {{ formatarNota(submissao.nota_final) }}
             </span>
+            <span class="hs-avaliador" *ngIf="submissao.avaliado_por_nome">
+              por {{ submissao.avaliado_por_nome }}
+            </span>
+          </div>
+
+          <div class="hs-avaliacao" *ngIf="getAvaliacaoState(submissao) as avaliacao">
+            <ng-container *ngIf="canAvaliar(submissao); else notaSomenteLeitura">
+              <mat-form-field appearance="outline" class="hs-nota-field">
+                <mat-label>Nota</mat-label>
+                <input matInput type="number" min="0" max="10" step="0.1" [(ngModel)]="avaliacao.nota" />
+              </mat-form-field>
+
+              <button
+                mat-raised-button
+                type="button"
+                class="hs-save-grade-btn"
+                [disabled]="avaliacao.isSaving"
+                (click)="avaliar(submissao)">
+                {{ avaliacao.isSaving ? 'Salvando...' : 'Salvar nota' }}
+              </button>
+            </ng-container>
+
+            <ng-template #notaSomenteLeitura>
+              <span class="hs-nota-readonly" *ngIf="submissao.nota_final !== null; else semNota">
+                {{ formatarNota(submissao.nota_final) }}
+              </span>
+              <ng-template #semNota>
+                <span class="hs-sem-nota">Sem nota lançada</span>
+              </ng-template>
+              <span class="hs-avaliacao-data" *ngIf="submissao.avaliado_em">
+                {{ formatarAvaliacaoData(submissao.avaliado_em) }}
+              </span>
+            </ng-template>
           </div>
 
           <div class="hs-actions">
