@@ -306,7 +306,17 @@ class ApresentacaoArtigoRecord(Base):
         nullable=False,
         index=True,
     )
+    submissao_id: Mapped[Optional[str]] = mapped_column(
+        String,
+        ForeignKey("submissoes_entregaveis.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
     data_apresentacao: Mapped[date] = mapped_column(Date, nullable=False)
+    tipo_veiculo: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    veiculo_publicacao: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    local_apresentacao: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    observacoes: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     artigo_ja_aceito: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     criado_em: Mapped[datetime] = mapped_column(
         DateTime(timezone=False),

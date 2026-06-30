@@ -19,7 +19,6 @@ import { NotificacoesComponent } from './pages/notificacoes/notificacoes.compone
 import { PrazosPeriodoComponent } from './pages/prazos-periodo/prazos-periodo.component';
 import { PrivacidadeComponent } from './pages/privacidade/privacidade.component';
 import { PainelCoordenadorComponent } from './pages/painel/painel.component';
-import { RegistrarApresentacaoComponent } from './pages/registrar-apresentacao/registrar-apresentacao.component';
 import { RegistrarBancaComponent } from './pages/registrar-banca/registrar-banca.component';
 import { RegistrarSessaoComponent } from './pages/registrar-sessao/registrar-sessao.component';
 import { PainelRedirectComponent } from './pages/redirect/redirect.component';
@@ -46,7 +45,6 @@ import { PainelRoutingModule } from './painel-routing.module';
     SubmeterArtigoComponent,
     HistoricoSubmissoesComponent,
     RegistrarSessaoComponent,
-    RegistrarApresentacaoComponent,
     RegistrarBancaComponent,
     SubmissoesAtrasadasComponent,
     LogsSistemaComponent,

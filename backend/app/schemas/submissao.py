@@ -66,11 +66,20 @@ class SubmissaoAtrasadaResponse(BaseModel):
 
 class ApresentacaoArtigoPayload(BaseModel):
     data_apresentacao: date
+    tipo_veiculo: Optional[str] = None
+    veiculo_publicacao: Optional[str] = None
+    local_apresentacao: Optional[str] = None
+    observacoes: Optional[str] = None
 
 
 class ApresentacaoArtigoResponse(BaseModel):
     id: str
     tcc_id: str
+    submissao_id: Optional[str] = None
     data_apresentacao: date
+    tipo_veiculo: Optional[str] = None
+    veiculo_publicacao: Optional[str] = None
+    local_apresentacao: Optional[str] = None
+    observacoes: Optional[str] = None
     artigo_ja_aceito: bool
     criado_em: datetime

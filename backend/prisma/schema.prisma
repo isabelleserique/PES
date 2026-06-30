@@ -171,6 +171,7 @@ model SubmissaoEntregavel {
   criado_em                  DateTime @default(now())
   tcc                        TCC      @relation(fields: [tcc_id], references: [id], onDelete: Cascade)
   aluno                      User     @relation(fields: [aluno_id], references: [id], onDelete: Cascade)
+  apresentacoes_artigo       ApresentacaoArtigo[]
 
   @@unique([tcc_id, etapa, versao], name: "uq_submissoes_entregaveis_tcc_etapa_versao")
   @@index([tcc_id])
@@ -230,14 +231,21 @@ model ApresentacaoArtigo {
   id                String   @id
   tcc_id            String
   aluno_id          String
+  submissao_id      String?
   data_apresentacao DateTime @db.Date
+  tipo_veiculo      String?
+  veiculo_publicacao String?
+  local_apresentacao String?
+  observacoes       String?
   artigo_ja_aceito  Boolean  @default(false)
   criado_em         DateTime @default(now())
   tcc               TCC      @relation(fields: [tcc_id], references: [id], onDelete: Cascade)
   aluno             User     @relation("AlunoApresentacaoArtigo", fields: [aluno_id], references: [id], onDelete: Cascade)
+  submissao         SubmissaoEntregavel? @relation(fields: [submissao_id], references: [id], onDelete: SetNull)
 
   @@index([tcc_id])
   @@index([aluno_id])
+  @@index([submissao_id])
   @@map("apresentacoes_artigo")
 }
 

@@ -11,11 +11,15 @@ from fastapi import HTTPException, UploadFile
 from starlette.datastructures import Headers
 
 from backend.app.core.config import get_settings
-from backend.app.db.models import SubmissaoEntregavelRecord
+from backend.app.db.models import ApresentacaoArtigoRecord, SubmissaoEntregavelRecord
 from backend.app.models.periodo import TipoTCC
 from backend.app.models.tcc import StatusTCC
 from backend.app.models.user import Perfil, StatusCadastro
-from backend.app.services.submissao_service import COMPROVANTE_REQUIRED_DETAIL, SubmissaoService
+from backend.app.services.submissao_service import (
+    COMPROVANTE_REQUIRED_DETAIL,
+    PRESENTATION_DATA_REQUIRED_DETAIL,
+    SubmissaoService,
+)
 from backend.tests.test_tcc import _build_auth_headers, _seed_periodo, _seed_tcc, _seed_user
 
 
@@ -116,6 +120,11 @@ def test_submeter_artigo_persists_files_and_returns_auto_grade(client, db_sessio
             arquivo=_build_upload("artigo.pdf", b"%PDF-1.4"),
             foi_aceito=True,
             comprovante=_build_upload("aceite.pdf", b"%PDF-proof"),
+            apresentacao_data=today,
+            apresentacao_tipo_veiculo="Conferência",
+            apresentacao_veiculo_publicacao="Simpósio de Sistemas",
+            apresentacao_local="Manaus",
+            apresentacao_observacoes="Trilha principal",
         )
     )
 
@@ -133,6 +142,13 @@ def test_submeter_artigo_persists_files_and_returns_auto_grade(client, db_sessio
     assert stored.nota_automatica == 10
     assert tmp_path in Path(stored.caminho_arquivo).parents
     assert stored.caminho_comprovante is not None
+    apresentacao = db_session.query(ApresentacaoArtigoRecord).one()
+    assert apresentacao.submissao_id == stored.id
+    assert apresentacao.data_apresentacao == today
+    assert apresentacao.tipo_veiculo == "Conferência"
+    assert apresentacao.veiculo_publicacao == "Simpósio de Sistemas"
+    assert apresentacao.local_apresentacao == "Manaus"
+    assert apresentacao.observacoes == "Trilha principal"
 
     history = service.listar_entregaveis(session=db_session, current_user=aluno)
     assert len(history) == 1
@@ -223,6 +239,59 @@ def test_submeter_artigo_requires_proof_when_marked_as_accepted(db_session, tmp_
 
     assert exc_info.value.status_code == 422
     assert exc_info.value.detail == COMPROVANTE_REQUIRED_DETAIL
+
+
+def test_submeter_artigo_requires_presentation_data_when_marked_as_accepted(db_session, tmp_path) -> None:
+    aluno = _seed_user(
+        db_session,
+        nome_completo="Aluno Sem Apresentacao",
+        email="aluno.sem.apresentacao@icomp.ufam.edu.br",
+        username="aluno.sem.apresentacao",
+        perfil=Perfil.ALUNO,
+        status=StatusCadastro.ATIVO,
+        ativo=True,
+    )
+    orientador = _seed_user(
+        db_session,
+        nome_completo="Prof. Sem Apresentacao",
+        email="prof.sem.apresentacao@icomp.ufam.edu.br",
+        username="prof.sem.apresentacao",
+        perfil=Perfil.ORIENTADOR,
+        status=StatusCadastro.ATIVO,
+        ativo=True,
+    )
+    today = date.today()
+    periodo = _seed_periodo(
+        db_session,
+        nome="2026.1",
+        data_inicio=(today - timedelta(days=30)).isoformat(),
+        data_fim=(today + timedelta(days=30)).isoformat(),
+        ativo=True,
+    )
+    _seed_tcc(
+        db_session,
+        periodo_id=periodo.id,
+        aluno_id=aluno.id,
+        orientador_id=orientador.id,
+        titulo="Artigo sem apresentação",
+        tipo_tcc=TipoTCC.ARTIGO,
+    )
+    service = SubmissaoService(settings=get_settings().model_copy(update={"upload_dir": tmp_path}))
+
+    with pytest.raises(HTTPException) as exc_info:
+        asyncio.run(
+            service.submeter_entregavel(
+                session=db_session,
+                current_user=aluno,
+                etapa="Artigo Final",
+                arquivo=_build_upload("artigo.pdf", b"%PDF-1.4"),
+                foi_aceito=True,
+                comprovante=_build_upload("aceite.pdf", b"%PDF-proof"),
+            )
+        )
+
+    assert exc_info.value.status_code == 422
+    assert exc_info.value.detail == PRESENTATION_DATA_REQUIRED_DETAIL
 
 
 def test_submeter_artigo_persists_selected_deliverable_step_without_accepted_flag(db_session, tmp_path) -> None:

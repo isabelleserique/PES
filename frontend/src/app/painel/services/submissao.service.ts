@@ -85,12 +85,21 @@ export interface LogAtividade {
 
 export interface ApresentacaoArtigoPayload {
   data_apresentacao: string;
+  tipo_veiculo?: string | null;
+  veiculo_publicacao?: string | null;
+  local_apresentacao?: string | null;
+  observacoes?: string | null;
 }
 
 export interface ApresentacaoArtigo {
   id: string;
   tcc_id: string;
+  submissao_id: string | null;
   data_apresentacao: string;
+  tipo_veiculo: string | null;
+  veiculo_publicacao: string | null;
+  local_apresentacao: string | null;
+  observacoes: string | null;
   artigo_ja_aceito: boolean;
   criado_em: string;
 }

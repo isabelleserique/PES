@@ -1,3 +1,5 @@
+from datetime import date
+
 from fastapi import APIRouter, Depends, File, Form, UploadFile, status
 from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
@@ -42,6 +44,11 @@ async def submeter_entregavel(
     etapa: str | None = Form(None),
     foi_aceito: bool = Form(False),
     comprovante: UploadFile | None = File(None),
+    apresentacao_data: date | None = Form(None),
+    apresentacao_tipo_veiculo: str | None = Form(None),
+    apresentacao_veiculo_publicacao: str | None = Form(None),
+    apresentacao_local: str | None = Form(None),
+    apresentacao_observacoes: str | None = Form(None),
     session: Session = Depends(get_db_session),
     submissao_service: SubmissaoService = Depends(get_submissao_service),
     email_service: EmailService = Depends(get_email_service),
@@ -54,6 +61,11 @@ async def submeter_entregavel(
         arquivo=arquivo,
         foi_aceito=foi_aceito,
         comprovante=comprovante,
+        apresentacao_data=apresentacao_data,
+        apresentacao_tipo_veiculo=apresentacao_tipo_veiculo,
+        apresentacao_veiculo_publicacao=apresentacao_veiculo_publicacao,
+        apresentacao_local=apresentacao_local,
+        apresentacao_observacoes=apresentacao_observacoes,
         email_service=email_service,
     )
 

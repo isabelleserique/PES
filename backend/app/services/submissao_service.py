@@ -42,6 +42,7 @@ SUBMISSAO_FILE_FORBIDDEN_DETAIL = "Perfil sem permissao para acessar o arquivo d
 COMPROVANTE_FILE_NOT_FOUND_DETAIL = "Comprovante da submissao nao encontrado."
 INVALID_ETAPA_DETAIL = "Etapa de entrega invalida para o tipo de TCC do aluno."
 COMPROVANTE_REQUIRED_DETAIL = "Comprovante de aceite e obrigatorio quando o artigo ja foi aceito."
+PRESENTATION_DATA_REQUIRED_DETAIL = "Dados de apresentacao/publicacao sao obrigatorios quando o artigo ja foi aceito."
 INVALID_FILE_DETAIL = "Arquivo deve estar nos formatos PDF ou DOCX."
 INVALID_COMPROVANTE_FILE_DETAIL = "Comprovante deve estar nos formatos PDF, DOCX, JPG ou PNG."
 MAX_FILE_SIZE_BYTES = 50 * 1024 * 1024
@@ -198,6 +199,10 @@ class SubmissaoService:
             tcc_id=tcc.id,
             aluno_id=current_user.id,
             data_apresentacao=payload.data_apresentacao,
+            tipo_veiculo=self._normalize_optional_text(payload.tipo_veiculo),
+            veiculo_publicacao=self._normalize_optional_text(payload.veiculo_publicacao),
+            local_apresentacao=self._normalize_optional_text(payload.local_apresentacao),
+            observacoes=self._normalize_optional_text(payload.observacoes),
             artigo_ja_aceito=artigo_ja_aceito,
         )
         session.add(apresentacao)
@@ -228,6 +233,11 @@ class SubmissaoService:
         arquivo: UploadFile,
         foi_aceito: bool,
         comprovante: UploadFile | None,
+        apresentacao_data: date | None = None,
+        apresentacao_tipo_veiculo: str | None = None,
+        apresentacao_veiculo_publicacao: str | None = None,
+        apresentacao_local: str | None = None,
+        apresentacao_observacoes: str | None = None,
         email_service: EmailService | None = None,
     ) -> SubmissaoEntregavelCreateResponse:
         tcc = self._get_active_tcc(session=session, current_user=current_user, raise_if_missing=True)
@@ -238,8 +248,23 @@ class SubmissaoService:
         if tcc.tipo_tcc != TipoTCC.ARTIGO and foi_aceito:
             foi_aceito = False
             comprovante = None
+            apresentacao_data = None
+            apresentacao_tipo_veiculo = None
+            apresentacao_veiculo_publicacao = None
+            apresentacao_local = None
+            apresentacao_observacoes = None
         if tcc.tipo_tcc == TipoTCC.ARTIGO and foi_aceito and comprovante is None:
             raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=COMPROVANTE_REQUIRED_DETAIL)
+        if tcc.tipo_tcc == TipoTCC.ARTIGO and foi_aceito:
+            apresentacao_tipo_veiculo = self._normalize_optional_text(apresentacao_tipo_veiculo)
+            apresentacao_veiculo_publicacao = self._normalize_optional_text(apresentacao_veiculo_publicacao)
+            apresentacao_local = self._normalize_optional_text(apresentacao_local)
+            apresentacao_observacoes = self._normalize_optional_text(apresentacao_observacoes)
+            if apresentacao_data is None or not apresentacao_tipo_veiculo or not apresentacao_veiculo_publicacao:
+                raise HTTPException(
+                    status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    detail=PRESENTATION_DATA_REQUIRED_DETAIL,
+                )
 
         arquivo_bytes = await self._read_and_validate_file(
             upload=arquivo,
@@ -293,6 +318,21 @@ class SubmissaoService:
             nota_automatica=10 if tcc.tipo_tcc == TipoTCC.ARTIGO and foi_aceito else None,
         )
         session.add(submissao)
+        if tcc.tipo_tcc == TipoTCC.ARTIGO and foi_aceito:
+            session.add(
+                ApresentacaoArtigoRecord(
+                    id=str(uuid4()),
+                    tcc_id=tcc.id,
+                    aluno_id=current_user.id,
+                    submissao_id=submissao.id,
+                    data_apresentacao=apresentacao_data,
+                    tipo_veiculo=apresentacao_tipo_veiculo,
+                    veiculo_publicacao=apresentacao_veiculo_publicacao,
+                    local_apresentacao=apresentacao_local,
+                    observacoes=apresentacao_observacoes,
+                    artigo_ja_aceito=True,
+                )
+            )
         session.commit()
         session.refresh(submissao)
         AuditService().log_event(
@@ -308,6 +348,7 @@ class SubmissaoService:
                 "versao": submissao.versao,
                 "arquivo": submissao.nome_arquivo,
                 "fora_do_prazo": submissao.fora_do_prazo,
+                "artigo_ja_aceito": submissao.foi_aceito,
             },
         )
         self._send_grade_notification_if_needed(
@@ -438,6 +479,12 @@ class SubmissaoService:
         normalized = unicodedata.normalize("NFKD", value.strip().casefold())
         without_accents = "".join(char for char in normalized if not unicodedata.combining(char))
         return " ".join(without_accents.split())
+
+    def _normalize_optional_text(self, value: str | None) -> str | None:
+        if value is None:
+            return None
+        normalized = " ".join(value.strip().split())
+        return normalized or None
 
     def listar_submissoes_atrasadas(
         self,
@@ -595,7 +642,12 @@ class SubmissaoService:
         return ApresentacaoArtigoResponse(
             id=apresentacao.id,
             tcc_id=apresentacao.tcc_id,
+            submissao_id=apresentacao.submissao_id,
             data_apresentacao=apresentacao.data_apresentacao,
+            tipo_veiculo=apresentacao.tipo_veiculo,
+            veiculo_publicacao=apresentacao.veiculo_publicacao,
+            local_apresentacao=apresentacao.local_apresentacao,
+            observacoes=apresentacao.observacoes,
             artigo_ja_aceito=apresentacao.artigo_ja_aceito,
             criado_em=apresentacao.criado_em,
         )

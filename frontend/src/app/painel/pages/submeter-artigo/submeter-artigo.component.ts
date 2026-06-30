@@ -1,6 +1,6 @@
 import { Location } from '@angular/common';
 import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
-import { FormControl } from '@angular/forms';
+import { FormControl, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { forkJoin, Observable } from 'rxjs';
 import { finalize } from 'rxjs/operators';
@@ -28,6 +28,11 @@ export class SubmeterArtigoComponent implements OnInit {
   comprovanteFile: File | null = null;
   readonly foiAceitoCtrl = new FormControl(false);
   readonly etapaCtrl = new FormControl<EtapaEntregavel | null>(null);
+  readonly apresentacaoTipoVeiculoCtrl = new FormControl('Conferência', Validators.required);
+  readonly apresentacaoVeiculoCtrl = new FormControl('', [Validators.required, Validators.maxLength(255)]);
+  readonly apresentacaoDataCtrl = new FormControl<Date | null>(null, Validators.required);
+  readonly apresentacaoLocalCtrl = new FormControl('', Validators.maxLength(255));
+  readonly apresentacaoObservacoesCtrl = new FormControl('', Validators.maxLength(1000));
 
   isSubmitting = false;
   isSubmitted = false;
@@ -62,7 +67,18 @@ export class SubmeterArtigoComponent implements OnInit {
     if (!this.arquivoFile) return false;
     if (!this.etapaCtrl.value) return false;
     if (this.foiAceito && !this.comprovanteFile) return false;
+    if (this.foiAceito && !this.apresentacaoFormValido) return false;
     return true;
+  }
+
+  get apresentacaoFormValido(): boolean {
+    return (
+      this.apresentacaoTipoVeiculoCtrl.valid &&
+      this.apresentacaoVeiculoCtrl.valid &&
+      this.apresentacaoDataCtrl.valid &&
+      this.apresentacaoLocalCtrl.valid &&
+      this.apresentacaoObservacoesCtrl.valid
+    );
   }
 
   get isArtigo(): boolean {
@@ -185,6 +201,9 @@ export class SubmeterArtigoComponent implements OnInit {
   }
 
   submeter(): void {
+    if (this.foiAceito) {
+      this.marcarCamposApresentacaoComoTocados();
+    }
     if (!this.podeSubmeter || this.isSubmitting) return;
     this.isSubmitting = true;
     this.errorMessage = '';
@@ -197,12 +216,24 @@ export class SubmeterArtigoComponent implements OnInit {
     formData.append('foi_aceito', String(this.foiAceito));
     if (this.foiAceito && this.comprovanteFile) {
       formData.append('comprovante', this.comprovanteFile);
+      formData.append('apresentacao_tipo_veiculo', this.apresentacaoTipoVeiculoCtrl.value ?? '');
+      formData.append('apresentacao_veiculo_publicacao', this.apresentacaoVeiculoCtrl.value ?? '');
+      formData.append('apresentacao_data', this.formatDateInput(this.apresentacaoDataCtrl.value as Date));
+      const local = this.apresentacaoLocalCtrl.value?.trim();
+      const observacoes = this.apresentacaoObservacoesCtrl.value?.trim();
+      if (local) {
+        formData.append('apresentacao_local', local);
+      }
+      if (observacoes) {
+        formData.append('apresentacao_observacoes', observacoes);
+      }
     }
 
     this.submissaoService.submeterEntregavel(formData).pipe(finalize(() => (this.isSubmitting = false))).subscribe({
       next: (res) => {
         this.isSubmitted = true;
         this.notaAtribuida = res.nota_automatica ?? null;
+        this.resetarApresentacao();
         this.carregarHistorico();
       },
       error: (error: unknown) => {
@@ -249,6 +280,30 @@ export class SubmeterArtigoComponent implements OnInit {
       .replace(/[\u0300-\u036f]/g, '')
       .toLowerCase()
       .trim();
+  }
+
+  private formatDateInput(date: Date): string {
+    return [
+      date.getFullYear(),
+      String(date.getMonth() + 1).padStart(2, '0'),
+      String(date.getDate()).padStart(2, '0'),
+    ].join('-');
+  }
+
+  private marcarCamposApresentacaoComoTocados(): void {
+    this.apresentacaoTipoVeiculoCtrl.markAsTouched();
+    this.apresentacaoVeiculoCtrl.markAsTouched();
+    this.apresentacaoDataCtrl.markAsTouched();
+    this.apresentacaoLocalCtrl.markAsTouched();
+    this.apresentacaoObservacoesCtrl.markAsTouched();
+  }
+
+  private resetarApresentacao(): void {
+    this.apresentacaoTipoVeiculoCtrl.reset('Conferência');
+    this.apresentacaoVeiculoCtrl.reset('');
+    this.apresentacaoDataCtrl.reset(null);
+    this.apresentacaoLocalCtrl.reset('');
+    this.apresentacaoObservacoesCtrl.reset('');
   }
 
   private abrirArquivo(request: Observable<Blob>): void {
