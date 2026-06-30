@@ -15,6 +15,7 @@ export class HistoricoSubmissoesComponent implements OnInit {
   isLoading = true;
   errorMessage = '';
   historico: SubmissaoHistorico[] = [];
+  avaliacoes: Record<string, { nota: number | null; isSaving: boolean }> = {};
 
   filtroTipo = '';
   filtroForaDoPrazo = false;
@@ -58,7 +59,11 @@ export class HistoricoSubmissoesComponent implements OnInit {
   }
 
   get pageScopeLabel(): string {
-    return this.perfil === 'ORIENTADOR' ? 'US016 - Orientador' : 'US016 - Coordenador';
+    return this.perfil === 'ORIENTADOR' ? 'Orientador' : 'Coordenador';
+  }
+
+  get isOrientador(): boolean {
+    return this.perfil === 'ORIENTADOR';
   }
 
   get pageSubtitle(): string {
@@ -79,6 +84,72 @@ export class HistoricoSubmissoesComponent implements OnInit {
     this.abrirArquivo(this.submissaoService.visualizarComprovante(submissao.id));
   }
 
+  canAvaliar(submissao: SubmissaoHistorico): boolean {
+    return this.isOrientador && submissao.nota_automatica === null;
+  }
+
+  getAvaliacaoState(submissao: SubmissaoHistorico): { nota: number | null; isSaving: boolean } {
+    if (!this.avaliacoes[submissao.id]) {
+      this.avaliacoes[submissao.id] = {
+        nota: submissao.nota_orientador,
+        isSaving: false,
+      };
+    }
+    return this.avaliacoes[submissao.id];
+  }
+
+  avaliar(submissao: SubmissaoHistorico): void {
+    const state = this.getAvaliacaoState(submissao);
+    if (state.nota === null || state.nota < 0 || state.nota > 10 || state.isSaving) {
+      this.errorMessage = 'Informe uma nota entre 0 e 10.';
+      return;
+    }
+
+    state.isSaving = true;
+    this.errorMessage = '';
+    this.submissaoService.avaliarSubmissao(submissao.id, {
+      nota: state.nota,
+    }).subscribe({
+      next: (response) => {
+        this.historico = this.historico.map((item) => (item.id === response.id ? response : item));
+        this.avaliacoes[response.id] = {
+          nota: response.nota_orientador,
+          isSaving: false,
+        };
+      },
+      error: (error: unknown) => {
+        state.isSaving = false;
+        this.errorMessage = getApiErrorMessage(error, 'Não foi possível lançar a nota.');
+      },
+    });
+  }
+
+  statusLabel(submissao: SubmissaoHistorico): string {
+    if (submissao.status_avaliacao === 'ACEITO') return 'Aceito';
+    if (submissao.status_avaliacao === 'AVALIADO') return 'Avaliado';
+    return 'Aguardando';
+  }
+
+  statusIcon(submissao: SubmissaoHistorico): string {
+    if (submissao.status_avaliacao === 'ACEITO') return 'verified';
+    if (submissao.status_avaliacao === 'AVALIADO') return 'grade';
+    return 'hourglass_empty';
+  }
+
+  statusBadgeClass(submissao: SubmissaoHistorico): string {
+    if (submissao.status_avaliacao === 'ACEITO') return 'hs-badge--aceito';
+    if (submissao.status_avaliacao === 'AVALIADO') return 'hs-badge--avaliado';
+    return 'hs-badge--pendente';
+  }
+
+  formatarNota(nota: number | null | undefined): string {
+    if (nota === null || nota === undefined) return '-';
+    return nota.toLocaleString('pt-BR', {
+      minimumFractionDigits: Number.isInteger(nota) ? 1 : 2,
+      maximumFractionDigits: 2,
+    });
+  }
+
   formatarData(dateStr: string): string {
     return new Date(dateStr).toLocaleString('pt-BR', {
       day: '2-digit',
@@ -87,6 +158,11 @@ export class HistoricoSubmissoesComponent implements OnInit {
       hour: '2-digit',
       minute: '2-digit',
     });
+  }
+
+  formatarAvaliacaoData(dateStr: string | null): string {
+    if (!dateStr) return '';
+    return this.formatarData(dateStr);
   }
 
   private getHistoricoRequest(): Observable<SubmissaoHistorico[]> {

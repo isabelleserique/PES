@@ -126,6 +126,86 @@ class EmailService:
             "Acesse o TCComp para acompanhar o cronograma e realizar a submissao quando aplicavel.\n"
         )
 
+    def build_advisor_deadline_notification_body(
+        self,
+        *,
+        orientador_nome: str,
+        aluno_nome: str,
+        titulo: str,
+        etapa: str,
+        data_limite: str,
+        tipo_alerta: str,
+    ) -> str:
+        mensagens = {
+            "A_VENCER": "Um prazo de orientando esta se aproximando.",
+            "VENCE_HOJE": "Um prazo de orientando vence hoje.",
+            "VENCIDO": "Um prazo de orientando venceu sem submissao registrada.",
+        }
+        return (
+            f"Ola, {orientador_nome}!\n\n"
+            f"{mensagens.get(tipo_alerta, 'Ha uma atualizacao sobre prazo de orientando.')}\n\n"
+            f"Aluno: {aluno_nome}\n"
+            f"TCC: {titulo}\n"
+            f"Etapa: {etapa}\n"
+            f"Data limite: {data_limite}\n\n"
+            "Acesse o TCComp para acompanhar seus orientandos.\n"
+        )
+
+    def build_grade_notification_body(
+        self,
+        *,
+        aluno_nome: str,
+        titulo: str,
+        etapa: str,
+        nota: int | float,
+    ) -> str:
+        return (
+            f"Ola, {aluno_nome}!\n\n"
+            "Uma nota foi lancada para o seu TCC.\n\n"
+            f"TCC: {titulo}\n"
+            f"Etapa: {etapa}\n"
+            f"Nota: {nota}\n\n"
+            "Acesse o TCComp para consultar o historico da submissao.\n"
+        )
+
+    def build_banca_notification_body(
+        self,
+        *,
+        aluno_nome: str,
+        titulo: str,
+        data_defesa: str,
+        local: str,
+        membros: list[str],
+    ) -> str:
+        membros_texto = "\n".join(f"- {membro}" for membro in membros)
+        return (
+            f"Ola, {aluno_nome}!\n\n"
+            "A composicao da sua banca de defesa foi registrada.\n\n"
+            f"TCC: {titulo}\n"
+            f"Data e horario: {data_defesa}\n"
+            f"Local: {local}\n\n"
+            f"Membros:\n{membros_texto}\n\n"
+            "Acesse o TCComp para acompanhar os detalhes.\n"
+        )
+
+    def build_deposito_status_notification_body(
+        self,
+        *,
+        aluno_nome: str,
+        titulo: str,
+        status_deposito: str,
+        observacao: str | None,
+    ) -> str:
+        observacao_texto = f"\nObservacao: {observacao}\n" if observacao else "\n"
+        return (
+            f"Ola, {aluno_nome}!\n\n"
+            "O status do deposito do seu TCC foi atualizado.\n\n"
+            f"TCC: {titulo}\n"
+            f"Novo status: {status_deposito}\n"
+            f"{observacao_texto}"
+            "Acesse o TCComp para verificar a situacao do deposito.\n"
+        )
+
     def send_email(self, to_email: str, subject: str, body: str) -> None:
         if not self.settings.smtp_user or not self.settings.smtp_pass:
             raise ValueError("SMTP_USER e SMTP_PASS precisam estar configurados.")
@@ -335,6 +415,117 @@ class EmailService:
             )
         except Exception:
             logger.exception("Falha ao enviar alerta de prazo para %s", to_email)
+            return False
+
+        return True
+
+    def send_advisor_deadline_notification(
+        self,
+        *,
+        to_email: str,
+        orientador_nome: str,
+        aluno_nome: str,
+        titulo: str,
+        etapa: str,
+        data_limite: str,
+        tipo_alerta: str,
+    ) -> bool:
+        subjects = {
+            "A_VENCER": "Prazo de orientando se aproximando",
+            "VENCE_HOJE": "Prazo de orientando vence hoje",
+            "VENCIDO": "Prazo de orientando vencido",
+        }
+        body = self.build_advisor_deadline_notification_body(
+            orientador_nome=orientador_nome,
+            aluno_nome=aluno_nome,
+            titulo=titulo,
+            etapa=etapa,
+            data_limite=data_limite,
+            tipo_alerta=tipo_alerta,
+        )
+
+        try:
+            self.send_email(
+                to_email=to_email,
+                subject=subjects.get(tipo_alerta, "Alerta de prazo de orientando"),
+                body=body,
+            )
+        except Exception:
+            logger.exception("Falha ao enviar alerta de prazo de orientando para %s", to_email)
+            return False
+
+        return True
+
+    def send_grade_notification(
+        self,
+        *,
+        to_email: str,
+        aluno_nome: str,
+        titulo: str,
+        etapa: str,
+        nota: int | float,
+    ) -> bool:
+        body = self.build_grade_notification_body(
+            aluno_nome=aluno_nome,
+            titulo=titulo,
+            etapa=etapa,
+            nota=nota,
+        )
+
+        try:
+            self.send_email(to_email=to_email, subject="Nota lancada no TCComp", body=body)
+        except Exception:
+            logger.exception("Falha ao enviar notificacao de nota para %s", to_email)
+            return False
+
+        return True
+
+    def send_banca_notification(
+        self,
+        *,
+        to_email: str,
+        aluno_nome: str,
+        titulo: str,
+        data_defesa: str,
+        local: str,
+        membros: list[str],
+    ) -> bool:
+        body = self.build_banca_notification_body(
+            aluno_nome=aluno_nome,
+            titulo=titulo,
+            data_defesa=data_defesa,
+            local=local,
+            membros=membros,
+        )
+
+        try:
+            self.send_email(to_email=to_email, subject="Banca de defesa registrada", body=body)
+        except Exception:
+            logger.exception("Falha ao enviar notificacao de banca para %s", to_email)
+            return False
+
+        return True
+
+    def send_deposito_status_notification(
+        self,
+        *,
+        to_email: str,
+        aluno_nome: str,
+        titulo: str,
+        status_deposito: str,
+        observacao: str | None,
+    ) -> bool:
+        body = self.build_deposito_status_notification_body(
+            aluno_nome=aluno_nome,
+            titulo=titulo,
+            status_deposito=status_deposito,
+            observacao=observacao,
+        )
+
+        try:
+            self.send_email(to_email=to_email, subject="Status de deposito atualizado", body=body)
+        except Exception:
+            logger.exception("Falha ao enviar status de deposito para %s", to_email)
             return False
 
         return True

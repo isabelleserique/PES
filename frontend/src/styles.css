@@ -195,9 +195,56 @@ html, body {
   display: flex;
   align-items: center;
   gap: 16px;
-  padding: 0 32px;
-  height: 52px;
+  padding: 10px 32px;
+  min-height: 52px;
   flex-shrink: 0;
+  flex-wrap: nowrap;
+}
+
+.app-navbar app-painel-nav {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.app-navbar [class$='-spacer'],
+.app-navbar .hs-spacer,
+.app-navbar .lg-spacer,
+.app-navbar .sa-spacer {
+  display: none !important;
+}
+
+.app-navbar a[mat-stroked-button],
+.app-navbar button[mat-stroked-button] {
+  background: rgba(255, 255, 255, 0.08) !important;
+  border-color: rgba(255, 255, 255, 0.24) !important;
+  border-radius: 999px !important;
+  box-shadow: none !important;
+  color: #fff !important;
+  flex: 0 0 auto;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0;
+  min-height: auto;
+  padding: 7px 12px !important;
+  text-transform: none;
+  transition:
+    background 0.16s ease,
+    border-color 0.16s ease,
+    box-shadow 0.16s ease,
+    transform 0.16s ease;
+}
+
+.app-navbar a[mat-stroked-button]:hover,
+.app-navbar button[mat-stroked-button]:hover {
+  background: rgba(255, 255, 255, 0.16) !important;
+  border-color: rgba(255, 255, 255, 0.38) !important;
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.12) !important;
+  transform: translateY(-1px);
+}
+
+.app-navbar a[mat-stroked-button] .mdc-button__label,
+.app-navbar button[mat-stroked-button] .mdc-button__label {
+  line-height: 1;
 }
 
 .navbar-brand {

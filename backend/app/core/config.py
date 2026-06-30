@@ -36,6 +36,11 @@ class Settings(BaseSettings):
     session_timeout_hours: int = 8
     password_reset_token_ttl_hours: int = 2
 
+    admin_email: str = ""
+    admin_username: str = ""
+    admin_full_name: str = ""
+    admin_password: str = ""
+
     smtp_host: str = "smtp.gmail.com"
     smtp_port: int = 587
     smtp_user: str = ""

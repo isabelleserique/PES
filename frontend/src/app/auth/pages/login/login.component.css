@@ -1,0 +1,30 @@
+.auth-public-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-bottom: 18px;
+}
+
+.auth-public-links a {
+  border: 1px solid rgba(13, 33, 55, 0.14);
+  border-radius: 999px;
+  color: #0d2137;
+  font-size: 0.86rem;
+  font-weight: 800;
+  padding: 8px 13px;
+  text-decoration: none;
+}
+
+.auth-public-links a:hover,
+.auth-public-links a:focus-visible {
+  background: #0d2137;
+  color: #fff;
+  outline: none;
+}
+
+@media (max-width: 720px) {
+  .auth-public-links {
+    justify-content: flex-start;
+  }
+}

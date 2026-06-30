@@ -47,7 +47,7 @@ export class DefinirTccComponent implements OnInit {
   });
 
   readonly step2Form = this.fb.nonNullable.group({
-    orientadorId: ['', Validators.required],
+    orientadorId: [''],
   });
 
   readonly step3Form = this.fb.nonNullable.group({
@@ -117,18 +117,21 @@ export class DefinirTccComponent implements OnInit {
 
   get successDescription(): string {
     if (this.submittedAction === 'update') {
-      return 'As alterações foram registradas e o orientador foi notificado sobre a atualização.';
+      if (this.responsavelSelecionado) {
+        return 'As alterações foram registradas e o professor selecionado foi notificado sobre a atualização.';
+      }
+      return 'As alterações foram registradas. Você pode continuar submetendo entregáveis sem orientador por enquanto.';
     }
 
-    return `O orientador ${this.orientadorSelecionado?.nome ?? ''} foi notificado e irá analisar sua solicitação.`;
+    if (this.responsavelSelecionado) {
+      return `O professor ${this.responsavelSelecionado.nome} foi notificado e irá analisar sua solicitação.`;
+    }
+
+    return 'Seu TCC foi registrado sem orientador inicial. Você pode submeter entregáveis e solicitar um professor depois.';
   }
 
   get successStatusLabel(): string {
-    if (this.submittedAction === 'update') {
-      return this.meuTcc?.status ?? 'Atualizado';
-    }
-
-    return 'Aguardando Aceite do Orientador';
+    return this.meuTcc?.status ?? (this.responsavelSelecionado ? 'Aguardando aceite' : 'Sem orientador');
   }
 
   get submitButtonLabel(): string {
@@ -185,6 +188,18 @@ export class DefinirTccComponent implements OnInit {
     );
   }
 
+  get responsavelSelecionado(): Professor | null {
+    return this.orientadorSelecionado ?? this.coorientadorSelecionado;
+  }
+
+  get orientadorNenhumSelecionado(): boolean {
+    return this.step2Form.controls.orientadorId.getRawValue() === '';
+  }
+
+  selecionarNenhumOrientador(): void {
+    this.step2Form.patchValue({ orientadorId: '' });
+  }
+
   selecionarOrientador(prof: Professor): void {
     this.step2Form.patchValue({ orientadorId: prof.id });
   }
@@ -207,9 +222,8 @@ export class DefinirTccComponent implements OnInit {
 
   submeter(): void {
     this.step1Form.markAllAsTouched();
-    this.step2Form.markAllAsTouched();
 
-    if (this.step1Form.invalid || this.step2Form.invalid || this.isSubmitting) {
+    if (this.step1Form.invalid || this.isSubmitting) {
       return;
     }
 
@@ -310,7 +324,7 @@ export class DefinirTccComponent implements OnInit {
       area_tematica: tcc.area_tematica ?? '',
       resumo: tcc.resumo ?? '',
     });
-    this.step2Form.reset({ orientadorId: tcc.orientador_id });
+    this.step2Form.reset({ orientadorId: tcc.orientador_id ?? '' });
     this.step3Form.reset({ coorientadorId: tcc.coorientador_id ?? '' });
     this.orientadorSelecionado = this.professores.find((prof) => prof.id === tcc.orientador_id) ?? null;
     this.coorientadorSelecionado = this.professores.find((prof) => prof.id === tcc.coorientador_id) ?? null;
@@ -324,9 +338,9 @@ export class DefinirTccComponent implements OnInit {
     return {
       titulo: step1.titulo.trim(),
       tipo_tcc: TIPO_TCC_BY_LABEL[step1.tipoDeTCC],
-      orientador_id: step2.orientadorId,
       resumo: step1.resumo.trim(),
       curso: 'Ciência da Computação',
+      ...(step2.orientadorId ? { orientador_id: step2.orientadorId } : {}),
       ...(step1.area_tematica.trim() ? { area_tematica: step1.area_tematica.trim() } : {}),
       ...(step3.coorientadorId ? { coorientador_id: step3.coorientadorId } : {}),
     };

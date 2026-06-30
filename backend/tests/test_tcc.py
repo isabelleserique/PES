@@ -93,7 +93,7 @@ def _seed_tcc(
     *,
     periodo_id: str,
     aluno_id: str,
-    orientador_id: str,
+    orientador_id: str | None,
     titulo: str,
     tipo_tcc: TipoTCC,
     prazo_excedido: bool = False,
@@ -192,6 +192,48 @@ def test_create_my_tcc_returns_201_marks_late_submission_and_notifies_orientador
         }
     ]
     assert "action=TCC_SUBMISSION" in caplog.text
+
+
+def test_create_my_tcc_allows_no_initial_advisor(client, db_session, email_service) -> None:
+    aluno = _seed_user(
+        db_session,
+        nome_completo="Aluno Sem Orientador",
+        email="aluno.sem.orientador@icomp.ufam.edu.br",
+        username="aluno.sem.orientador",
+        perfil=Perfil.ALUNO,
+        status=StatusCadastro.ATIVO,
+        ativo=True,
+        matricula="2023123099",
+    )
+    today = date.today()
+    periodo = _seed_periodo(
+        db_session,
+        nome="2026.2",
+        data_inicio=(today - timedelta(days=5)).isoformat(),
+        data_fim=(today + timedelta(days=70)).isoformat(),
+        ativo=True,
+        prazos=[("Definicao de Tema/Orientador", (today + timedelta(days=5)).isoformat(), TipoTCC.TODOS)],
+    )
+
+    response = client.post(
+        "/tcc/me",
+        json={
+            "titulo": "TCC sem orientador inicial",
+            "tipo_tcc": "Monografia",
+        },
+        headers=_build_auth_headers(user_id=aluno.id, perfil=aluno.perfil),
+    )
+
+    assert response.status_code == 201
+    body = response.json()
+    assert body["orientador_id"] is None
+    assert body["orientador_nome"] is None
+    assert body["status"] == "SEM_ORIENTADOR"
+
+    stored_tcc = db_session.query(TCCRecord).filter_by(aluno_id=aluno.id, periodo_id=periodo.id).one()
+    assert stored_tcc.orientador_id is None
+    assert stored_tcc.status == StatusTCC.SEM_ORIENTADOR
+    assert email_service.tcc_notifications == []
 
 
 def test_create_my_tcc_returns_409_when_student_submits_twice_in_same_period(client, db_session) -> None:
@@ -339,6 +381,14 @@ def test_update_my_tcc_appends_edit_log_and_resets_status(client, db_session, em
     assert email_service.tcc_notifications == [
         {
             "to_email": novo_orientador.email,
+            "aluno_nome": aluno.nome_completo,
+            "titulo": "Tema Ajustado",
+            "tipo_tcc": "Relatorio de Estagio",
+            "periodo_nome": periodo.nome,
+            "prazo_excedido": False,
+        },
+        {
+            "to_email": coorientador.email,
             "aluno_nome": aluno.nome_completo,
             "titulo": "Tema Ajustado",
             "tipo_tcc": "Relatorio de Estagio",

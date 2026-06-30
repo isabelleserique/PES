@@ -1,13 +1,14 @@
 from __future__ import annotations
 
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
+from uuid import uuid4
 
-from backend.app.db.models import NotificacaoPrazoRecord
+from backend.app.db.models import DepositoFinalRecord, DocumentoDepositoRecord, NotificacaoPrazoRecord
+from backend.app.models.deposito import StatusDeposito, TipoDocumentoDeposito
 from backend.app.models.periodo import TipoTCC
 from backend.app.models.tcc import StatusTCC
 from backend.app.models.user import Perfil, StatusCadastro
 from backend.app.services.notificacao_service import NotificacaoPrazoService
-from backend.tests.test_submissoes import _seed_submissao
 from backend.tests.test_tcc import _build_auth_headers, _seed_periodo, _seed_tcc, _seed_user
 
 
@@ -127,20 +128,31 @@ def test_public_tcc_search_detail_preview_and_download(client, db_session, tmp_p
     tcc.curso = "Ciência da Computação"
     tcc.data_defesa = today
     tcc.banca = ["Prof. Publico", "Prof. Banca"]
+    aluno.publicar_tcc_portal_publico = True
     db_session.commit()
 
     arquivo = tmp_path / "artigo-publico.pdf"
     arquivo.write_bytes(b"%PDF-publico")
-    submissao = _seed_submissao(
-        db_session,
+    deposito = DepositoFinalRecord(
+        id=str(uuid4()),
         tcc_id=tcc.id,
-        aluno_id=aluno.id,
-        tipo_tcc=TipoTCC.ARTIGO,
-        etapa="Artigo Final",
-        versao=1,
-        nome_arquivo=arquivo.name,
-        caminho_arquivo=str(arquivo),
+        status=StatusDeposito.DEPOSITADO,
+        submetido_em=datetime.combine(today, datetime.min.time()),
     )
+    db_session.add(deposito)
+    db_session.flush()
+    documento = DocumentoDepositoRecord(
+        id=str(uuid4()),
+        deposito_id=deposito.id,
+        tipo_documento=TipoDocumentoDeposito.TCC_FINAL,
+        nome_original=arquivo.name,
+        caminho_original=str(arquivo),
+        mime_type="application/pdf",
+        tamanho_bytes=len(b"%PDF-publico"),
+        caminho_preview_pdf=str(arquivo),
+    )
+    db_session.add(documento)
+    db_session.commit()
 
     search_response = client.request("GET", "/public/tcc?titulo=floresta")
     assert search_response.status_code == 200
@@ -153,10 +165,10 @@ def test_public_tcc_search_detail_preview_and_download(client, db_session, tmp_p
     assert detail_response.status_code == 200
     detail_body = detail_response.json()
     assert detail_body["resumo"] == "Resumo publico do trabalho."
-    assert detail_body["documentos"][0]["id"] == submissao.id
-    assert detail_body["documentos"][0]["url_preview"].endswith(f"/public/tcc/{tcc.id}/documentos/{submissao.id}/arquivo")
+    assert detail_body["documentos"][0]["id"] == documento.id
+    assert detail_body["documentos"][0]["url_preview"].endswith(f"/public/tcc/{tcc.id}/documentos/{documento.id}/arquivo")
 
-    file_response = client.request("GET", f"/public/tcc/{tcc.id}/documentos/{submissao.id}/arquivo")
+    file_response = client.request("GET", f"/public/tcc/{tcc.id}/documentos/{documento.id}/arquivo")
     assert file_response.status_code == 200
     assert file_response.body == b"%PDF-publico"
 
@@ -211,9 +223,9 @@ def test_notificacao_prazo_sends_email_once_for_upcoming_deadline(db_session, em
         reference_date=today,
     )
 
-    assert first_result.enviadas == 1
+    assert first_result.enviadas == 2
     assert second_result.enviadas == 0
-    assert second_result.ignoradas == 1
+    assert second_result.ignoradas == 2
     assert email_service.deadline_notifications == [
         {
             "to_email": aluno.email,
@@ -224,4 +236,15 @@ def test_notificacao_prazo_sends_email_once_for_upcoming_deadline(db_session, em
             "tipo_alerta": "A_VENCER",
         }
     ]
-    assert db_session.query(NotificacaoPrazoRecord).count() == 1
+    assert email_service.advisor_deadline_notifications == [
+        {
+            "to_email": orientador.email,
+            "orientador_nome": orientador.nome_completo,
+            "aluno_nome": aluno.nome_completo,
+            "titulo": "Monografia com alerta",
+            "etapa": "2ª Entrega",
+            "data_limite": (today + timedelta(days=2)).isoformat(),
+            "tipo_alerta": "A_VENCER",
+        }
+    ]
+    assert db_session.query(NotificacaoPrazoRecord).count() == 2

@@ -57,6 +57,7 @@ async def get_documento_tcc_publico(
         session=session,
         tcc_id=tcc_id,
         submissao_id=submissao_id,
+        download=download,
     )
     return FileResponse(
         path=arquivo.path,

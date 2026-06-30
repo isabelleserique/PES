@@ -1,0 +1,126 @@
+<div class="app-shell">
+  <nav class="app-navbar">
+    <div class="navbar-brand">
+      <div class="logo-badge">IC</div>
+      <span class="logo-name">IComp</span>
+    </div>
+    <div class="navbar-sep"></div>
+    <span class="navbar-app-name">TCComp</span>
+    <app-painel-nav></app-painel-nav>
+    <span class="rb-navbar-spacer"></span>
+    <a mat-stroked-button class="rb-nav-btn" routerLink="/painel/orientador">Home</a>
+    <button mat-stroked-button type="button" class="rb-nav-btn" (click)="voltar()">Voltar</button>
+  </nav>
+
+  <main class="app-page-content">
+    <h1 class="rb-page-title">Registrar Composição da Banca</h1>
+    <p class="rb-page-subtitle">
+      Informe os membros da banca e os dados da defesa. O aluno será informado sobre nome, titulação,
+      instituição, data, horário e local.
+    </p>
+
+    <p class="status-message status-message--error" *ngIf="errorMessage">{{ errorMessage }}</p>
+    <p class="status-message status-message--success" *ngIf="successMessage">{{ successMessage }}</p>
+
+    <div class="rb-card" *ngIf="isLoading">
+      <div class="rb-loading">
+        <mat-icon>hourglass_empty</mat-icon>
+        <span>Carregando orientandos...</span>
+      </div>
+    </div>
+
+    <form class="rb-card" *ngIf="!isLoading" [formGroup]="bancaForm" (ngSubmit)="registrar()">
+      <div class="rb-section-header">DADOS DA DEFESA</div>
+
+      <div class="rb-grid">
+        <mat-form-field appearance="outline" class="rb-field-full">
+          <mat-label>Orientando</mat-label>
+          <mat-select formControlName="aluno_id">
+            <mat-option *ngFor="let orientando of orientandos" [value]="orientando.aluno_id">
+              {{ orientando.aluno_nome }} - {{ orientando.titulo_tcc }}
+            </mat-option>
+          </mat-select>
+          <mat-error>Selecione o orientando.</mat-error>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Data da defesa</mat-label>
+          <input matInput [matDatepicker]="picker" formControlName="data_defesa" readonly />
+          <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+          <mat-datepicker #picker></mat-datepicker>
+          <mat-error>Informe a data.</mat-error>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Horário</mat-label>
+          <input matInput type="time" formControlName="horario_defesa" />
+          <mat-error>Informe o horário.</mat-error>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="rb-field-full">
+          <mat-label>Local da defesa</mat-label>
+          <input matInput formControlName="local_defesa" placeholder="Ex.: Auditório do IComp" />
+          <mat-error>Informe o local.</mat-error>
+        </mat-form-field>
+      </div>
+
+      <div class="rb-section-header rb-section-header--secondary">MEMBROS DA BANCA</div>
+
+      <div class="rb-membros" formArrayName="membros">
+        <div class="rb-membro" *ngFor="let membro of membros.controls; let i = index" [formGroupName]="i">
+          <div class="rb-membro__head">
+            <span class="rb-membro__num">Membro {{ i + 1 }}</span>
+            <button
+              mat-icon-button
+              type="button"
+              class="rb-membro__remove"
+              [disabled]="membros.length <= 2"
+              (click)="removerMembro(i)"
+              title="Remover membro">
+              <mat-icon>delete_outline</mat-icon>
+            </button>
+          </div>
+
+          <div class="rb-membro__fields">
+            <mat-form-field appearance="outline" class="rb-field-full">
+              <mat-label>Nome</mat-label>
+              <input matInput formControlName="nome" />
+              <mat-error>Informe o nome.</mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Titulação</mat-label>
+              <mat-select formControlName="titulacao">
+                <mat-option *ngFor="let titulacao of titulacoes" [value]="titulacao">{{ titulacao }}</mat-option>
+              </mat-select>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Instituição</mat-label>
+              <input matInput formControlName="instituicao" />
+              <mat-error>Informe a instituição.</mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Papel</mat-label>
+              <mat-select formControlName="papel">
+                <mat-option *ngFor="let papel of papeis" [value]="papel.value">{{ papel.label }}</mat-option>
+              </mat-select>
+            </mat-form-field>
+          </div>
+        </div>
+      </div>
+
+      <button mat-stroked-button type="button" class="rb-add-btn" (click)="adicionarMembro()">
+        <mat-icon>add</mat-icon> Adicionar membro
+      </button>
+
+      <div class="rb-actions">
+        <button mat-stroked-button type="button" (click)="voltar()">Cancelar</button>
+        <button mat-raised-button type="submit" class="rb-btn-salvar" [disabled]="isSaving">
+          {{ isSaving ? 'Registrando...' : 'Registrar banca' }}
+        </button>
+      </div>
+    </form>
+  </main>
+</div>

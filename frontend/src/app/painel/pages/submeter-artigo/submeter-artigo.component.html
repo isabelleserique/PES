@@ -8,6 +8,7 @@
     </div>
     <div class="navbar-sep"></div>
     <span class="navbar-app-name">TCComp</span>
+    <app-painel-nav></app-painel-nav>
     <span class="sa-navbar-spacer"></span>
     <a mat-stroked-button class="sa-nav-btn" routerLink="/painel/aluno">Home</a>
     <button mat-stroked-button type="button" class="sa-nav-btn" (click)="voltar()">Voltar</button>
@@ -134,6 +135,58 @@
             <input #comprovanteInput type="file" accept=".pdf,.docx,.jpg,.jpeg,.png" hidden (change)="onComprovanteFileChange($event)" />
           </div>
 
+          <!-- Dados da apresentação/publicação (condicional) -->
+          <div class="sa-apresentacao-box" *ngIf="isArtigo && foiAceito">
+            <div class="sa-apresentacao-header">
+              <mat-icon>event_available</mat-icon>
+              <div>
+                <strong>Dados da apresentação ou publicação</strong>
+                <p>Informe onde o artigo foi aceito/apresentado. Esses dados ficam vinculados à submissão aceita.</p>
+              </div>
+            </div>
+
+            <div class="sa-apresentacao-grid">
+              <mat-form-field appearance="outline">
+                <mat-label>Tipo</mat-label>
+                <mat-select [formControl]="apresentacaoTipoVeiculoCtrl">
+                  <mat-option value="Conferência">Conferência</mat-option>
+                  <mat-option value="Periódico">Periódico</mat-option>
+                  <mat-option value="Workshop">Workshop</mat-option>
+                  <mat-option value="Outro">Outro</mat-option>
+                </mat-select>
+                <mat-error>Informe o tipo.</mat-error>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Nome do periódico/conferência</mat-label>
+                <input matInput [formControl]="apresentacaoVeiculoCtrl" placeholder="Ex.: SBES, SBCARS, JBCS" />
+                <mat-error *ngIf="apresentacaoVeiculoCtrl.hasError('required')">Informe o nome.</mat-error>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Data da apresentação/publicação</mat-label>
+                <input matInput [matDatepicker]="apresentacaoPicker" [formControl]="apresentacaoDataCtrl" readonly />
+                <mat-datepicker-toggle matSuffix [for]="apresentacaoPicker"></mat-datepicker-toggle>
+                <mat-datepicker #apresentacaoPicker></mat-datepicker>
+                <mat-error>Informe a data.</mat-error>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Local, cidade ou modalidade</mat-label>
+                <input matInput [formControl]="apresentacaoLocalCtrl" placeholder="Ex.: Manaus, remoto, híbrido" />
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="sa-field-full">
+                <mat-label>Observações</mat-label>
+                <textarea
+                  matInput
+                  rows="3"
+                  [formControl]="apresentacaoObservacoesCtrl"
+                  placeholder="Inclua DOI, URL, trilha do evento ou observações relevantes."></textarea>
+              </mat-form-field>
+            </div>
+          </div>
+
           <!-- Mensagem de erro -->
           <p class="status-message status-message--error" *ngIf="errorMessage">{{ errorMessage }}</p>
 
@@ -182,14 +235,14 @@
               <span class="sa-arquivo-nome" [title]="s.nome_arquivo">{{ s.nome_arquivo }}</span>
               <span class="sa-data">{{ formatarData(s.data_submissao) }}</span>
               <div class="sa-badges">
-                <span class="sa-badge sa-badge--aceito" *ngIf="s.foi_aceito">
-                  <mat-icon>verified</mat-icon> Aceito
-                </span>
-                <span class="sa-badge sa-badge--pendente" *ngIf="!s.foi_aceito">
-                  <mat-icon>hourglass_empty</mat-icon> Aguardando
+                <span class="sa-badge" [ngClass]="statusBadgeClass(s)">
+                  <mat-icon>{{ statusIcon(s) }}</mat-icon> {{ statusLabel(s) }}
                 </span>
                 <span class="sa-badge sa-badge--atraso" *ngIf="s.fora_do_prazo">
                   Fora do prazo
+                </span>
+                <span class="sa-badge sa-badge--nota" *ngIf="s.nota_final !== null">
+                  Nota {{ formatarNota(s.nota_final) }}
                 </span>
               </div>
               <div class="sa-file-actions">

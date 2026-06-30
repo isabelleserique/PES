@@ -60,6 +60,8 @@ class SolicitarCadastroRequest(UserBaseRequest):
 
     @model_validator(mode="after")
     def validate_profile_constraints(self) -> "SolicitarCadastroRequest":
+        if self.perfil == Perfil.ADMIN:
+            raise ValueError("Perfil ADMIN nao pode ser solicitado pelo cadastro publico.")
         if self.perfil == Perfil.ALUNO and not self.matricula:
             raise ValueError("Matricula e obrigatoria para perfil ALUNO.")
         return self

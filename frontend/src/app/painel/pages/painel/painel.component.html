@@ -6,6 +6,7 @@
     </div>
     <div class="navbar-sep"></div>
     <span class="navbar-app-name">TCComp</span>
+    <app-painel-nav></app-painel-nav>
     <span class="coord-navbar-spacer"></span>
     <button mat-stroked-button type="button" class="coord-logout-btn" (click)="logout()">Sair</button>
   </nav>
@@ -18,14 +19,6 @@
         <p class="coord-subtitle">
           Gerencie períodos letivos, prazos do TCC e solicitações pendentes de cadastro.
         </p>
-      </div>
-      <div class="coord-hero-actions" *ngIf="isCoordenador">
-        <a mat-raised-button class="coord-btn-primary" routerLink="/painel/gerenciar-periodos">Gerenciar períodos</a>
-        <a mat-stroked-button routerLink="/painel/visao-geral">Visão geral</a>
-        <a mat-stroked-button routerLink="/painel/criar-periodo">Definir prazos</a>
-        <a mat-stroked-button routerLink="/painel/historico-submissoes">Histórico de submissões</a>
-        <a mat-stroked-button routerLink="/painel/submissoes-atrasadas">Submissões atrasadas</a>
-        <a mat-stroked-button routerLink="/painel/logs-sistema">Logs do sistema</a>
       </div>
     </header>
 
@@ -64,24 +57,6 @@
               <span class="coord-field-label">Matrícula</span>
               <strong>{{ user.matricula }}</strong>
             </div>
-          </div>
-        </section>
-
-        <section class="coord-card coord-card--accent" *ngIf="isCoordenador; else genericUserState">
-          <div class="coord-card-header">
-            <div>
-              <span class="coord-card-label">US006</span>
-              <h2 class="coord-card-title">Ações rápidas do período</h2>
-            </div>
-          </div>
-
-          <div class="coord-action-grid">
-            <a mat-raised-button class="coord-btn-primary" routerLink="/painel/gerenciar-periodos">Gerenciar períodos</a>
-            <a mat-stroked-button routerLink="/painel/visao-geral">Visão geral do período</a>
-            <a mat-stroked-button routerLink="/painel/criar-periodo">Definir prazos do período</a>
-            <a mat-stroked-button routerLink="/painel/historico-submissoes">Histórico de submissões</a>
-            <a mat-stroked-button routerLink="/painel/submissoes-atrasadas">Submissões atrasadas</a>
-            <a mat-stroked-button routerLink="/painel/logs-sistema">Logs do sistema</a>
           </div>
         </section>
 
@@ -129,19 +104,17 @@
           <p class="coord-empty">Não há solicitações pendentes no momento.</p>
         </ng-template>
 
-        <ng-template #genericUserState>
-          <section class="coord-card">
-            <div class="coord-card-header">
-              <div>
-                <span class="coord-card-label">Acesso liberado</span>
-                <h2 class="coord-card-title">Painel autenticado ativo</h2>
-              </div>
+        <section class="coord-card" *ngIf="!isCoordenador">
+          <div class="coord-card-header">
+            <div>
+              <span class="coord-card-label">Acesso liberado</span>
+              <h2 class="coord-card-title">Painel autenticado ativo</h2>
             </div>
-            <p class="coord-empty">
-              Seu token JWT foi validado e o painel carregou seus dados a partir do endpoint protegido <code>/usuarios/me</code>.
-            </p>
-          </section>
-        </ng-template>
+          </div>
+          <p class="coord-empty">
+            Seu token JWT foi validado e o painel carregou seus dados a partir do endpoint protegido <code>/usuarios/me</code>.
+          </p>
+        </section>
       </ng-container>
     </ng-container>
   </main>

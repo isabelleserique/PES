@@ -1,3 +1,5 @@
+from datetime import date
+
 from fastapi import APIRouter, Depends, File, Form, UploadFile, status
 from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
@@ -9,12 +11,14 @@ from backend.app.models.user import Perfil
 from backend.app.schemas.submissao import (
     ApresentacaoArtigoPayload,
     ApresentacaoArtigoResponse,
+    SubmissaoAvaliacaoRequest,
     SubmissaoAtrasadaResponse,
     SubmissaoEntregavelCreateResponse,
     SubmissaoEntregavelResponse,
     SubmissaoHistoricoResponse,
 )
 from backend.app.services.audit_service import AuditService, get_audit_service
+from backend.app.services.email_service import EmailService, get_email_service
 from backend.app.services.submissao_service import SubmissaoService, get_submissao_service
 
 router = APIRouter(prefix="/submissoes", tags=["submissoes"])
@@ -41,8 +45,14 @@ async def submeter_entregavel(
     etapa: str | None = Form(None),
     foi_aceito: bool = Form(False),
     comprovante: UploadFile | None = File(None),
+    apresentacao_data: date | None = Form(None),
+    apresentacao_tipo_veiculo: str | None = Form(None),
+    apresentacao_veiculo_publicacao: str | None = Form(None),
+    apresentacao_local: str | None = Form(None),
+    apresentacao_observacoes: str | None = Form(None),
     session: Session = Depends(get_db_session),
     submissao_service: SubmissaoService = Depends(get_submissao_service),
+    email_service: EmailService = Depends(get_email_service),
     current_aluno: UserRecord = Depends(require_perfis(Perfil.ALUNO)),
 ) -> SubmissaoEntregavelCreateResponse:
     return await submissao_service.submeter_entregavel(
@@ -52,6 +62,12 @@ async def submeter_entregavel(
         arquivo=arquivo,
         foi_aceito=foi_aceito,
         comprovante=comprovante,
+        apresentacao_data=apresentacao_data,
+        apresentacao_tipo_veiculo=apresentacao_tipo_veiculo,
+        apresentacao_veiculo_publicacao=apresentacao_veiculo_publicacao,
+        apresentacao_local=apresentacao_local,
+        apresentacao_observacoes=apresentacao_observacoes,
+        email_service=email_service,
     )
 
 
@@ -110,6 +126,29 @@ async def visualizar_arquivo_entregavel(
         media_type=arquivo.media_type,
         filename=arquivo.filename,
         content_disposition_type="inline",
+    )
+
+
+@router.patch(
+    "/entregaveis/{submissao_id}/avaliacao",
+    status_code=status.HTTP_200_OK,
+)
+async def avaliar_entregavel(
+    submissao_id: str,
+    payload: SubmissaoAvaliacaoRequest,
+    session: Session = Depends(get_db_session),
+    submissao_service: SubmissaoService = Depends(get_submissao_service),
+    email_service: EmailService = Depends(get_email_service),
+    audit_service: AuditService = Depends(get_audit_service),
+    current_orientador: UserRecord = Depends(require_perfis(Perfil.ORIENTADOR)),
+) -> SubmissaoHistoricoResponse:
+    return submissao_service.avaliar_entregavel(
+        session=session,
+        current_user=current_orientador,
+        submissao_id=submissao_id,
+        payload=payload,
+        email_service=email_service,
+        audit_service=audit_service,
     )
 
 

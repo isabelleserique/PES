@@ -4,28 +4,140 @@
       <span class="public-logo">IC</span>
       <span>
         <strong>TCComp</strong>
-        <small>Biblioteca pública de TCC</small>
+        <small>Gestão de TCC do IComp</small>
       </span>
     </a>
     <div class="public-nav-links">
-      <a routerLink="/consultor-externo" aria-current="page">Consultor externo</a>
-      <a routerLink="/auth/login">Login</a>
-      <a routerLink="/auth/cadastro">Cadastro</a>
+      <a routerLink="/consultor-externo" fragment="inicio" aria-current="page">Início</a>
+      <a routerLink="/consultor-externo" fragment="como-funciona">Como funciona</a>
+      <a routerLink="/consultor-externo" fragment="professores">Professores</a>
+      <a routerLink="/consultor-externo" fragment="biblioteca">Consultor externo</a>
+      <a *ngIf="isAuthenticated; else publicLoginLink" [routerLink]="painelRoute">Painel</a>
+      <ng-template #publicLoginLink>
+        <a routerLink="/auth/login">Login</a>
+      </ng-template>
+      <a *ngIf="!isAuthenticated" routerLink="/auth/cadastro">Cadastro</a>
     </div>
   </nav>
 
   <main class="public-page">
-    <header class="bt-hero">
-      <span class="bt-eyebrow">Consultor externo</span>
-      <h1>Encontre trabalhos de conclusão do IComp</h1>
-      <p>
-        Pesquise por área temática, curso, aluno ou título e acesse os documentos disponíveis para visualização e download.
-      </p>
+    <header class="bt-hero" id="inicio">
+      <div class="bt-hero-copy">
+        <span class="bt-eyebrow">Sistema de acompanhamento acadêmico</span>
+        <h1>TCComp organiza o ciclo completo do TCC no IComp</h1>
+        <p>
+          Uma plataforma para alunos, orientadores e coordenação acompanharem tema, prazos,
+          submissões, banca, depósito final e consulta pública dos trabalhos concluídos.
+        </p>
+        <div class="bt-hero-actions">
+          <a mat-raised-button class="bt-btn-primary" [routerLink]="isAuthenticated ? painelRoute : ['/auth/login']">
+            {{ isAuthenticated ? 'Voltar ao painel' : 'Acessar sistema' }}
+          </a>
+          <a mat-stroked-button class="bt-btn-secondary" routerLink="/consultor-externo" fragment="biblioteca">
+            Consultar biblioteca
+          </a>
+        </div>
+      </div>
+
+      <aside class="bt-hero-panel" aria-label="Resumo do funcionamento">
+        <span class="bt-panel-kicker">Fluxo integrado</span>
+        <strong>Definição, orientação, entregas e publicação em um único lugar.</strong>
+        <div class="bt-panel-grid">
+          <span>Aluno</span>
+          <span>Orientador</span>
+          <span>Coordenação</span>
+          <span>Consulta pública</span>
+        </div>
+      </aside>
     </header>
 
-    <section class="bt-card bt-search-card" aria-labelledby="busca-tcc-title">
+    <section class="bt-info-grid" aria-label="Informações sobre o sistema">
+      <article class="bt-info-card">
+        <span class="bt-card-label">Para alunos</span>
+        <h2>Formalização e entregas</h2>
+        <p>Registre tema, tipo de TCC, orientador, coorientador e acompanhe cada etapa do período letivo.</p>
+      </article>
+      <article class="bt-info-card">
+        <span class="bt-card-label">Para orientadores</span>
+        <h2>Acompanhamento acadêmico</h2>
+        <p>Aceite solicitações, acompanhe prazos, registre sessões de orientação e dados de banca.</p>
+      </article>
+      <article class="bt-info-card">
+        <span class="bt-card-label">Para coordenação</span>
+        <h2>Gestão do período</h2>
+        <p>Configure períodos letivos, prazos por tipo de TCC e monitore submissões e pendências.</p>
+      </article>
+    </section>
+
+    <section class="bt-flow-card" id="como-funciona">
+      <div class="bt-section-heading">
+        <span class="bt-card-label">Como funciona</span>
+        <h2>Do cadastro à consulta pública</h2>
+      </div>
+      <div class="bt-flow-steps">
+        <article>
+          <span>01</span>
+          <h3>Cadastro e aprovação</h3>
+          <p>O acesso é solicitado, revisado e liberado para o perfil correto.</p>
+        </article>
+        <article>
+          <span>02</span>
+          <h3>Definição do TCC</h3>
+          <p>O aluno informa tema, modalidade e professor orientador para iniciar o fluxo.</p>
+        </article>
+        <article>
+          <span>03</span>
+          <h3>Entregas e validações</h3>
+          <p>Submissões, documentos, apresentação e versão final ficam centralizados.</p>
+        </article>
+        <article>
+          <span>04</span>
+          <h3>Biblioteca pública</h3>
+          <p>Trabalhos autorizados podem ser encontrados pelo consultor externo.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="bt-professores" id="professores" aria-labelledby="professores-title">
+      <div class="bt-section-heading">
+        <span class="bt-card-label">Professores disponíveis</span>
+        <h2 id="professores-title">Linhas de orientação</h2>
+        <p>
+          Dados públicos do corpo docente do IComp/UFAM, com linhas de pesquisa, temas de interesse,
+          contato institucional e currículo Lattes.
+        </p>
+      </div>
+
+      <div class="bt-prof-grid">
+        <article class="bt-prof-card" *ngFor="let professor of professores">
+          <div class="bt-prof-photo">
+            <img
+              *ngIf="professor.fotoUrl; else fotoFallback"
+              [src]="professor.fotoUrl"
+              [alt]="professor.nome"
+              loading="lazy"
+            >
+            <ng-template #fotoFallback>{{ professor.foto }}</ng-template>
+          </div>
+          <div class="bt-prof-body">
+            <h3>{{ professor.nome }}</h3>
+            <strong>{{ professor.titulo }}</strong>
+            <p>{{ professor.descricao }}</p>
+            <div class="bt-prof-links">
+              <a [href]="'mailto:' + professor.email">{{ professor.email }}</a>
+              <a [href]="professor.lattes" target="_blank" rel="noopener noreferrer">Lattes</a>
+            </div>
+            <div class="bt-prof-tags">
+              <span *ngFor="let objeto of professor.objetosEstudo">{{ objeto }}</span>
+            </div>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="bt-card bt-search-card" id="biblioteca" aria-labelledby="busca-tcc-title">
       <div class="bt-card-heading">
-        <span class="bt-card-label">US034</span>
+        <span class="bt-card-label">Consultor externo</span>
         <h2 id="busca-tcc-title">Busca pública de TCC</h2>
       </div>
 

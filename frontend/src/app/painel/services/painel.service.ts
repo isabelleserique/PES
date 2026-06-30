@@ -9,7 +9,7 @@ export interface AuthenticatedUserProfile {
   nome_completo: string;
   email: string;
   username: string;
-  perfil: 'COORDENADOR' | 'ALUNO' | 'ORIENTADOR';
+  perfil: 'ADMIN' | 'COORDENADOR' | 'ALUNO' | 'ORIENTADOR';
   matricula: string | null;
   status: 'PENDENTE' | 'ATIVO' | 'REJEITADO';
   ativo: boolean;
@@ -20,7 +20,7 @@ export interface PendingRegistration {
   nome_completo: string;
   email: string;
   username: string;
-  perfil: 'COORDENADOR' | 'ALUNO' | 'ORIENTADOR';
+  perfil: 'ADMIN' | 'COORDENADOR' | 'ALUNO' | 'ORIENTADOR';
   matricula: string | null;
   status: 'PENDENTE' | 'ATIVO' | 'REJEITADO';
 }
@@ -32,7 +32,7 @@ export interface ReviewRegistrationPayload {
 export interface ReviewRegistrationResponse {
   id: string;
   nome_completo: string;
-  perfil: 'COORDENADOR' | 'ALUNO' | 'ORIENTADOR';
+  perfil: 'ADMIN' | 'COORDENADOR' | 'ALUNO' | 'ORIENTADOR';
   status: 'PENDENTE' | 'ATIVO' | 'REJEITADO';
 }
 
@@ -96,8 +96,8 @@ export interface CronogramaPeriodoResponse {
 export interface TccPayload {
   titulo: string;
   tipo_tcc: TipoTccAluno;
-  orientador_id: string;
-  coorientador_id?: string;
+  orientador_id?: string | null;
+  coorientador_id?: string | null;
   resumo?: string;
   area_tematica?: string;
   curso?: string;
@@ -109,8 +109,8 @@ export interface TccResponse {
   id: string;
   titulo: string;
   tipo_tcc: TipoTccAluno;
-  orientador_id: string;
-  orientador_nome: string;
+  orientador_id: string | null;
+  orientador_nome: string | null;
   coorientador_id: string | null;
   coorientador_nome: string | null;
   periodo_id: string;

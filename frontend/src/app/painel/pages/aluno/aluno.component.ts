@@ -41,7 +41,7 @@ export class PainelAlunoComponent implements OnInit {
   readonly tccForm = this.fb.nonNullable.group({
     titulo: ['', [Validators.required, Validators.minLength(3)]],
     tipo_tcc: ['Artigo' as TipoTccAluno, Validators.required],
-    orientador_id: ['', Validators.required],
+    orientador_id: [''],
     coorientador_id: [''],
   });
 
@@ -68,6 +68,9 @@ export class PainelAlunoComponent implements OnInit {
 
   get coorientadoresDisponiveis(): OrientadorDisponivel[] {
     const orientadorSelecionado = this.tccForm.controls.orientador_id.getRawValue();
+    if (!orientadorSelecionado) {
+      return this.orientadores;
+    }
     return this.orientadores.filter((orientador) => orientador.id !== orientadorSelecionado);
   }
 
@@ -87,7 +90,7 @@ export class PainelAlunoComponent implements OnInit {
     const payload: TccPayload = {
       titulo: rawValue.titulo.trim(),
       tipo_tcc: rawValue.tipo_tcc,
-      orientador_id: rawValue.orientador_id,
+      ...(rawValue.orientador_id ? { orientador_id: rawValue.orientador_id } : {}),
       ...(rawValue.coorientador_id ? { coorientador_id: rawValue.coorientador_id } : {}),
     };
 
@@ -171,7 +174,7 @@ export class PainelAlunoComponent implements OnInit {
     this.tccForm.reset({
       titulo: tcc.titulo,
       tipo_tcc: tcc.tipo_tcc,
-      orientador_id: tcc.orientador_id,
+      orientador_id: tcc.orientador_id ?? '',
       coorientador_id: tcc.coorientador_id ?? '',
     });
   }

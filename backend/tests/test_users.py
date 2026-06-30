@@ -277,6 +277,21 @@ def test_request_registration_allows_coordenador_without_matricula(client, db_se
     assert stored_user.matricula is None
 
 
+def test_request_registration_rejects_admin_profile(client) -> None:
+    payload = {
+        "nome_completo": "Admin Solicitante",
+        "email": "admin.solicitante@icomp.ufam.edu.br",
+        "username": "admin.solicitante",
+        "senha": "SenhaAdmin@123",
+        "perfil": "ADMIN",
+    }
+
+    response = client.post("/usuarios/solicitar-cadastro", json=payload)
+
+    assert response.status_code == 422
+    assert "Perfil ADMIN nao pode ser solicitado pelo cadastro publico." in response.body.decode("utf-8")
+
+
 def test_request_registration_returns_422_when_student_has_no_matricula(client) -> None:
     payload = {
         "nome_completo": "Aluno Sem Matricula",

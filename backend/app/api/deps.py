@@ -109,6 +109,12 @@ async def get_current_active_coordenador(
     return current_user
 
 
+async def get_current_active_admin(
+    current_user: UserRecord = Depends(require_perfis(Perfil.ADMIN)),
+) -> UserRecord:
+    return current_user
+
+
 async def get_optional_current_active_coordenador(
     current_user: UserRecord | None = Depends(get_optional_authenticated_user),
 ) -> UserRecord | None:

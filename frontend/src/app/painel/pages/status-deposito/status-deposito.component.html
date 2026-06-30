@@ -1,0 +1,87 @@
+<div class="app-shell">
+  <nav class="app-navbar">
+    <div class="navbar-brand">
+      <div class="logo-badge">IC</div>
+      <span class="logo-name">IComp</span>
+    </div>
+    <div class="navbar-sep"></div>
+    <span class="navbar-app-name">TCComp</span>
+    <app-painel-nav></app-painel-nav>
+    <span class="sd-navbar-spacer"></span>
+    <a mat-stroked-button class="sd-nav-btn" routerLink="/painel/aluno">Home</a>
+    <button mat-stroked-button type="button" class="sd-nav-btn" (click)="voltar()">Voltar</button>
+  </nav>
+
+  <main class="app-page-content">
+    <h1 class="sd-page-title">Status de Depósito na Biblioteca</h1>
+    <p class="sd-page-subtitle">
+      Acompanhe a validação da versão final e dos documentos obrigatórios do seu TCC.
+    </p>
+
+    <p class="status-message status-message--error" *ngIf="errorMessage">{{ errorMessage }}</p>
+
+    <section class="sd-card" *ngIf="isLoading">
+      <div class="sd-loading">
+        <mat-icon>hourglass_empty</mat-icon>
+        <span>Carregando status do depósito...</span>
+      </div>
+    </section>
+
+    <ng-container *ngIf="!isLoading && deposito as depositoData">
+      <section class="sd-status-hero" [class.sd-status-hero--alert]="foiDevolvido">
+        <span class="sd-eyebrow">Status atual</span>
+        <h2>{{ statusAtualLabel }}</h2>
+        <p *ngIf="depositoData.titulo_tcc">{{ depositoData.titulo_tcc }}</p>
+        <p *ngIf="depositoData.observacao_revisao" class="sd-review-note">
+          {{ depositoData.observacao_revisao }}
+        </p>
+      </section>
+
+      <section class="sd-card">
+        <div class="sd-timeline">
+          <article
+            class="sd-step"
+            *ngFor="let etapa of etapas"
+            [class.sd-step--done]="estadoDaEtapa(etapa) === 'concluida'"
+            [class.sd-step--current]="estadoDaEtapa(etapa) === 'atual'"
+            [class.sd-step--pending]="estadoDaEtapa(etapa) === 'pendente'">
+            <div class="sd-step-icon">
+              <mat-icon>{{ etapa.icone }}</mat-icon>
+            </div>
+            <div>
+              <h3>{{ etapa.label }}</h3>
+              <p>{{ etapa.descricao }}</p>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="sd-card">
+        <div class="sd-card-header">
+          <div>
+            <span class="sd-eyebrow">Documentos</span>
+            <h2>Arquivos enviados</h2>
+          </div>
+          <a mat-stroked-button routerLink="/painel/submeter-versao-final" *ngIf="foiDevolvido || statusAtual === 'AGUARDANDO_ENVIO'">
+            Enviar novamente
+          </a>
+        </div>
+
+        <p class="sd-empty" *ngIf="depositoData.documentos.length === 0">
+          Nenhum documento de depósito foi enviado ainda.
+        </p>
+
+        <div class="sd-doc-list" *ngIf="depositoData.documentos.length > 0">
+          <article class="sd-doc-card" *ngFor="let documento of depositoData.documentos">
+            <mat-icon>{{ documento.possui_preview ? 'picture_as_pdf' : 'description' }}</mat-icon>
+            <div>
+              <strong>{{ formatarTipoDocumento(documento.tipo_documento) }}</strong>
+              <p>{{ documento.nome_arquivo }}</p>
+            </div>
+            <button mat-stroked-button type="button" (click)="visualizar(documento)">Visualizar</button>
+          </article>
+        </div>
+      </section>
+    </ng-container>
+  </main>
+</div>

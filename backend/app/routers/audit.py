@@ -2,10 +2,9 @@ from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from backend.app.api.deps import require_perfis
+from backend.app.api.deps import get_current_active_admin
 from backend.app.db.models import AuditLogRecord, UserRecord
 from backend.app.db.session import get_db_session
-from backend.app.models.user import Perfil
 from backend.app.schemas.audit import AuditLogResponse
 
 router = APIRouter(prefix="/logs", tags=["logs"])
@@ -19,9 +18,9 @@ async def listar_logs(
     acao: str | None = Query(default=None),
     user_id: str | None = Query(default=None),
     session: Session = Depends(get_db_session),
-    current_coordenador: UserRecord = Depends(require_perfis(Perfil.COORDENADOR)),
+    current_admin: UserRecord = Depends(get_current_active_admin),
 ) -> list[AuditLogResponse]:
-    _ = current_coordenador
+    _ = current_admin
     statement = (
         select(AuditLogRecord, UserRecord)
         .join(UserRecord, UserRecord.id == AuditLogRecord.user_id, isouter=True)

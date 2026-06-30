@@ -4,13 +4,18 @@
       <span class="public-logo">IC</span>
       <span>
         <strong>TCComp</strong>
-        <small>Biblioteca pública de TCC</small>
+        <small>Gestão de TCC do IComp</small>
       </span>
     </a>
     <div class="public-nav-links">
-      <a routerLink="/consultor-externo">Consultor externo</a>
-      <a routerLink="/auth/login">Login</a>
-      <a routerLink="/auth/cadastro">Cadastro</a>
+      <a routerLink="/consultor-externo" fragment="inicio">Início</a>
+      <a routerLink="/consultor-externo" fragment="professores">Professores</a>
+      <a routerLink="/consultor-externo" fragment="biblioteca">Consultor externo</a>
+      <a *ngIf="isAuthenticated; else detailPublicLoginLink" [routerLink]="painelRoute">Painel</a>
+      <ng-template #detailPublicLoginLink>
+        <a routerLink="/auth/login">Login</a>
+      </ng-template>
+      <a *ngIf="!isAuthenticated" routerLink="/auth/cadastro">Cadastro</a>
     </div>
   </nav>
 
@@ -24,7 +29,7 @@
     <ng-container *ngIf="!isLoading && !errorMessage && tcc as trabalho">
       <header class="dt-hero">
         <div>
-          <span class="dt-eyebrow">US035 · Consultor externo</span>
+          <span class="dt-eyebrow">Consultor externo</span>
           <h1>{{ trabalho.titulo }}</h1>
           <p>{{ trabalho.aluno_nome }} · {{ trabalho.curso }}</p>
         </div>

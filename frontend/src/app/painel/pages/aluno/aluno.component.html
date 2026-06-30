@@ -6,6 +6,7 @@
     </div>
     <div class="navbar-sep"></div>
     <span class="navbar-app-name">TCComp</span>
+    <app-painel-nav></app-painel-nav>
     <span class="al-navbar-spacer"></span>
     <button mat-stroked-button type="button" class="al-logout-btn" (click)="logout()">Sair</button>
   </nav>
@@ -18,14 +19,6 @@
         <p class="al-subtitle">
           Acompanhe sua formalização de TCC, orientador e prazos do período letivo atual.
         </p>
-      </div>
-      <div class="al-hero-actions">
-        <a mat-raised-button class="al-btn-primary" routerLink="/painel/definir-tcc">Definir TCC</a>
-        <a mat-stroked-button routerLink="/painel/submeter-entregaveis" *ngIf="meuTcc">Submeter entregáveis</a>
-        <a mat-stroked-button routerLink="/painel/registrar-apresentacao" *ngIf="meuTcc?.tipo_tcc === 'Artigo'">
-          Registrar apresentação
-        </a>
-        <a mat-stroked-button routerLink="/painel/prazos-periodo">Ver prazos</a>
       </div>
     </header>
 
@@ -69,7 +62,7 @@
       <section class="al-card al-card--accent">
         <div class="al-card-header">
           <div>
-            <span class="al-card-label">US008</span>
+            <span class="al-card-label">Formalização</span>
             <h2 class="al-card-title">Formalização do TCC</h2>
           </div>
           <span class="al-badge al-badge--soft">{{ meuTcc ? meuTcc.status : 'SEM ENVIO' }}</span>
@@ -87,7 +80,7 @@
 
         <div class="al-summary" *ngIf="meuTcc as tcc">
           <span>{{ tcc.tipo_tcc }}</span>
-          <span>Orientador: {{ tcc.orientador_nome }}</span>
+          <span>Orientador: {{ tcc.orientador_nome || 'Nenhum neste momento' }}</span>
           <span *ngIf="tcc.coorientador_nome">Coorientador: {{ tcc.coorientador_nome }}</span>
           <span>Período: {{ tcc.periodo_nome }}</span>
         </div>
@@ -119,13 +112,11 @@
             <mat-form-field appearance="outline">
               <mat-label>Professor orientador</mat-label>
               <mat-select formControlName="orientador_id">
+                <mat-option value="">Nenhum neste momento</mat-option>
                 <mat-option *ngFor="let orientador of orientadores" [value]="orientador.id">
                   {{ orientador.nome_completo }}
                 </mat-option>
               </mat-select>
-              <mat-error *ngIf="tccForm.controls.orientador_id.touched && tccForm.controls.orientador_id.hasError('required')">
-                Selecione um orientador.
-              </mat-error>
             </mat-form-field>
           </div>
 
@@ -140,11 +131,11 @@
           </mat-form-field>
 
           <div class="al-form-actions">
-            <button mat-raised-button type="submit" class="al-btn-primary" [disabled]="isSavingTcc || orientadores.length === 0">
+            <button mat-raised-button type="submit" class="al-btn-primary" [disabled]="isSavingTcc">
               {{ isSavingTcc ? 'SALVANDO...' : (meuTcc ? 'ATUALIZAR TCC' : 'REGISTRAR TCC') }}
             </button>
             <p class="al-empty" *ngIf="orientadores.length === 0">
-              Nenhum orientador ativo está disponível no momento.
+              Nenhum orientador ativo está disponível no momento. Você ainda pode registrar o TCC sem orientador inicial.
             </p>
           </div>
         </form>
@@ -153,7 +144,7 @@
       <section class="al-card" *ngIf="meuTcc">
         <div class="al-card-header">
           <div>
-            <span class="al-card-label">US017</span>
+            <span class="al-card-label">Orientação</span>
             <h2 class="al-card-title">Sessões de orientação</h2>
           </div>
           <span class="al-badge al-badge--soft">{{ sessoesOrientacao.length }} registro(s)</span>
@@ -189,7 +180,7 @@
       <section class="al-card" *ngIf="cronogramaAluno as cronogramaAlunoData">
         <div class="al-card-header">
           <div>
-            <span class="al-card-label">US007</span>
+            <span class="al-card-label">Cronograma</span>
             <h2 class="al-card-title">Cronograma do período {{ cronograma?.periodo?.nome }}</h2>
           </div>
           <span class="al-badge al-badge--soft">{{ cronogramaAlunoData.tipo_tcc || 'Prazos gerais' }}</span>

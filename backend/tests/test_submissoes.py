@@ -11,11 +11,15 @@ from fastapi import HTTPException, UploadFile
 from starlette.datastructures import Headers
 
 from backend.app.core.config import get_settings
-from backend.app.db.models import SubmissaoEntregavelRecord
+from backend.app.db.models import ApresentacaoArtigoRecord, SubmissaoEntregavelRecord
 from backend.app.models.periodo import TipoTCC
 from backend.app.models.tcc import StatusTCC
 from backend.app.models.user import Perfil, StatusCadastro
-from backend.app.services.submissao_service import COMPROVANTE_REQUIRED_DETAIL, SubmissaoService
+from backend.app.services.submissao_service import (
+    COMPROVANTE_REQUIRED_DETAIL,
+    PRESENTATION_DATA_REQUIRED_DETAIL,
+    SubmissaoService,
+)
 from backend.tests.test_tcc import _build_auth_headers, _seed_periodo, _seed_tcc, _seed_user
 
 
@@ -116,6 +120,11 @@ def test_submeter_artigo_persists_files_and_returns_auto_grade(client, db_sessio
             arquivo=_build_upload("artigo.pdf", b"%PDF-1.4"),
             foi_aceito=True,
             comprovante=_build_upload("aceite.pdf", b"%PDF-proof"),
+            apresentacao_data=today,
+            apresentacao_tipo_veiculo="Conferência",
+            apresentacao_veiculo_publicacao="Simpósio de Sistemas",
+            apresentacao_local="Manaus",
+            apresentacao_observacoes="Trilha principal",
         )
     )
 
@@ -133,6 +142,13 @@ def test_submeter_artigo_persists_files_and_returns_auto_grade(client, db_sessio
     assert stored.nota_automatica == 10
     assert tmp_path in Path(stored.caminho_arquivo).parents
     assert stored.caminho_comprovante is not None
+    apresentacao = db_session.query(ApresentacaoArtigoRecord).one()
+    assert apresentacao.submissao_id == stored.id
+    assert apresentacao.data_apresentacao == today
+    assert apresentacao.tipo_veiculo == "Conferência"
+    assert apresentacao.veiculo_publicacao == "Simpósio de Sistemas"
+    assert apresentacao.local_apresentacao == "Manaus"
+    assert apresentacao.observacoes == "Trilha principal"
 
     history = service.listar_entregaveis(session=db_session, current_user=aluno)
     assert len(history) == 1
@@ -223,6 +239,59 @@ def test_submeter_artigo_requires_proof_when_marked_as_accepted(db_session, tmp_
 
     assert exc_info.value.status_code == 422
     assert exc_info.value.detail == COMPROVANTE_REQUIRED_DETAIL
+
+
+def test_submeter_artigo_requires_presentation_data_when_marked_as_accepted(db_session, tmp_path) -> None:
+    aluno = _seed_user(
+        db_session,
+        nome_completo="Aluno Sem Apresentacao",
+        email="aluno.sem.apresentacao@icomp.ufam.edu.br",
+        username="aluno.sem.apresentacao",
+        perfil=Perfil.ALUNO,
+        status=StatusCadastro.ATIVO,
+        ativo=True,
+    )
+    orientador = _seed_user(
+        db_session,
+        nome_completo="Prof. Sem Apresentacao",
+        email="prof.sem.apresentacao@icomp.ufam.edu.br",
+        username="prof.sem.apresentacao",
+        perfil=Perfil.ORIENTADOR,
+        status=StatusCadastro.ATIVO,
+        ativo=True,
+    )
+    today = date.today()
+    periodo = _seed_periodo(
+        db_session,
+        nome="2026.1",
+        data_inicio=(today - timedelta(days=30)).isoformat(),
+        data_fim=(today + timedelta(days=30)).isoformat(),
+        ativo=True,
+    )
+    _seed_tcc(
+        db_session,
+        periodo_id=periodo.id,
+        aluno_id=aluno.id,
+        orientador_id=orientador.id,
+        titulo="Artigo sem apresentação",
+        tipo_tcc=TipoTCC.ARTIGO,
+    )
+    service = SubmissaoService(settings=get_settings().model_copy(update={"upload_dir": tmp_path}))
+
+    with pytest.raises(HTTPException) as exc_info:
+        asyncio.run(
+            service.submeter_entregavel(
+                session=db_session,
+                current_user=aluno,
+                etapa="Artigo Final",
+                arquivo=_build_upload("artigo.pdf", b"%PDF-1.4"),
+                foi_aceito=True,
+                comprovante=_build_upload("aceite.pdf", b"%PDF-proof"),
+            )
+        )
+
+    assert exc_info.value.status_code == 422
+    assert exc_info.value.detail == PRESENTATION_DATA_REQUIRED_DETAIL
 
 
 def test_submeter_artigo_persists_selected_deliverable_step_without_accepted_flag(db_session, tmp_path) -> None:
@@ -532,6 +601,160 @@ def test_historico_submissoes_coordenador_and_orientador_include_versions_and_tc
     assert {"titulo_tcc", "aluno_nome", "matricula", "nota_automatica"}.issubset(body[0])
 
 
+def test_orientador_avalia_submissao_manual_and_grade_is_visible(client, db_session, email_service) -> None:
+    aluno = _seed_user(
+        db_session,
+        nome_completo="Aluno Avaliacao",
+        email="aluno.avaliacao@icomp.ufam.edu.br",
+        username="aluno.avaliacao",
+        perfil=Perfil.ALUNO,
+        status=StatusCadastro.ATIVO,
+        ativo=True,
+        matricula="2023123999",
+    )
+    coorientador = _seed_user(
+        db_session,
+        nome_completo="Prof. Avaliador",
+        email="prof.avaliador@icomp.ufam.edu.br",
+        username="prof.avaliador",
+        perfil=Perfil.ORIENTADOR,
+        status=StatusCadastro.ATIVO,
+        ativo=True,
+    )
+    coordenador = _seed_user(
+        db_session,
+        nome_completo="Coord Avaliacao",
+        email="coord.avaliacao@icomp.ufam.edu.br",
+        username="coord.avaliacao",
+        perfil=Perfil.COORDENADOR,
+        status=StatusCadastro.ATIVO,
+        ativo=True,
+    )
+    today = date.today()
+    periodo = _seed_periodo(
+        db_session,
+        nome="2027.2",
+        data_inicio=(today - timedelta(days=10)).isoformat(),
+        data_fim=(today + timedelta(days=90)).isoformat(),
+        ativo=True,
+    )
+    tcc = _seed_tcc(
+        db_session,
+        periodo_id=periodo.id,
+        aluno_id=aluno.id,
+        orientador_id=None,
+        coorientador_id=coorientador.id,
+        titulo="Monografia sem orientador principal",
+        tipo_tcc=TipoTCC.MONOGRAFIA,
+        status=StatusTCC.EM_ANDAMENTO,
+    )
+    submissao = _seed_submissao(
+        db_session,
+        tcc_id=tcc.id,
+        aluno_id=aluno.id,
+        tipo_tcc=TipoTCC.MONOGRAFIA,
+        etapa="1ª Entrega",
+        versao=1,
+        nome_arquivo="entrega.pdf",
+    )
+
+    response = client.patch(
+        f"/submissoes/entregaveis/{submissao.id}/avaliacao",
+        json={"nota": 8.5},
+        headers=_build_auth_headers(user_id=coorientador.id, perfil=coorientador.perfil),
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["status_avaliacao"] == "AVALIADO"
+    assert body["nota_orientador"] == 8.5
+    assert body["nota_final"] == 8.5
+    assert body["avaliado_por_nome"] == coorientador.nome_completo
+
+    db_session.refresh(submissao)
+    assert submissao.nota_orientador == 8.5
+    assert submissao.avaliado_por_id == coorientador.id
+
+    service = SubmissaoService()
+    historico_coordenador = service.listar_historico_coordenador(
+        session=db_session,
+        current_user=coordenador,
+    )
+    assert historico_coordenador[0].nota_final == 8.5
+    assert historico_coordenador[0].status_avaliacao == "AVALIADO"
+
+    historico_aluno = service.listar_entregaveis(session=db_session, current_user=aluno)
+    assert historico_aluno[0].nota_final == 8.5
+    assert historico_aluno[0].status_avaliacao == "AVALIADO"
+    assert email_service.grade_notifications == [
+        {
+            "to_email": aluno.email,
+            "aluno_nome": aluno.nome_completo,
+            "titulo": tcc.titulo,
+            "etapa": submissao.etapa,
+            "nota": 8.5,
+        }
+    ]
+
+
+def test_auto_graded_submission_cannot_receive_manual_grade(client, db_session) -> None:
+    aluno = _seed_user(
+        db_session,
+        nome_completo="Aluno Auto Grade",
+        email="aluno.auto.grade@icomp.ufam.edu.br",
+        username="aluno.auto.grade",
+        perfil=Perfil.ALUNO,
+        status=StatusCadastro.ATIVO,
+        ativo=True,
+    )
+    orientador = _seed_user(
+        db_session,
+        nome_completo="Prof. Auto Grade",
+        email="prof.auto.grade@icomp.ufam.edu.br",
+        username="prof.auto.grade",
+        perfil=Perfil.ORIENTADOR,
+        status=StatusCadastro.ATIVO,
+        ativo=True,
+    )
+    today = date.today()
+    periodo = _seed_periodo(
+        db_session,
+        nome="2027.3",
+        data_inicio=(today - timedelta(days=10)).isoformat(),
+        data_fim=(today + timedelta(days=90)).isoformat(),
+        ativo=True,
+    )
+    tcc = _seed_tcc(
+        db_session,
+        periodo_id=periodo.id,
+        aluno_id=aluno.id,
+        orientador_id=orientador.id,
+        titulo="Artigo aceito",
+        tipo_tcc=TipoTCC.ARTIGO,
+        status=StatusTCC.EM_ANDAMENTO,
+    )
+    submissao = _seed_submissao(
+        db_session,
+        tcc_id=tcc.id,
+        aluno_id=aluno.id,
+        tipo_tcc=TipoTCC.ARTIGO,
+        etapa="Artigo Final",
+        versao=1,
+        nome_arquivo="artigo.pdf",
+        foi_aceito=True,
+        nota_automatica=10,
+    )
+
+    response = client.patch(
+        f"/submissoes/entregaveis/{submissao.id}/avaliacao",
+        json={"nota": 7},
+        headers=_build_auth_headers(user_id=orientador.id, perfil=orientador.perfil),
+    )
+
+    assert response.status_code == 409
+    assert response.json()["detail"] == "Submissao com nota automatica nao pode receber nota manual."
+
+
 def test_registrar_apresentacao_artigo_marks_existing_acceptance_and_logs(client, db_session) -> None:
     coordenador = _seed_user(
         db_session,
@@ -609,10 +832,26 @@ def test_registrar_apresentacao_artigo_marks_existing_acceptance_and_logs(client
     assert list_response.status_code == 200
     assert len(list_response.json()) == 1
 
-    logs_response = client.request(
+    coordinator_logs_response = client.request(
         "GET",
         "/logs",
         headers=_build_auth_headers(user_id=coordenador.id, perfil=coordenador.perfil),
+    )
+    assert coordinator_logs_response.status_code == 403
+
+    admin = _seed_user(
+        db_session,
+        nome_completo="Admin Logs",
+        email="admin.logs@icomp.ufam.edu.br",
+        username="admin.logs",
+        perfil=Perfil.ADMIN,
+        status=StatusCadastro.ATIVO,
+        ativo=True,
+    )
+    logs_response = client.request(
+        "GET",
+        "/logs",
+        headers=_build_auth_headers(user_id=admin.id, perfil=admin.perfil),
     )
     assert logs_response.status_code == 200
     assert any(log["acao"] == "REGISTRO_APRESENTACAO_ARTIGO" for log in logs_response.json())

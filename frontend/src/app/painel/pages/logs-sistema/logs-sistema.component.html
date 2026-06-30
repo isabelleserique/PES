@@ -6,18 +6,19 @@
     </div>
     <div class="navbar-sep"></div>
     <span class="navbar-app-name">TCComp</span>
+    <app-painel-nav></app-painel-nav>
     <span class="lg-spacer"></span>
-    <a mat-stroked-button class="lg-nav-btn" routerLink="/painel/coordenador">Home</a>
+    <a mat-stroked-button class="lg-nav-btn" routerLink="/painel/admin">Home</a>
     <button mat-stroked-button type="button" class="lg-nav-btn" (click)="voltar()">Voltar</button>
   </nav>
 
   <main class="app-page-content lg-page">
     <header class="lg-hero">
       <div>
-        <span class="lg-eyebrow">US048 — Coordenador</span>
+        <span class="lg-eyebrow">Administração</span>
         <h1 class="lg-title">Logs de atividade do sistema</h1>
         <p class="lg-subtitle">
-          Registros de uploads, aceites de orientação, aprovações de acesso e alterações de prazo.
+          Registros de uploads, aceites de orientação, aprovações de acesso e alterações sensíveis.
           Cada registro contém usuário, ação, data e hora.
         </p>
       </div>

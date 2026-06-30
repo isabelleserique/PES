@@ -10,6 +10,7 @@ class Perfil(str, Enum):
     COORDENADOR = "COORDENADOR"
     ALUNO = "ALUNO"
     ORIENTADOR = "ORIENTADOR"
+    ADMIN = "ADMIN"
 
 
 class StatusCadastro(str, Enum):

@@ -51,7 +51,7 @@ export class LogsSistemaComponent implements OnInit {
   }
 
   voltar(): void {
-    void this.router.navigate(['/painel/coordenador']);
+    void this.router.navigate(['/painel/admin']);
   }
 
   formatarData(dateStr: string): string {

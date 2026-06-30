@@ -80,7 +80,8 @@ class TCCService:
             .join(UserRecord, UserRecord.id == TCCRecord.aluno_id)
             .where(
                 TCCRecord.periodo_id == periodo.id,
-                TCCRecord.orientador_id == current_user.id,
+                (TCCRecord.orientador_id == current_user.id)
+                | (TCCRecord.coorientador_id == current_user.id),
                 TCCRecord.status == StatusTCC.AGUARDANDO_ACEITE,
             )
             .order_by(TCCRecord.criado_em.asc(), UserRecord.nome_completo.asc())
@@ -135,7 +136,8 @@ class TCCService:
         tcc = session.scalar(
             select(TCCRecord).where(
                 TCCRecord.id == tcc_id,
-                TCCRecord.orientador_id == current_user.id,
+                (TCCRecord.orientador_id == current_user.id)
+                | (TCCRecord.coorientador_id == current_user.id),
             )
         )
         if tcc is None:
@@ -163,11 +165,13 @@ class TCCService:
                 detail="Aluno relacionado ao TCC nao foi encontrado.",
             )
 
+        orientador = self._get_professor_by_id(session=session, user_id=tcc.orientador_id)
+        coorientador = self._get_professor_by_id(session=session, user_id=tcc.coorientador_id)
         previous_snapshot = self._serialize_tcc_snapshot(
             tcc=tcc,
             periodo=periodo,
-            orientador=current_user,
-            coorientador=self._get_professor_by_id(session=session, user_id=tcc.coorientador_id),
+            orientador=orientador,
+            coorientador=coorientador,
         )
         acao_fora_do_prazo, alerta_acao_prazo, _ = self._build_orientation_deadline_info(
             periodo=periodo,
@@ -192,8 +196,8 @@ class TCCService:
                 action=log_action,
                 previous_snapshot=previous_snapshot,
                 periodo=periodo,
-                orientador=current_user,
-                coorientador=self._get_professor_by_id(session=session, user_id=tcc.coorientador_id),
+                orientador=orientador,
+                coorientador=coorientador,
                 observacao=payload.observacao,
             )
         )
@@ -261,19 +265,28 @@ class TCCService:
                 detail=TCC_ALREADY_EXISTS_DETAIL,
             )
 
-        orientador = self._get_active_professor(session=session, user_id=payload.orientador_id)
-        coorientador = self._get_optional_active_professor(session=session, user_id=payload.coorientador_id)
+        orientador = self._get_optional_active_professor(
+            session=session,
+            user_id=payload.orientador_id,
+            invalid_detail=INVALID_ORIENTADOR_DETAIL,
+        )
+        coorientador = self._get_optional_active_professor(
+            session=session,
+            user_id=payload.coorientador_id,
+            invalid_detail=INVALID_COORIENTADOR_DETAIL,
+        )
         prazo_excedido = self._is_submission_late(periodo=periodo, tipo_tcc=payload.tipo_tcc)
+        status_tcc = StatusTCC.AGUARDANDO_ACEITE if orientador is not None or coorientador is not None else StatusTCC.SEM_ORIENTADOR
 
         tcc = TCCRecord(
             id=str(uuid4()),
             titulo=payload.titulo,
             tipo_tcc=payload.tipo_tcc,
             aluno_id=current_user.id,
-            orientador_id=orientador.id,
+            orientador_id=orientador.id if orientador is not None else None,
             coorientador_id=coorientador.id if coorientador is not None else None,
             periodo_id=periodo.id,
-            status=StatusTCC.AGUARDANDO_ACEITE,
+            status=status_tcc,
             prazo_excedido=prazo_excedido,
             resumo=payload.resumo,
             area_tematica=payload.area_tematica,
@@ -296,18 +309,17 @@ class TCCService:
         session.commit()
         session.refresh(tcc)
 
-        email_service.send_tcc_submission_notification(
-            to_email=orientador.email,
-            aluno_nome=current_user.nome_completo,
-            titulo=tcc.titulo,
-            tipo_tcc=tcc.tipo_tcc.value,
-            periodo_nome=periodo.nome,
-            prazo_excedido=tcc.prazo_excedido,
+        self._send_tcc_submission_notifications(
+            email_service=email_service,
+            aluno=current_user,
+            tcc=tcc,
+            periodo=periodo,
+            professores=[orientador, coorientador],
         )
         audit_service.log_tcc_submission(
             aluno_id=current_user.id,
             tcc_id=tcc.id,
-            orientador_id=orientador.id,
+            orientador_id=tcc.orientador_id,
             prazo_excedido=tcc.prazo_excedido,
         )
         audit_service.log_event(
@@ -318,7 +330,8 @@ class TCCService:
             description="Registrou dados do TCC.",
             data={
                 "tcc_id": tcc.id,
-                "orientador_id": orientador.id,
+                "orientador_id": tcc.orientador_id,
+                "coorientador_id": tcc.coorientador_id,
                 "prazo_excedido": tcc.prazo_excedido,
             },
         )
@@ -359,14 +372,22 @@ class TCCService:
             coorientador=previous_coorientador,
         )
 
-        orientador = self._get_active_professor(session=session, user_id=payload.orientador_id)
-        coorientador = self._get_optional_active_professor(session=session, user_id=payload.coorientador_id)
+        orientador = self._get_optional_active_professor(
+            session=session,
+            user_id=payload.orientador_id,
+            invalid_detail=INVALID_ORIENTADOR_DETAIL,
+        )
+        coorientador = self._get_optional_active_professor(
+            session=session,
+            user_id=payload.coorientador_id,
+            invalid_detail=INVALID_COORIENTADOR_DETAIL,
+        )
 
         tcc.titulo = payload.titulo
         tcc.tipo_tcc = payload.tipo_tcc
-        tcc.orientador_id = orientador.id
+        tcc.orientador_id = orientador.id if orientador is not None else None
         tcc.coorientador_id = coorientador.id if coorientador is not None else None
-        tcc.status = StatusTCC.AGUARDANDO_ACEITE
+        tcc.status = StatusTCC.AGUARDANDO_ACEITE if orientador is not None or coorientador is not None else StatusTCC.SEM_ORIENTADOR
         tcc.prazo_excedido = self._is_submission_late(periodo=periodo, tipo_tcc=payload.tipo_tcc)
         tcc.observacao_orientador = None
         tcc.resumo = payload.resumo
@@ -389,18 +410,17 @@ class TCCService:
         session.commit()
         session.refresh(tcc)
 
-        email_service.send_tcc_submission_notification(
-            to_email=orientador.email,
-            aluno_nome=current_user.nome_completo,
-            titulo=tcc.titulo,
-            tipo_tcc=tcc.tipo_tcc.value,
-            periodo_nome=periodo.nome,
-            prazo_excedido=tcc.prazo_excedido,
+        self._send_tcc_submission_notifications(
+            email_service=email_service,
+            aluno=current_user,
+            tcc=tcc,
+            periodo=periodo,
+            professores=[orientador, coorientador],
         )
         audit_service.log_tcc_update(
             aluno_id=current_user.id,
             tcc_id=tcc.id,
-            orientador_id=orientador.id,
+            orientador_id=tcc.orientador_id,
             prazo_excedido=tcc.prazo_excedido,
         )
         audit_service.log_event(
@@ -411,7 +431,8 @@ class TCCService:
             description="Atualizou dados do TCC.",
             data={
                 "tcc_id": tcc.id,
-                "orientador_id": orientador.id,
+                "orientador_id": tcc.orientador_id,
+                "coorientador_id": tcc.coorientador_id,
                 "prazo_excedido": tcc.prazo_excedido,
             },
         )
@@ -450,25 +471,12 @@ class TCCService:
             )
         )
 
-    def _get_active_professor(self, *, session: Session, user_id: str) -> UserRecord:
-        professor = self._get_professor_by_id(session=session, user_id=user_id)
-        if professor is None or professor.perfil != Perfil.ORIENTADOR:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=INVALID_ORIENTADOR_DETAIL,
-            )
-        if professor.status != StatusCadastro.ATIVO or professor.ativo is not True:
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
-                detail=INVALID_ORIENTADOR_DETAIL,
-            )
-        return professor
-
     def _get_optional_active_professor(
         self,
         *,
         session: Session,
         user_id: str | None,
+        invalid_detail: str,
     ) -> UserRecord | None:
         if user_id is None:
             return None
@@ -477,12 +485,12 @@ class TCCService:
         if professor is None or professor.perfil != Perfil.ORIENTADOR:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail=INVALID_COORIENTADOR_DETAIL,
+                detail=invalid_detail,
             )
         if professor.status != StatusCadastro.ATIVO or professor.ativo is not True:
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
-                detail=INVALID_COORIENTADOR_DETAIL,
+                detail=invalid_detail,
             )
         return professor
 
@@ -490,6 +498,29 @@ class TCCService:
         if user_id is None:
             return None
         return session.scalar(select(UserRecord).where(UserRecord.id == user_id))
+
+    def _send_tcc_submission_notifications(
+        self,
+        *,
+        email_service: EmailService,
+        aluno: UserRecord,
+        tcc: TCCRecord,
+        periodo: PeriodoLetivoRecord,
+        professores: list[UserRecord | None],
+    ) -> None:
+        notified: set[str] = set()
+        for professor in professores:
+            if professor is None or professor.id in notified:
+                continue
+            notified.add(professor.id)
+            email_service.send_tcc_submission_notification(
+                to_email=professor.email,
+                aluno_nome=aluno.nome_completo,
+                titulo=tcc.titulo,
+                tipo_tcc=tcc.tipo_tcc.value,
+                periodo_nome=periodo.nome,
+                prazo_excedido=tcc.prazo_excedido,
+            )
 
     def _is_submission_late(self, *, periodo: PeriodoLetivoRecord, tipo_tcc: TipoTCC) -> bool:
         prazo = self._find_submission_deadline(periodo=periodo, tipo_tcc=tipo_tcc)
@@ -549,7 +580,7 @@ class TCCService:
         action: AcaoEdicaoTCC,
         previous_snapshot: dict | None,
         periodo: PeriodoLetivoRecord,
-        orientador: UserRecord,
+        orientador: UserRecord | None,
         coorientador: UserRecord | None,
         observacao: str | None = None,
     ) -> TCCEditLogRecord:
@@ -573,14 +604,14 @@ class TCCService:
         *,
         tcc: TCCRecord,
         periodo: PeriodoLetivoRecord,
-        orientador: UserRecord,
+        orientador: UserRecord | None,
         coorientador: UserRecord | None,
     ) -> dict[str, str | bool | None]:
         return {
             "titulo": tcc.titulo,
             "tipo_tcc": tcc.tipo_tcc.value,
-            "orientador_id": orientador.id,
-            "orientador_nome": orientador.nome_completo,
+            "orientador_id": orientador.id if orientador is not None else None,
+            "orientador_nome": orientador.nome_completo if orientador is not None else None,
             "coorientador_id": coorientador.id if coorientador is not None else None,
             "coorientador_nome": coorientador.nome_completo if coorientador is not None else None,
             "periodo_id": periodo.id,
@@ -600,7 +631,7 @@ class TCCService:
         *,
         tcc: TCCRecord,
         periodo: PeriodoLetivoRecord,
-        orientador: UserRecord,
+        orientador: UserRecord | None,
         coorientador: UserRecord | None,
     ) -> TCCResponse:
         alerta = None
@@ -611,8 +642,8 @@ class TCCService:
             id=tcc.id,
             titulo=tcc.titulo,
             tipo_tcc=tcc.tipo_tcc,
-            orientador_id=orientador.id,
-            orientador_nome=orientador.nome_completo,
+            orientador_id=orientador.id if orientador is not None else None,
+            orientador_nome=orientador.nome_completo if orientador is not None else None,
             coorientador_id=coorientador.id if coorientador is not None else None,
             coorientador_nome=coorientador.nome_completo if coorientador is not None else None,
             periodo_id=periodo.id,

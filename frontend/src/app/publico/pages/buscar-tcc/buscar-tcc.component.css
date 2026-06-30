@@ -1,6 +1,7 @@
 .public-shell {
   background:
-    radial-gradient(circle at 10% 10%, rgba(31, 111, 94, 0.14), transparent 30%),
+    radial-gradient(circle at 12% 6%, rgba(31, 111, 94, 0.18), transparent 28%),
+    radial-gradient(circle at 88% 0%, rgba(180, 83, 9, 0.14), transparent 30%),
     linear-gradient(135deg, #f5efe3 0%, #e8f3ed 48%, #f9fbf7 100%);
   min-height: 100vh;
 }
@@ -11,6 +12,12 @@
   gap: 24px;
   justify-content: space-between;
   padding: 22px clamp(20px, 5vw, 72px);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  backdrop-filter: blur(16px);
+  background: rgba(245, 239, 227, 0.76);
+  border-bottom: 1px solid rgba(13, 42, 36, 0.08);
 }
 
 .public-brand {
@@ -43,13 +50,14 @@
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
+  justify-content: flex-end;
 }
 
 .public-nav-links a {
   border: 1px solid rgba(13, 42, 36, 0.18);
   border-radius: 999px;
   color: #0d2a24;
-  font-weight: 700;
+  font-weight: 800;
   padding: 10px 16px;
   text-decoration: none;
 }
@@ -64,23 +72,31 @@
 
 .public-page {
   display: grid;
-  gap: 28px;
+  gap: 30px;
   margin: 0 auto;
   max-width: 1160px;
   padding: 28px 20px 64px;
 }
 
 .bt-hero {
-  max-width: 820px;
-  padding: 36px 0 8px;
+  align-items: stretch;
+  display: grid;
+  gap: 28px;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 380px);
+  padding: 54px 0 14px;
+}
+
+.bt-hero-copy {
+  max-width: 850px;
 }
 
 .bt-eyebrow,
-.bt-card-label {
+.bt-card-label,
+.bt-panel-kicker {
   color: #1f6f5e;
   display: block;
   font-size: 0.78rem;
-  font-weight: 800;
+  font-weight: 900;
   letter-spacing: 0.1em;
   margin-bottom: 8px;
   text-transform: uppercase;
@@ -88,35 +104,236 @@
 
 .bt-hero h1 {
   color: #0d2a24;
-  font-size: clamp(2.3rem, 6vw, 4.8rem);
-  letter-spacing: -0.06em;
-  line-height: 0.95;
-  margin: 0 0 18px;
+  font-size: clamp(2.6rem, 7vw, 5.9rem);
+  letter-spacing: -0.07em;
+  line-height: 0.9;
+  margin: 0 0 20px;
 }
 
 .bt-hero p,
 .bt-help,
-.bt-empty {
+.bt-empty,
+.bt-section-heading p,
+.bt-info-card p,
+.bt-flow-steps p,
+.bt-prof-card p {
   color: #527067;
   line-height: 1.7;
 }
 
-.bt-card {
+.bt-hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.bt-btn-primary {
+  background: #0d2a24 !important;
+  color: #fff !important;
+  min-height: 44px;
+}
+
+.bt-btn-secondary {
+  border-color: rgba(13, 42, 36, 0.3) !important;
+  color: #0d2a24 !important;
+  min-height: 44px;
+}
+
+.bt-hero-panel,
+.bt-card,
+.bt-info-card,
+.bt-flow-card,
+.bt-prof-card {
   background: rgba(255, 255, 255, 0.88);
   border: 1px solid rgba(13, 42, 36, 0.08);
   border-radius: 28px;
   box-shadow: 0 28px 70px rgba(13, 42, 36, 0.1);
+}
+
+.bt-hero-panel {
+  display: grid;
+  gap: 22px;
+  min-height: 360px;
+  padding: 28px;
+  place-content: end;
+  background:
+    linear-gradient(160deg, rgba(13, 42, 36, 0.92), rgba(31, 111, 94, 0.78)),
+    radial-gradient(circle at top right, rgba(255, 255, 255, 0.18), transparent 42%);
+  color: #fff;
+}
+
+.bt-hero-panel strong {
+  display: block;
+  font-size: clamp(1.6rem, 3vw, 2.4rem);
+  line-height: 1.05;
+}
+
+.bt-panel-kicker {
+  color: #a9f0d1;
+}
+
+.bt-panel-grid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.bt-panel-grid span {
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 16px;
+  color: rgba(255, 255, 255, 0.88);
+  font-size: 0.82rem;
+  font-weight: 800;
+  padding: 10px;
+}
+
+.bt-info-grid {
+  display: grid;
+  gap: 18px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.bt-info-card,
+.bt-flow-card,
+.bt-card {
   padding: clamp(22px, 4vw, 34px);
+}
+
+.bt-info-card h2,
+.bt-section-heading h2,
+.bt-card-heading h2,
+.bt-results-header h2 {
+  color: #0d2a24;
+  font-size: 1.45rem;
+  margin-bottom: 8px;
+}
+
+.bt-flow-card {
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.92), rgba(238, 247, 242, 0.92)),
+    radial-gradient(circle at 95% 15%, rgba(180, 83, 9, 0.12), transparent 32%);
+}
+
+.bt-section-heading {
+  max-width: 760px;
+}
+
+.bt-flow-steps {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin-top: 22px;
+}
+
+.bt-flow-steps article {
+  background: #fff;
+  border: 1px solid rgba(13, 42, 36, 0.08);
+  border-radius: 22px;
+  padding: 18px;
+}
+
+.bt-flow-steps span {
+  color: #b45309;
+  font-size: 1.65rem;
+  font-weight: 900;
+}
+
+.bt-flow-steps h3,
+.bt-prof-card h3,
+.bt-result-card h3 {
+  color: #0d2a24;
+}
+
+.bt-professores {
+  display: grid;
+  gap: 20px;
+}
+
+.bt-prof-grid {
+  display: grid;
+  gap: 18px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.bt-prof-card {
+  overflow: hidden;
+}
+
+.bt-prof-photo {
+  align-items: center;
+  background:
+    radial-gradient(circle at 30% 25%, rgba(255, 255, 255, 0.45), transparent 26%),
+    linear-gradient(135deg, #0d2a24, #1f6f5e 58%, #b45309);
+  color: #fff;
+  display: flex;
+  font-size: 2.6rem;
+  font-weight: 900;
+  height: 190px;
+  justify-content: center;
+  letter-spacing: -0.06em;
+}
+
+.bt-prof-photo img {
+  display: block;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  width: 100%;
+}
+
+.bt-prof-body {
+  padding: 22px;
+}
+
+.bt-prof-body strong {
+  color: #1f6f5e;
+  display: block;
+  margin: 8px 0;
+}
+
+.bt-prof-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  margin-top: 12px;
+}
+
+.bt-prof-links a {
+  color: #b45309;
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.bt-prof-links a:hover {
+  text-decoration: underline;
+}
+
+.bt-prof-tags,
+.bt-result-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.bt-prof-tags {
+  margin-top: 14px;
+}
+
+.bt-prof-tags span,
+.bt-tipo-badge,
+.bt-result-meta span {
+  background: rgba(31, 111, 94, 0.1);
+  border-radius: 999px;
+  color: #1f6f5e;
+  font-size: 0.78rem;
+  font-weight: 800;
+  padding: 5px 12px;
 }
 
 .bt-search-card {
   border-top: 6px solid #1f6f5e;
-}
-
-.bt-card-heading h2,
-.bt-results-header h2 {
-  color: #0d2a24;
-  font-size: 1.4rem;
 }
 
 .bt-form-grid {
@@ -128,12 +345,6 @@
 .bt-form-actions {
   display: flex;
   justify-content: flex-end;
-}
-
-.bt-btn-primary {
-  background: #0d2a24 !important;
-  color: #fff !important;
-  min-height: 44px;
 }
 
 .bt-results-grid {
@@ -164,18 +375,7 @@
   justify-content: space-between;
 }
 
-.bt-tipo-badge,
-.bt-result-meta span {
-  background: rgba(31, 111, 94, 0.1);
-  border-radius: 999px;
-  color: #1f6f5e;
-  font-size: 0.78rem;
-  font-weight: 800;
-  padding: 5px 12px;
-}
-
 .bt-result-card h3 {
-  color: #0d2a24;
   font-size: 1.1rem;
   line-height: 1.35;
 }
@@ -188,12 +388,6 @@
   font-size: 0.9rem;
 }
 
-.bt-result-meta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
 .bt-card-action {
   align-self: flex-start;
   border-color: rgba(31, 111, 94, 0.28) !important;
@@ -201,17 +395,32 @@
   margin-top: auto;
 }
 
+@media (max-width: 980px) {
+  .bt-hero,
+  .bt-info-grid,
+  .bt-flow-steps,
+  .bt-prof-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 @media (max-width: 720px) {
   .public-navbar {
     align-items: flex-start;
     flex-direction: column;
+    position: static;
+  }
+
+  .public-nav-links {
+    justify-content: flex-start;
   }
 
   .bt-form-actions {
     justify-content: stretch;
   }
 
-  .bt-btn-primary {
+  .bt-btn-primary,
+  .bt-btn-secondary {
     width: 100%;
   }
 }

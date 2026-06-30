@@ -116,6 +116,10 @@ class StubEmailService:
         self.tcc_notifications: list[dict[str, str | bool]] = []
         self.orientation_decisions: list[dict[str, str | bool | None]] = []
         self.deadline_notifications: list[dict[str, str]] = []
+        self.advisor_deadline_notifications: list[dict[str, str]] = []
+        self.grade_notifications: list[dict[str, str | int | float]] = []
+        self.banca_notifications: list[dict[str, str | list[str]]] = []
+        self.deposito_status_notifications: list[dict[str, str | None]] = []
 
     def send_welcome_email(
         self,
@@ -259,6 +263,100 @@ class StubEmailService:
                 "etapa": etapa,
                 "data_limite": data_limite,
                 "tipo_alerta": tipo_alerta,
+            }
+        )
+        if self.should_fail:
+            return False
+        return True
+
+    def send_advisor_deadline_notification(
+        self,
+        *,
+        to_email: str,
+        orientador_nome: str,
+        aluno_nome: str,
+        titulo: str,
+        etapa: str,
+        data_limite: str,
+        tipo_alerta: str,
+    ) -> bool:
+        self.advisor_deadline_notifications.append(
+            {
+                "to_email": to_email,
+                "orientador_nome": orientador_nome,
+                "aluno_nome": aluno_nome,
+                "titulo": titulo,
+                "etapa": etapa,
+                "data_limite": data_limite,
+                "tipo_alerta": tipo_alerta,
+            }
+        )
+        if self.should_fail:
+            return False
+        return True
+
+    def send_grade_notification(
+        self,
+        *,
+        to_email: str,
+        aluno_nome: str,
+        titulo: str,
+        etapa: str,
+        nota: int | float,
+    ) -> bool:
+        self.grade_notifications.append(
+            {
+                "to_email": to_email,
+                "aluno_nome": aluno_nome,
+                "titulo": titulo,
+                "etapa": etapa,
+                "nota": nota,
+            }
+        )
+        if self.should_fail:
+            return False
+        return True
+
+    def send_banca_notification(
+        self,
+        *,
+        to_email: str,
+        aluno_nome: str,
+        titulo: str,
+        data_defesa: str,
+        local: str,
+        membros: list[str],
+    ) -> bool:
+        self.banca_notifications.append(
+            {
+                "to_email": to_email,
+                "aluno_nome": aluno_nome,
+                "titulo": titulo,
+                "data_defesa": data_defesa,
+                "local": local,
+                "membros": membros,
+            }
+        )
+        if self.should_fail:
+            return False
+        return True
+
+    def send_deposito_status_notification(
+        self,
+        *,
+        to_email: str,
+        aluno_nome: str,
+        titulo: str,
+        status_deposito: str,
+        observacao: str | None,
+    ) -> bool:
+        self.deposito_status_notifications.append(
+            {
+                "to_email": to_email,
+                "aluno_nome": aluno_nome,
+                "titulo": titulo,
+                "status_deposito": status_deposito,
+                "observacao": observacao,
             }
         )
         if self.should_fail:
