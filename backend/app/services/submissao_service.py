@@ -31,6 +31,7 @@ from backend.app.schemas.submissao import (
     SubmissaoHistoricoResponse,
 )
 from backend.app.services.audit_service import AuditService
+from backend.app.services.email_service import EmailService
 
 NO_ACTIVE_PERIODO_FOUND_DETAIL = "Nenhum periodo letivo ativo encontrado."
 NO_ACTIVE_TCC_DETAIL = "Aluno nao possui TCC no periodo letivo ativo."
@@ -227,6 +228,7 @@ class SubmissaoService:
         arquivo: UploadFile,
         foi_aceito: bool,
         comprovante: UploadFile | None,
+        email_service: EmailService | None = None,
     ) -> SubmissaoEntregavelCreateResponse:
         tcc = self._get_active_tcc(session=session, current_user=current_user, raise_if_missing=True)
         if tcc is None:
@@ -307,6 +309,12 @@ class SubmissaoService:
                 "arquivo": submissao.nome_arquivo,
                 "fora_do_prazo": submissao.fora_do_prazo,
             },
+        )
+        self._send_grade_notification_if_needed(
+            email_service=email_service,
+            aluno=current_user,
+            tcc=tcc,
+            submissao=submissao,
         )
 
         return SubmissaoEntregavelCreateResponse(
@@ -590,6 +598,31 @@ class SubmissaoService:
             data_apresentacao=apresentacao.data_apresentacao,
             artigo_ja_aceito=apresentacao.artigo_ja_aceito,
             criado_em=apresentacao.criado_em,
+        )
+
+    def _send_grade_notification_if_needed(
+        self,
+        *,
+        email_service: EmailService | None,
+        aluno: UserRecord,
+        tcc: TCCRecord,
+        submissao: SubmissaoEntregavelRecord,
+    ) -> None:
+        if email_service is None or submissao.nota_automatica is None:
+            return
+
+        is_final = "final" in self._normalize_text(submissao.etapa)
+        if is_final and not aluno.email_notas_finais:
+            return
+        if not is_final and not aluno.email_notas_parciais:
+            return
+
+        email_service.send_grade_notification(
+            to_email=aluno.email,
+            aluno_nome=aluno.nome_completo,
+            titulo=tcc.titulo,
+            etapa=submissao.etapa,
+            nota=submissao.nota_automatica,
         )
 
 

@@ -3,11 +3,18 @@ from __future__ import annotations
 from pathlib import Path
 
 from fastapi import HTTPException, status
-from sqlalchemy import exists, or_, select
+from sqlalchemy import exists, select
 from sqlalchemy.orm import Session, aliased, selectinload
 
 from backend.app.core.config import Settings, get_settings
-from backend.app.db.models import SubmissaoEntregavelRecord, TCCRecord, UserRecord
+from backend.app.db.models import (
+    BancaRecord,
+    DepositoFinalRecord,
+    DocumentoDepositoRecord,
+    TCCRecord,
+    UserRecord,
+)
+from backend.app.models.deposito import StatusDeposito, TipoDocumentoDeposito
 from backend.app.schemas.publico import (
     DocumentoTccPublicoResponse,
     PublicStoredFile,
@@ -38,7 +45,10 @@ class PublicoService:
             select(TCCRecord, aluno_alias, orientador_alias)
             .join(aluno_alias, aluno_alias.id == TCCRecord.aluno_id)
             .join(orientador_alias, orientador_alias.id == TCCRecord.orientador_id)
-            .where(self._has_public_document_clause())
+            .where(
+                aluno_alias.publicar_tcc_portal_publico.is_(True),
+                self._has_public_document_clause(),
+            )
             .order_by(TCCRecord.atualizado_em.desc(), TCCRecord.titulo.asc())
         )
 
@@ -67,11 +77,15 @@ class PublicoService:
         orientador_alias = aliased(UserRecord)
         row = session.execute(
             select(TCCRecord, aluno_alias, orientador_alias)
-            .options(selectinload(TCCRecord.submissoes_entregaveis))
+            .options(
+                selectinload(TCCRecord.deposito_final).selectinload(DepositoFinalRecord.documentos),
+                selectinload(TCCRecord.banca_defesa).selectinload(BancaRecord.membros),
+            )
             .join(aluno_alias, aluno_alias.id == TCCRecord.aluno_id)
             .join(orientador_alias, orientador_alias.id == TCCRecord.orientador_id)
             .where(
                 TCCRecord.id == tcc_id,
+                aluno_alias.publicar_tcc_portal_publico.is_(True),
                 self._has_public_document_clause(),
             )
         ).one_or_none()
@@ -92,26 +106,32 @@ class PublicoService:
         session: Session,
         tcc_id: str,
         submissao_id: str,
+        download: bool = False,
     ) -> PublicStoredFile:
-        submissao = session.scalar(
-            select(SubmissaoEntregavelRecord)
-            .join(TCCRecord, TCCRecord.id == SubmissaoEntregavelRecord.tcc_id)
+        documento = session.scalar(
+            select(DocumentoDepositoRecord)
+            .join(DepositoFinalRecord, DepositoFinalRecord.id == DocumentoDepositoRecord.deposito_id)
+            .join(TCCRecord, TCCRecord.id == DepositoFinalRecord.tcc_id)
+            .join(UserRecord, UserRecord.id == TCCRecord.aluno_id)
             .where(
                 TCCRecord.id == tcc_id,
-                SubmissaoEntregavelRecord.id == submissao_id,
+                DocumentoDepositoRecord.id == submissao_id,
+                DocumentoDepositoRecord.tipo_documento == TipoDocumentoDeposito.TCC_FINAL,
+                DepositoFinalRecord.status.in_([StatusDeposito.APROVADO, StatusDeposito.DEPOSITADO]),
+                UserRecord.publicar_tcc_portal_publico.is_(True),
             )
         )
-        if submissao is None:
+        if documento is None:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=DOCUMENTO_PUBLICO_NOT_FOUND_DETAIL)
 
-        path = Path(submissao.caminho_arquivo)
+        path = Path(documento.caminho_original if download else documento.caminho_preview_pdf or documento.caminho_original)
         if not path.exists() or not path.is_file():
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=DOCUMENTO_PUBLICO_NOT_FOUND_DETAIL)
 
         return PublicStoredFile(
             path=str(path),
-            filename=submissao.nome_arquivo,
-            media_type=submissao.tipo_conteudo or "application/octet-stream",
+            filename=documento.nome_original,
+            media_type="application/pdf" if path.suffix.lower() == ".pdf" else documento.mime_type or "application/octet-stream",
         )
 
     def _apply_filters(
@@ -136,7 +156,13 @@ class PublicoService:
 
     def _has_public_document_clause(self):
         return exists(
-            select(SubmissaoEntregavelRecord.id).where(SubmissaoEntregavelRecord.tcc_id == TCCRecord.id)
+            select(DocumentoDepositoRecord.id)
+            .join(DepositoFinalRecord, DepositoFinalRecord.id == DocumentoDepositoRecord.deposito_id)
+            .where(
+                DepositoFinalRecord.tcc_id == TCCRecord.id,
+                DepositoFinalRecord.status.in_([StatusDeposito.APROVADO, StatusDeposito.DEPOSITADO]),
+                DocumentoDepositoRecord.tipo_documento == TipoDocumentoDeposito.TCC_FINAL,
+            )
         )
 
     def _build_public_response(
@@ -160,6 +186,11 @@ class PublicoService:
         )
 
     def _build_banca(self, *, session: Session, tcc: TCCRecord, orientador: UserRecord) -> list[str]:
+        if tcc.banca_defesa is not None and tcc.banca_defesa.membros:
+            return [
+                f"{membro.nome} ({membro.titulacao}, {membro.instituicao})"
+                for membro in sorted(tcc.banca_defesa.membros, key=lambda item: item.papel.value)
+            ]
         if tcc.banca:
             return tcc.banca
 
@@ -171,32 +202,33 @@ class PublicoService:
         return banca
 
     def _build_documentos(self, tcc: TCCRecord) -> list[DocumentoTccPublicoResponse]:
-        latest_by_etapa: dict[str, SubmissaoEntregavelRecord] = {}
-        for submissao in tcc.submissoes_entregaveis:
-            current = latest_by_etapa.get(submissao.etapa)
-            if current is None or submissao.versao > current.versao:
-                latest_by_etapa[submissao.etapa] = submissao
+        if tcc.deposito_final is None:
+            return []
+        if tcc.deposito_final.status not in {StatusDeposito.APROVADO, StatusDeposito.DEPOSITADO}:
+            return []
 
-        return [
-            self._build_documento(tcc=tcc, submissao=submissao)
-            for submissao in sorted(latest_by_etapa.values(), key=lambda item: (item.etapa, item.versao))
+        documentos = [
+            documento
+            for documento in tcc.deposito_final.documentos
+            if documento.tipo_documento == TipoDocumentoDeposito.TCC_FINAL
         ]
+        return [self._build_documento(tcc=tcc, documento=documento) for documento in documentos]
 
     def _build_documento(
         self,
         *,
         tcc: TCCRecord,
-        submissao: SubmissaoEntregavelRecord,
+        documento: DocumentoDepositoRecord,
     ) -> DocumentoTccPublicoResponse:
         base_url = self.settings.api_base_url.rstrip("/")
-        url = f"{base_url}/public/tcc/{tcc.id}/documentos/{submissao.id}/arquivo"
-        is_pdf = Path(submissao.nome_arquivo).suffix.casefold() == ".pdf"
+        url = f"{base_url}/public/tcc/{tcc.id}/documentos/{documento.id}/arquivo"
+        has_pdf_preview = bool(documento.caminho_preview_pdf and Path(documento.caminho_preview_pdf).suffix.casefold() == ".pdf")
         return DocumentoTccPublicoResponse(
-            id=submissao.id,
-            tipo=submissao.etapa,
-            nome_arquivo=submissao.nome_arquivo,
+            id=documento.id,
+            tipo=documento.tipo_documento.value,
+            nome_arquivo=documento.nome_original,
             url_download=f"{url}?download=true",
-            url_preview=url if is_pdf else None,
+            url_preview=url if has_pdf_preview else None,
         )
 
 

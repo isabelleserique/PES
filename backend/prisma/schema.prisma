@@ -54,6 +54,13 @@ model User {
   failed_login_attempts Int                  @default(0)
   blocked_until         DateTime?
   ativo                 Boolean              @default(true)
+  email_prazos_orientandos Boolean           @default(true)
+  notificacao_antecedencia_dias Int          @default(3)
+  email_notas_parciais Boolean               @default(true)
+  email_notas_finais   Boolean               @default(true)
+  publicar_tcc_portal_publico Boolean        @default(false)
+  compartilhar_dados_terceiros Boolean       @default(false)
+  privacidade_atualizado_em DateTime?
   criado_em             DateTime             @default(now())
   password_reset_tokens PasswordResetToken[]
   tccs_como_aluno       TCC[]                @relation("AlunoTCC")
@@ -66,6 +73,7 @@ model User {
   apresentacoes_artigo ApresentacaoArtigo[] @relation("AlunoApresentacaoArtigo")
   audit_logs            AuditLog[]
   notificacoes_prazos   NotificacaoPrazo[]
+  membros_banca         MembroBanca[]
 
   @@map("users")
 }
@@ -129,6 +137,8 @@ model TCC {
   orientacao_sessoes OrientacaoSessao[]
   apresentacoes_artigo ApresentacaoArtigo[]
   notificacoes_prazos NotificacaoPrazo[]
+  banca_defesa     Banca?
+  deposito_final   DepositoFinal?
 
   @@unique([aluno_id, periodo_id])
   @@index([orientador_id])
@@ -268,4 +278,91 @@ model NotificacaoPrazo {
   @@index([tipo_alerta])
   @@index([enviado_em])
   @@map("notificacoes_prazos")
+}
+
+enum PapelBanca {
+  ORIENTADOR
+  COORIENTADOR
+  AVALIADOR_INTERNO
+  AVALIADOR_EXTERNO
+  SUPLENTE
+}
+
+model Banca {
+  id            String        @id
+  tcc_id        String        @unique
+  data_defesa   DateTime
+  local         String
+  criado_em     DateTime      @default(now())
+  atualizado_em DateTime      @updatedAt
+  tcc           TCC           @relation(fields: [tcc_id], references: [id], onDelete: Cascade)
+  membros       MembroBanca[]
+
+  @@index([tcc_id])
+  @@map("bancas")
+}
+
+model MembroBanca {
+  id          String     @id
+  banca_id    String
+  user_id     String?
+  nome        String
+  titulacao   String
+  instituicao String
+  papel       PapelBanca
+  banca       Banca      @relation(fields: [banca_id], references: [id], onDelete: Cascade)
+  user        User?      @relation(fields: [user_id], references: [id], onDelete: SetNull)
+
+  @@index([banca_id])
+  @@index([user_id])
+  @@map("membros_banca")
+}
+
+enum StatusDeposito {
+  AGUARDANDO_ENVIO
+  EM_REVISAO
+  DEVOLVIDO_PARA_CORRECAO
+  APROVADO
+  DEPOSITADO
+}
+
+enum TipoDocumentoDeposito {
+  TCC_FINAL
+  ATA_DEFESA
+  FOLHA_APROVACAO
+  FORMULARIOS
+  DECLARACOES
+}
+
+model DepositoFinal {
+  id                String               @id
+  tcc_id            String               @unique
+  status            StatusDeposito       @default(AGUARDANDO_ENVIO)
+  observacao_revisao String?
+  submetido_em      DateTime?
+  criado_em         DateTime             @default(now())
+  atualizado_em     DateTime             @updatedAt
+  tcc               TCC                  @relation(fields: [tcc_id], references: [id], onDelete: Cascade)
+  documentos        DocumentoDeposito[]
+
+  @@index([tcc_id])
+  @@index([status])
+  @@map("depositos_finais")
+}
+
+model DocumentoDeposito {
+  id                  String                @id
+  deposito_id          String
+  tipo_documento       TipoDocumentoDeposito
+  nome_original        String
+  caminho_original     String
+  mime_type            String?
+  tamanho_bytes        Int
+  caminho_preview_pdf  String?
+  criado_em            DateTime              @default(now())
+  deposito             DepositoFinal         @relation(fields: [deposito_id], references: [id], onDelete: Cascade)
+
+  @@unique([deposito_id, tipo_documento], name: "uq_documento_deposito_tipo", map: "uq_documento_deposito_tipo")
+  @@index([deposito_id])
+  @@map("documentos_deposito")
 }

@@ -1,0 +1,97 @@
+@import '../../painel-page.css';
+
+.nt-navbar-spacer { flex: 1; }
+.nt-nav-btn { border-radius: 999px; }
+
+.nt-page-title {
+  margin: 32px 0 8px;
+  color: #06133a;
+  font-size: clamp(2rem, 4vw, 3.1rem);
+  font-weight: 900;
+  letter-spacing: -0.06em;
+}
+
+.nt-page-subtitle {
+  max-width: 840px;
+  color: #526079;
+  font-size: 1.05rem;
+  line-height: 1.6;
+}
+
+.nt-card,
+.nt-loading {
+  border: 1px solid rgba(6, 19, 58, 0.1);
+  border-radius: 28px;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 24px 70px rgba(6, 19, 58, 0.08);
+  padding: clamp(20px, 4vw, 34px);
+  margin-top: 22px;
+}
+
+.nt-section-header {
+  margin-bottom: 18px;
+  color: #273bd4;
+  font-size: 0.78rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+}
+
+.nt-toggle-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 24px;
+  align-items: center;
+  border-radius: 20px;
+  background: #f7f9fd;
+  padding: 18px;
+}
+
+.nt-toggle-info {
+  display: grid;
+  gap: 4px;
+}
+
+.nt-toggle-label {
+  color: #06133a;
+  font-weight: 900;
+}
+
+.nt-toggle-desc {
+  color: #526079;
+}
+
+.nt-subfield {
+  margin-top: 18px;
+}
+
+.nt-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 22px;
+}
+
+.nt-btn-salvar {
+  border-radius: 999px;
+  background: #06133a;
+  color: #fff;
+}
+
+.nt-empty,
+.nt-loading {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #526079;
+  font-weight: 800;
+}
+
+@media (max-width: 720px) {
+  .nt-toggle-row {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .nt-actions button {
+    width: 100%;
+  }
+}

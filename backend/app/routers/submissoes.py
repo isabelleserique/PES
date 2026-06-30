@@ -15,6 +15,7 @@ from backend.app.schemas.submissao import (
     SubmissaoHistoricoResponse,
 )
 from backend.app.services.audit_service import AuditService, get_audit_service
+from backend.app.services.email_service import EmailService, get_email_service
 from backend.app.services.submissao_service import SubmissaoService, get_submissao_service
 
 router = APIRouter(prefix="/submissoes", tags=["submissoes"])
@@ -43,6 +44,7 @@ async def submeter_entregavel(
     comprovante: UploadFile | None = File(None),
     session: Session = Depends(get_db_session),
     submissao_service: SubmissaoService = Depends(get_submissao_service),
+    email_service: EmailService = Depends(get_email_service),
     current_aluno: UserRecord = Depends(require_perfis(Perfil.ALUNO)),
 ) -> SubmissaoEntregavelCreateResponse:
     return await submissao_service.submeter_entregavel(
@@ -52,6 +54,7 @@ async def submeter_entregavel(
         arquivo=arquivo,
         foi_aceito=foi_aceito,
         comprovante=comprovante,
+        email_service=email_service,
     )
 
 

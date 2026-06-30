@@ -1,0 +1,185 @@
+@import '../../painel-page.css';
+
+.sv-navbar-spacer { flex: 1; }
+.sv-nav-btn { border-radius: 999px; }
+
+.sv-page-title,
+.sv-success-card h1 {
+  margin: 32px 0 8px;
+  color: #06133a;
+  font-size: clamp(2rem, 4vw, 3.1rem);
+  font-weight: 900;
+  letter-spacing: -0.06em;
+}
+
+.sv-page-subtitle {
+  max-width: 900px;
+  color: #526079;
+  font-size: 1.05rem;
+  line-height: 1.6;
+}
+
+.sv-layout {
+  display: grid;
+  grid-template-columns: minmax(240px, 320px) minmax(0, 1fr);
+  gap: 22px;
+  align-items: start;
+  margin-top: 24px;
+}
+
+.sv-card,
+.sv-summary-card,
+.sv-success-card {
+  border: 1px solid rgba(6, 19, 58, 0.1);
+  border-radius: 28px;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 24px 70px rgba(6, 19, 58, 0.08);
+  padding: clamp(20px, 4vw, 34px);
+}
+
+.sv-summary-card {
+  background: linear-gradient(145deg, #06133a, #273bd4);
+  color: #fff;
+}
+
+.sv-summary-card h2 {
+  margin: 8px 0;
+  font-size: 1.35rem;
+  line-height: 1.2;
+}
+
+.sv-summary-card p {
+  color: rgba(255, 255, 255, 0.78);
+}
+
+.sv-eyebrow,
+.sv-section-header {
+  color: #273bd4;
+  font-size: 0.78rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.sv-summary-card .sv-eyebrow { color: #a9f0d1; }
+.sv-section-header { margin-bottom: 16px; }
+.sv-section-header--secondary { margin-top: 28px; }
+
+.sv-upload-area {
+  display: grid;
+  place-items: center;
+  gap: 8px;
+  min-height: 180px;
+  border: 2px dashed rgba(39, 59, 212, 0.28);
+  border-radius: 24px;
+  background: linear-gradient(135deg, #f6fbff, #ffffff);
+  color: #06133a;
+  cursor: pointer;
+  text-align: center;
+}
+
+.sv-upload-area mat-icon {
+  width: 52px;
+  height: 52px;
+  font-size: 52px;
+  color: #273bd4;
+}
+
+.sv-file-selected,
+.sv-doc-file {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-radius: 18px;
+  background: #eefdf5;
+  color: #064b33;
+  padding: 14px 16px;
+}
+
+.sv-file-selected div {
+  display: grid;
+  gap: 2px;
+  flex: 1;
+}
+
+.sv-file-selected span,
+.sv-doc-card p {
+  color: #526079;
+}
+
+.sv-doc-list {
+  display: grid;
+  gap: 14px;
+}
+
+.sv-doc-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 14px;
+  align-items: center;
+  border: 1px solid rgba(6, 19, 58, 0.08);
+  border-radius: 20px;
+  padding: 16px;
+}
+
+.sv-doc-card strong {
+  color: #06133a;
+}
+
+.sv-doc-card p {
+  margin: 4px 0 0;
+}
+
+.sv-doc-file {
+  max-width: 360px;
+  overflow: hidden;
+}
+
+.sv-doc-file span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sv-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 28px;
+}
+
+.sv-btn-primary {
+  border-radius: 999px;
+  background: #06133a;
+  color: #fff;
+}
+
+.sv-loading,
+.sv-success-card {
+  display: grid;
+  gap: 12px;
+  justify-items: center;
+  text-align: center;
+}
+
+.sv-success-icon {
+  width: 72px;
+  height: 72px;
+  font-size: 72px;
+  color: #0d9f6e;
+}
+
+@media (max-width: 900px) {
+  .sv-layout,
+  .sv-doc-card {
+    grid-template-columns: 1fr;
+  }
+
+  .sv-actions {
+    flex-direction: column-reverse;
+  }
+
+  .sv-actions button {
+    width: 100%;
+  }
+}

@@ -7,6 +7,8 @@ from sqlalchemy import Boolean, Date, DateTime, Enum, ForeignKey, Integer, JSON,
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from backend.app.db.base import Base
+from backend.app.models.banca import PapelBanca
+from backend.app.models.deposito import StatusDeposito, TipoDocumentoDeposito
 from backend.app.models.periodo import TipoTCC
 from backend.app.models.tcc import AcaoEdicaoTCC, StatusTCC
 from backend.app.models.user import Perfil, StatusCadastro
@@ -14,6 +16,27 @@ from backend.app.models.user import Perfil, StatusCadastro
 TIPO_TCC_ENUM = Enum(
     TipoTCC,
     name="TipoTCC",
+    values_callable=lambda enum_class: [item.value for item in enum_class],
+    validate_strings=True,
+)
+
+PAPEL_BANCA_ENUM = Enum(
+    PapelBanca,
+    name="PapelBanca",
+    values_callable=lambda enum_class: [item.value for item in enum_class],
+    validate_strings=True,
+)
+
+STATUS_DEPOSITO_ENUM = Enum(
+    StatusDeposito,
+    name="StatusDeposito",
+    values_callable=lambda enum_class: [item.value for item in enum_class],
+    validate_strings=True,
+)
+
+TIPO_DOCUMENTO_DEPOSITO_ENUM = Enum(
+    TipoDocumentoDeposito,
+    name="TipoDocumentoDeposito",
     values_callable=lambda enum_class: [item.value for item in enum_class],
     validate_strings=True,
 )
@@ -37,12 +60,21 @@ class UserRecord(Base):
     failed_login_attempts: Mapped[int] = mapped_column(default=0, nullable=False)
     blocked_until: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=False), nullable=True)
     ativo: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    email_prazos_orientandos: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    notificacao_antecedencia_dias: Mapped[int] = mapped_column(Integer, default=3, nullable=False)
+    email_notas_parciais: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    email_notas_finais: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    publicar_tcc_portal_publico: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    compartilhar_dados_terceiros: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    privacidade_atualizado_em: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=False), nullable=True)
     criado_em: Mapped[datetime] = mapped_column(
         DateTime(timezone=False),
         server_default=func.now(),
         nullable=False,
     )
     audit_logs: Mapped[list["AuditLogRecord"]] = relationship(back_populates="user")
+    notificacoes_prazos: Mapped[list["NotificacaoPrazoRecord"]] = relationship(back_populates="aluno")
+    membros_banca: Mapped[list["MembroBancaRecord"]] = relationship(back_populates="user")
 
 
 class PeriodoLetivoRecord(Base):
@@ -165,6 +197,20 @@ class TCCRecord(Base):
         cascade="all, delete-orphan",
     )
     apresentacoes_artigo: Mapped[list["ApresentacaoArtigoRecord"]] = relationship(
+        back_populates="tcc",
+        cascade="all, delete-orphan",
+    )
+    banca_defesa: Mapped[Optional["BancaRecord"]] = relationship(
+        back_populates="tcc",
+        uselist=False,
+        cascade="all, delete-orphan",
+    )
+    deposito_final: Mapped[Optional["DepositoFinalRecord"]] = relationship(
+        back_populates="tcc",
+        uselist=False,
+        cascade="all, delete-orphan",
+    )
+    notificacoes_prazos: Mapped[list["NotificacaoPrazoRecord"]] = relationship(
         back_populates="tcc",
         cascade="all, delete-orphan",
     )
@@ -320,6 +366,125 @@ class PasswordResetTokenRecord(Base):
     )
 
 
+class BancaRecord(Base):
+    __tablename__ = "bancas"
+
+    id: Mapped[str] = mapped_column(String, primary_key=True)
+    tcc_id: Mapped[str] = mapped_column(
+        String,
+        ForeignKey("tccs.id", ondelete="CASCADE"),
+        nullable=False,
+        unique=True,
+        index=True,
+    )
+    data_defesa: Mapped[datetime] = mapped_column(DateTime(timezone=False), nullable=False)
+    local: Mapped[str] = mapped_column(String, nullable=False)
+    criado_em: Mapped[datetime] = mapped_column(
+        DateTime(timezone=False),
+        server_default=func.now(),
+        nullable=False,
+    )
+    atualizado_em: Mapped[datetime] = mapped_column(
+        DateTime(timezone=False),
+        server_default=func.now(),
+        onupdate=func.now(),
+        nullable=False,
+    )
+    tcc: Mapped[TCCRecord] = relationship(back_populates="banca_defesa")
+    membros: Mapped[list["MembroBancaRecord"]] = relationship(
+        back_populates="banca",
+        cascade="all, delete-orphan",
+    )
+
+
+class MembroBancaRecord(Base):
+    __tablename__ = "membros_banca"
+
+    id: Mapped[str] = mapped_column(String, primary_key=True)
+    banca_id: Mapped[str] = mapped_column(
+        String,
+        ForeignKey("bancas.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    user_id: Mapped[Optional[str]] = mapped_column(
+        String,
+        ForeignKey("users.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+    nome: Mapped[str] = mapped_column(String, nullable=False)
+    titulacao: Mapped[str] = mapped_column(String, nullable=False)
+    instituicao: Mapped[str] = mapped_column(String, nullable=False)
+    papel: Mapped[PapelBanca] = mapped_column(PAPEL_BANCA_ENUM, nullable=False)
+    banca: Mapped[BancaRecord] = relationship(back_populates="membros")
+    user: Mapped[Optional[UserRecord]] = relationship(back_populates="membros_banca")
+
+
+class DepositoFinalRecord(Base):
+    __tablename__ = "depositos_finais"
+
+    id: Mapped[str] = mapped_column(String, primary_key=True)
+    tcc_id: Mapped[str] = mapped_column(
+        String,
+        ForeignKey("tccs.id", ondelete="CASCADE"),
+        nullable=False,
+        unique=True,
+        index=True,
+    )
+    status: Mapped[StatusDeposito] = mapped_column(
+        STATUS_DEPOSITO_ENUM,
+        nullable=False,
+        default=StatusDeposito.AGUARDANDO_ENVIO,
+        index=True,
+    )
+    observacao_revisao: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    submetido_em: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=False), nullable=True)
+    criado_em: Mapped[datetime] = mapped_column(
+        DateTime(timezone=False),
+        server_default=func.now(),
+        nullable=False,
+    )
+    atualizado_em: Mapped[datetime] = mapped_column(
+        DateTime(timezone=False),
+        server_default=func.now(),
+        onupdate=func.now(),
+        nullable=False,
+    )
+    tcc: Mapped[TCCRecord] = relationship(back_populates="deposito_final")
+    documentos: Mapped[list["DocumentoDepositoRecord"]] = relationship(
+        back_populates="deposito",
+        cascade="all, delete-orphan",
+    )
+
+
+class DocumentoDepositoRecord(Base):
+    __tablename__ = "documentos_deposito"
+    __table_args__ = (
+        UniqueConstraint("deposito_id", "tipo_documento", name="uq_documento_deposito_tipo"),
+    )
+
+    id: Mapped[str] = mapped_column(String, primary_key=True)
+    deposito_id: Mapped[str] = mapped_column(
+        String,
+        ForeignKey("depositos_finais.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    tipo_documento: Mapped[TipoDocumentoDeposito] = mapped_column(TIPO_DOCUMENTO_DEPOSITO_ENUM, nullable=False)
+    nome_original: Mapped[str] = mapped_column(String, nullable=False)
+    caminho_original: Mapped[str] = mapped_column(String, nullable=False)
+    mime_type: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    tamanho_bytes: Mapped[int] = mapped_column(Integer, nullable=False)
+    caminho_preview_pdf: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    criado_em: Mapped[datetime] = mapped_column(
+        DateTime(timezone=False),
+        server_default=func.now(),
+        nullable=False,
+    )
+    deposito: Mapped[DepositoFinalRecord] = relationship(back_populates="documentos")
+
+
 class AuditLogRecord(Base):
     __tablename__ = "audit_logs"
 
@@ -377,3 +542,5 @@ class NotificacaoPrazoRecord(Base):
         nullable=False,
         index=True,
     )
+    tcc: Mapped[TCCRecord] = relationship(back_populates="notificacoes_prazos")
+    aluno: Mapped[UserRecord] = relationship(back_populates="notificacoes_prazos")

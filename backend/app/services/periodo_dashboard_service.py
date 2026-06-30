@@ -7,7 +7,8 @@ from fastapi import HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
-from backend.app.db.models import PeriodoLetivoRecord, SubmissaoEntregavelRecord, TCCRecord, UserRecord
+from backend.app.db.models import PeriodoLetivoRecord, TCCRecord, UserRecord
+from backend.app.models.deposito import StatusDeposito
 from backend.app.models.periodo import TipoTCC
 from backend.app.models.tcc import StatusTCC
 from backend.app.models.user import Perfil, StatusCadastro
@@ -21,13 +22,6 @@ from backend.app.schemas.dashboard import (
 )
 
 NO_ACTIVE_PERIODO_FOUND_DETAIL = "Nenhum periodo letivo ativo encontrado."
-
-FINAL_ETAPA_BY_TIPO = {
-    TipoTCC.MONOGRAFIA: "Monografia Final",
-    TipoTCC.RELATORIO_ESTAGIO: "Relatório Final",
-    TipoTCC.ARTIGO: "Artigo Final",
-}
-
 
 class PeriodoDashboardService:
     def get_dashboard(self, *, session: Session) -> PeriodoDashboardResponse:
@@ -43,7 +37,10 @@ class PeriodoDashboardService:
         ).all()
         tccs = session.scalars(
             select(TCCRecord)
-            .options(selectinload(TCCRecord.submissoes_entregaveis))
+            .options(
+                selectinload(TCCRecord.submissoes_entregaveis),
+                selectinload(TCCRecord.deposito_final),
+            )
             .where(TCCRecord.periodo_id == periodo.id)
         ).all()
         tcc_by_aluno = {tcc.aluno_id: tcc for tcc in tccs}
@@ -101,7 +98,7 @@ class PeriodoDashboardService:
             relatorio_estagio=sum(1 for tcc in tccs if tcc.tipo_tcc == TipoTCC.RELATORIO_ESTAGIO),
             sem_tcc=max(len(alunos) - len(tccs), 0),
         )
-        depositados = sum(1 for detalhe in detalhes if detalhe.deposito_biblioteca == "DEPOSITADO")
+        depositados = sum(1 for detalhe in detalhes if detalhe.deposito_biblioteca == StatusDeposito.DEPOSITADO.value)
         return DashboardAlunosResumo(
             total=len(alunos),
             por_tipo=tipo_counts,
@@ -146,7 +143,7 @@ class PeriodoDashboardService:
             sem_orientador_aceito=tcc.status != StatusTCC.EM_ANDAMENTO and tcc.status != StatusTCC.APROVADO,
             prazos_vencidos_sem_entrega=vencidos,
             entregas_pendentes=pendentes,
-            deposito_biblioteca="DEPOSITADO" if self._has_final_document(tcc) else "PENDENTE",
+            deposito_biblioteca=self._get_deposito_status(tcc),
         )
 
     def _count_pending_deadlines(self, *, tcc: TCCRecord, periodo: PeriodoLetivoRecord) -> tuple[int, int]:
@@ -173,15 +170,10 @@ class PeriodoDashboardService:
             for submissao in tcc.submissoes_entregaveis
         )
 
-    def _has_final_document(self, tcc: TCCRecord) -> bool:
-        final_etapa = FINAL_ETAPA_BY_TIPO.get(tcc.tipo_tcc)
-        if final_etapa is None:
-            return False
-        final_normalizada = self._normalize_text(final_etapa)
-        return any(
-            self._normalize_text(submissao.etapa) == final_normalizada
-            for submissao in tcc.submissoes_entregaveis
-        )
+    def _get_deposito_status(self, tcc: TCCRecord) -> str:
+        if tcc.deposito_final is None:
+            return StatusDeposito.AGUARDANDO_ENVIO.value
+        return tcc.deposito_final.status.value
 
     def _deadline_matches_etapa(self, nome_etapa: str, etapa_normalizada: str) -> bool:
         nome_normalizado = self._normalize_text(nome_etapa)

@@ -44,11 +44,11 @@ class NotificacaoPrazoService:
             .options(selectinload(TCCRecord.submissoes_entregaveis))
             .where(TCCRecord.periodo_id == periodo.id)
         ).all()
-        alunos = self._load_alunos(session=session, tccs=tccs)
+        users = self._load_users(session=session, tccs=tccs)
         resultado = NotificacaoPrazoResultado()
 
         for tcc in tccs:
-            aluno = alunos.get(tcc.aluno_id)
+            aluno = users.get(tcc.aluno_id)
             if aluno is None:
                 continue
 
@@ -62,71 +62,199 @@ class NotificacaoPrazoService:
                 if tipo_alerta is None:
                     continue
 
-                resultado.avaliadas += 1
-                if self._notification_already_sent(
+                self._process_student_notification(
                     session=session,
-                    tcc_id=tcc.id,
+                    email_service=email_service,
+                    resultado=resultado,
+                    tcc=tcc,
+                    aluno=aluno,
                     prazo_id=prazo.id,
-                    tipo_alerta=tipo_alerta,
-                ):
-                    resultado.ignoradas += 1
-                    continue
-
-                sent = email_service.send_deadline_notification(
-                    to_email=aluno.email,
-                    aluno_nome=aluno.nome_completo,
-                    titulo=tcc.titulo,
                     etapa=prazo.nome_etapa,
                     data_limite=prazo.data_limite.isoformat(),
                     tipo_alerta=tipo_alerta,
                 )
-                if not sent:
-                    resultado.ignoradas += 1
-                    continue
-
-                if self._record_notification(
-                    session=session,
-                    tcc_id=tcc.id,
-                    aluno_id=aluno.id,
-                    prazo_id=prazo.id,
-                    tipo_alerta=tipo_alerta,
-                ):
-                    resultado.enviadas += 1
-                    AuditService().log_event(
-                        session=session,
-                        user_id=aluno.id,
-                        action="NOTIFICACAO_PRAZO",
-                        entity="PRAZO",
-                        description=f"Enviou alerta {tipo_alerta} para {prazo.nome_etapa}.",
-                        data={"tcc_id": tcc.id, "prazo_id": prazo.id, "tipo_alerta": tipo_alerta},
+                for orientador_id in {tcc.orientador_id, tcc.coorientador_id} - {None}:
+                    orientador = users.get(orientador_id)
+                    if orientador is None or not orientador.email_prazos_orientandos:
+                        continue
+                    orientador_alerta = self._resolve_tipo_alerta(
+                        data_limite=prazo.data_limite,
+                        reference_date=hoje,
+                        alert_days_before=orientador.notificacao_antecedencia_dias,
                     )
-                else:
-                    resultado.ignoradas += 1
+                    if orientador_alerta is None:
+                        continue
+                    self._process_advisor_notification(
+                        session=session,
+                        email_service=email_service,
+                        resultado=resultado,
+                        tcc=tcc,
+                        aluno=aluno,
+                        orientador=orientador,
+                        prazo_id=prazo.id,
+                        etapa=prazo.nome_etapa,
+                        data_limite=prazo.data_limite.isoformat(),
+                        tipo_alerta=orientador_alerta,
+                    )
 
         return resultado
 
-    def _load_alunos(self, *, session: Session, tccs: list[TCCRecord]) -> dict[str, UserRecord]:
-        aluno_ids = {tcc.aluno_id for tcc in tccs}
-        if not aluno_ids:
+    def _load_users(self, *, session: Session, tccs: list[TCCRecord]) -> dict[str, UserRecord]:
+        user_ids = {
+            user_id
+            for tcc in tccs
+            for user_id in (tcc.aluno_id, tcc.orientador_id, tcc.coorientador_id)
+            if user_id is not None
+        }
+        if not user_ids:
             return {}
-        alunos = session.scalars(
+        users = session.scalars(
             select(UserRecord).where(
-                UserRecord.id.in_(aluno_ids),
+                UserRecord.id.in_(user_ids),
                 UserRecord.status == StatusCadastro.ATIVO,
                 UserRecord.ativo.is_(True),
             )
         ).all()
-        return {aluno.id: aluno for aluno in alunos}
+        return {user.id: user for user in users}
 
-    def _resolve_tipo_alerta(self, *, data_limite: date, reference_date: date) -> str | None:
+    def _resolve_tipo_alerta(
+        self,
+        *,
+        data_limite: date,
+        reference_date: date,
+        alert_days_before: int = ALERT_DAYS_BEFORE_DEADLINE,
+    ) -> str | None:
         dias_restantes = (data_limite - reference_date).days
-        if 0 < dias_restantes <= ALERT_DAYS_BEFORE_DEADLINE:
+        if 0 < dias_restantes <= alert_days_before:
             return "A_VENCER"
         if dias_restantes == 0:
             return "VENCE_HOJE"
         if dias_restantes < 0:
             return "VENCIDO"
         return None
+
+    def _process_student_notification(
+        self,
+        *,
+        session: Session,
+        email_service: EmailService,
+        resultado: NotificacaoPrazoResultado,
+        tcc: TCCRecord,
+        aluno: UserRecord,
+        prazo_id: str,
+        etapa: str,
+        data_limite: str,
+        tipo_alerta: str,
+    ) -> None:
+        resultado.avaliadas += 1
+        if self._notification_already_sent(
+            session=session,
+            tcc_id=tcc.id,
+            prazo_id=prazo_id,
+            tipo_alerta=tipo_alerta,
+        ):
+            resultado.ignoradas += 1
+            return
+
+        sent = email_service.send_deadline_notification(
+            to_email=aluno.email,
+            aluno_nome=aluno.nome_completo,
+            titulo=tcc.titulo,
+            etapa=etapa,
+            data_limite=data_limite,
+            tipo_alerta=tipo_alerta,
+        )
+        if not sent:
+            resultado.ignoradas += 1
+            return
+
+        self._finalize_notification(
+            session=session,
+            resultado=resultado,
+            tcc_id=tcc.id,
+            user_id=aluno.id,
+            prazo_id=prazo_id,
+            tipo_alerta=tipo_alerta,
+            description=f"Enviou alerta {tipo_alerta} para {etapa}.",
+        )
+
+    def _process_advisor_notification(
+        self,
+        *,
+        session: Session,
+        email_service: EmailService,
+        resultado: NotificacaoPrazoResultado,
+        tcc: TCCRecord,
+        aluno: UserRecord,
+        orientador: UserRecord,
+        prazo_id: str,
+        etapa: str,
+        data_limite: str,
+        tipo_alerta: str,
+    ) -> None:
+        notification_type = f"ORIENTADOR_{tipo_alerta}"
+        resultado.avaliadas += 1
+        if self._notification_already_sent(
+            session=session,
+            tcc_id=tcc.id,
+            prazo_id=prazo_id,
+            tipo_alerta=notification_type,
+        ):
+            resultado.ignoradas += 1
+            return
+
+        sent = email_service.send_advisor_deadline_notification(
+            to_email=orientador.email,
+            orientador_nome=orientador.nome_completo,
+            aluno_nome=aluno.nome_completo,
+            titulo=tcc.titulo,
+            etapa=etapa,
+            data_limite=data_limite,
+            tipo_alerta=tipo_alerta,
+        )
+        if not sent:
+            resultado.ignoradas += 1
+            return
+
+        self._finalize_notification(
+            session=session,
+            resultado=resultado,
+            tcc_id=tcc.id,
+            user_id=orientador.id,
+            prazo_id=prazo_id,
+            tipo_alerta=notification_type,
+            description=f"Enviou alerta {tipo_alerta} de orientando para {etapa}.",
+        )
+
+    def _finalize_notification(
+        self,
+        *,
+        session: Session,
+        resultado: NotificacaoPrazoResultado,
+        tcc_id: str,
+        user_id: str,
+        prazo_id: str,
+        tipo_alerta: str,
+        description: str,
+    ) -> None:
+        if self._record_notification(
+            session=session,
+            tcc_id=tcc_id,
+            aluno_id=user_id,
+            prazo_id=prazo_id,
+            tipo_alerta=tipo_alerta,
+        ):
+            resultado.enviadas += 1
+            AuditService().log_event(
+                session=session,
+                user_id=user_id,
+                action="NOTIFICACAO_PRAZO",
+                entity="PRAZO",
+                description=description,
+                data={"tcc_id": tcc_id, "prazo_id": prazo_id, "tipo_alerta": tipo_alerta},
+            )
+        else:
+            resultado.ignoradas += 1
 
     def _notification_already_sent(
         self,

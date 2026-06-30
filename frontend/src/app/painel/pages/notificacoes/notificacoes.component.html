@@ -1,0 +1,84 @@
+<div class="app-shell">
+  <nav class="app-navbar">
+    <div class="navbar-brand">
+      <div class="logo-badge">IC</div>
+      <span class="logo-name">IComp</span>
+    </div>
+    <div class="navbar-sep"></div>
+    <span class="navbar-app-name">TCComp</span>
+    <span class="nt-navbar-spacer"></span>
+    <a mat-stroked-button class="nt-nav-btn" [routerLink]="homePath">Home</a>
+    <button mat-stroked-button type="button" class="nt-nav-btn" (click)="voltar()">Voltar</button>
+  </nav>
+
+  <main class="app-page-content">
+    <h1 class="nt-page-title">Preferências de Notificação</h1>
+    <p class="nt-page-subtitle">Escolha como e quando deseja receber notificações por e-mail.</p>
+
+    <p class="status-message status-message--error" *ngIf="errorMessage">{{ errorMessage }}</p>
+    <p class="status-message status-message--success" *ngIf="successMessage">{{ successMessage }}</p>
+
+    <div class="nt-loading" *ngIf="isLoading">
+      <mat-icon>hourglass_empty</mat-icon>
+      <span>Carregando preferências...</span>
+    </div>
+
+    <ng-container *ngIf="!isLoading">
+      <div class="nt-card" *ngIf="isOrientador">
+        <div class="nt-section-header">PRAZOS DOS ORIENTANDOS</div>
+
+        <div class="nt-toggle-row">
+          <div class="nt-toggle-info">
+            <span class="nt-toggle-label">Receber e-mail sobre prazos a vencer</span>
+            <span class="nt-toggle-desc">
+              Canal opcional. Você será avisado sobre os prazos a vencer dos seus orientandos.
+            </span>
+          </div>
+          <mat-slide-toggle color="primary" [(ngModel)]="prefs.email_prazos_orientandos"></mat-slide-toggle>
+        </div>
+
+        <div class="nt-subfield" *ngIf="prefs.email_prazos_orientandos">
+          <mat-form-field appearance="outline">
+            <mat-label>Antecedência do aviso</mat-label>
+            <mat-select [(ngModel)]="prefs.antecedencia_dias">
+              <mat-option *ngFor="let dias of antecedenciaOpcoes" [value]="dias">
+                {{ dias }} dias antes
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+      </div>
+
+      <div class="nt-card" *ngIf="isAluno">
+        <div class="nt-section-header">NOTAS LANÇADAS</div>
+
+        <div class="nt-toggle-row">
+          <div class="nt-toggle-info">
+            <span class="nt-toggle-label">Receber e-mail a cada nota parcial</span>
+            <span class="nt-toggle-desc">Avisado sempre que uma nota parcial for lançada.</span>
+          </div>
+          <mat-slide-toggle color="primary" [(ngModel)]="prefs.email_notas_parciais"></mat-slide-toggle>
+        </div>
+
+        <div class="nt-toggle-row">
+          <div class="nt-toggle-info">
+            <span class="nt-toggle-label">Receber e-mail da nota final</span>
+            <span class="nt-toggle-desc">Avisado quando a nota final for lançada.</span>
+          </div>
+          <mat-slide-toggle color="primary" [(ngModel)]="prefs.email_notas_finais"></mat-slide-toggle>
+        </div>
+      </div>
+
+      <div class="nt-card nt-empty" *ngIf="!isOrientador && !isAluno">
+        <mat-icon>notifications_off</mat-icon>
+        <p>Não há preferências de notificação configuráveis para o seu perfil.</p>
+      </div>
+
+      <div class="nt-actions" *ngIf="isOrientador || isAluno">
+        <button mat-raised-button type="button" class="nt-btn-salvar" [disabled]="isSaving" (click)="salvar()">
+          {{ isSaving ? 'Salvando...' : 'Salvar preferências' }}
+        </button>
+      </div>
+    </ng-container>
+  </main>
+</div>

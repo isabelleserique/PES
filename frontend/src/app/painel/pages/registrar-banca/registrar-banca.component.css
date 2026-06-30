@@ -1,0 +1,112 @@
+@import '../../painel-page.css';
+
+.rb-navbar-spacer { flex: 1; }
+.rb-nav-btn { border-radius: 999px; }
+
+.rb-page-title {
+  margin: 32px 0 8px;
+  color: #06133a;
+  font-size: clamp(2rem, 4vw, 3.2rem);
+  font-weight: 900;
+  letter-spacing: -0.06em;
+}
+
+.rb-page-subtitle {
+  max-width: 880px;
+  margin: 0 0 24px;
+  color: #526079;
+  font-size: 1.05rem;
+  line-height: 1.6;
+}
+
+.rb-card {
+  border: 1px solid rgba(6, 19, 58, 0.1);
+  border-radius: 28px;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 24px 70px rgba(6, 19, 58, 0.08);
+  padding: clamp(20px, 4vw, 36px);
+}
+
+.rb-section-header {
+  margin-bottom: 18px;
+  color: #273bd4;
+  font-size: 0.78rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+}
+
+.rb-section-header--secondary { margin-top: 18px; }
+
+.rb-grid,
+.rb-membro__fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.rb-field-full { grid-column: 1 / -1; }
+
+.rb-membros {
+  display: grid;
+  gap: 18px;
+}
+
+.rb-membro {
+  border: 1px solid rgba(39, 59, 212, 0.14);
+  border-radius: 22px;
+  background: linear-gradient(135deg, #f8faff, #ffffff);
+  padding: 18px;
+}
+
+.rb-membro__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.rb-membro__num {
+  color: #06133a;
+  font-weight: 900;
+}
+
+.rb-add-btn {
+  margin-top: 18px;
+  border-radius: 999px;
+}
+
+.rb-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 28px;
+}
+
+.rb-btn-salvar {
+  border-radius: 999px;
+  background: #06133a;
+  color: #fff;
+}
+
+.rb-loading {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #526079;
+  font-weight: 800;
+}
+
+@media (max-width: 760px) {
+  .rb-grid,
+  .rb-membro__fields {
+    grid-template-columns: 1fr;
+  }
+
+  .rb-actions {
+    flex-direction: column-reverse;
+  }
+
+  .rb-actions button {
+    width: 100%;
+  }
+}
