@@ -21,6 +21,7 @@ class Settings(BaseSettings):
     api_port: int = 8000
     api_base_url: str = "http://localhost:8000"
     frontend_url: str = "http://localhost:4200"
+    cors_origins: str = ""
 
     database_url: str = Field(
         default="postgresql://postgres:postgres@localhost:5432/sistema_tcc_icomp",

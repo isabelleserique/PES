@@ -1,0 +1,10 @@
+{
+  "buildCommand": "npm run build:deploy",
+  "outputDirectory": "dist/sistema-tcc-icomp-frontend",
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}

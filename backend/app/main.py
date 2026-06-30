@@ -17,6 +17,15 @@ backup_task: asyncio.Task | None = None
 notification_task: asyncio.Task | None = None
 
 
+def get_allowed_origins() -> list[str]:
+    origins = settings.cors_origins or settings.frontend_url
+    return [
+        origin.strip().rstrip("/")
+        for origin in origins.split(",")
+        if origin.strip()
+    ]
+
+
 @asynccontextmanager
 async def lifespan(_: FastAPI) -> AsyncIterator[None]:
     global backup_task, notification_task
@@ -45,7 +54,7 @@ app = FastAPI(
 )
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[settings.frontend_url.rstrip("/")],
+    allow_origins=get_allowed_origins(),
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
